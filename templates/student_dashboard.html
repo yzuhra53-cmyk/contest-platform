@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Talaba kabineti · Bilim.Arena{% endblock %}
+{% block content %}
+<div class="mb-4"><p class="eyebrow mb-2">TALABA KABINETI</p><h1 class="page-title mb-1">Salom, {{ student.full_name }}!</h1><p class="text-secondary mb-0">HEMIS ID: {{ student.hemis_id }} · {{ student.group_name }}</p></div>
+<h2 class="h5 mb-3">Faol kontestlar</h2>
+<div class="row g-3">
+  {% for contest in contests %}
+  {% set attempt = attempts.get(contest.id) %}
+  <div class="col-md-6 col-xl-4"><div class="card contest-card border-0 shadow-sm h-100"><div class="card-body p-4 d-flex flex-column">
+    <div class="d-flex justify-content-between mb-3"><span class="badge {{ 'text-bg-warning' if contest.contest_type == 'coding' else 'text-bg-success' }}">{{ 'Kod yozish' if contest.contest_type == 'coding' else 'Output testi' }}</span><span class="small text-secondary">{{ contest.duration_minutes }} daqiqa</span></div>
+    <h3 class="h5">{{ contest.title }}</h3><p class="text-secondary small">{{ contest.questions|length }} ta masala</p>
+    {% if attempt and attempt.completed_at %}<a class="btn btn-outline-primary mt-auto" href="{{ url_for('student_result', attempt_id=attempt.id) }}">Natijani ko‘rish</a>
+    {% elif attempt %}<a class="btn btn-primary mt-auto" href="{{ url_for('take_contest', contest_id=contest.id) }}">Davom ettirish</a>
+    {% else %}<a class="btn btn-primary mt-auto" href="{{ url_for('take_contest', contest_id=contest.id) }}">Kontestni boshlash</a>{% endif %}
+  </div></div></div>
+  {% else %}<div class="col-12"><div class="card border-0 shadow-sm"><div class="empty-state">Hozircha faol kontest mavjud emas. Keyinroq qayta tekshiring.</div></div></div>{% endfor %}
+</div>
+{% endblock %}

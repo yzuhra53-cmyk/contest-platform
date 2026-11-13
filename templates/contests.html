@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Kontestlar · Bilim.Arena{% endblock %}
+{% block content %}
+<div class="page-heading"><p class="eyebrow mb-2">OLIMPIADALAR</p><h1 class="page-title">Kontestlarni boshqarish</h1><p class="text-secondary">Savollarni tanlang, vaqtni va faol holatini belgilang.</p></div>
+<div class="row g-4">
+  <div class="col-lg-5"><div class="card border-0 shadow-sm"><div class="card-body p-4">
+    <h2 class="h5 mb-3">Yangi kontest</h2>
+    <form method="post" id="contestForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label class="form-label">Kontest yo‘nalishi</label>
+      <select class="form-select mb-3" id="contest_type" name="contest_type">
+        <option value="quiz">Outputni tanlash testi</option>
+        <option value="coding">Python / C++ kod yozish</option>
+      </select>
+      <label class="form-label">Kontest nomi</label><input class="form-control mb-3" name="title" required>
+      <label class="form-label">Davomiyligi (daqiqa)</label><input class="form-control mb-3" type="number" name="duration_minutes" min="1" max="600" value="45" required>
+      <div class="border rounded-3 p-3 mb-3">
+        <div class="form-label fw-semibold">Kontest savollari</div>
+        <div class="question-picker" data-contest-type="quiz">
+          {% for question in quiz_questions %}
+          <label class="form-check d-flex gap-2 py-2"><input class="form-check-input mt-1" type="checkbox" name="question_ids" value="{{ question.id }}"><span><span class="badge text-bg-light">Output testi</span> {{ question.prompt|truncate(110) }}</span></label>
+          {% else %}<p class="small text-secondary mb-0">Output tanlash testlari hali qo‘shilmagan.</p>{% endfor %}
+        </div>
+        <div class="question-picker d-none" data-contest-type="coding">
+          {% for question in coding_questions %}
+          <label class="form-check d-flex gap-2 py-2"><input class="form-check-input mt-1" type="checkbox" name="question_ids" value="{{ question.id }}"><span><span class="badge text-bg-warning">Kod yozish</span> {{ question.prompt|truncate(110) }}</span></label>
+          {% else %}<p class="small text-secondary mb-0">Kod yozish masalalari hali qo‘shilmagan.</p>{% endfor %}
+        </div>
+      </div>
+      <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="start_as_teacher" name="start_as_teacher"><label class="form-check-label" for="start_as_teacher">Yaratilgach ustoz sifatida testni boshlash</label></div>
+      <div class="form-check form-switch mb-4"><input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active"><label class="form-check-label" for="is_active">Yaratilgandan so‘ng faol bo‘lsin</label></div>
+      <button class="btn btn-primary">Kontest yaratish</button>
+    </form>
+  </div></div></div>
+  <div class="col-lg-7"><div class="card border-0 shadow-sm"><div class="card-body p-0">
+    <div class="p-4 border-bottom"><h2 class="h5 mb-0">Kontestlar <span class="badge rounded-pill text-bg-light">{{ contests|length }}</span></h2></div>
+    {% if contests %}<div class="list-group list-group-flush">
+      {% for contest in contests %}<div class="list-group-item p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div><h3 class="h6 mb-1">{{ contest.title }}</h3><div class="small text-secondary">{{ 'Kod yozish' if contest.contest_type == 'coding' else 'Output testi' }} · {{ contest.questions|length }} ta masala · {{ contest.duration_minutes }} daqiqa · {{ contest.attempts|length }} ta urinish</div></div>
+        <div class="d-flex align-items-center gap-2"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin_preview_contest', contest_id=contest.id) }}">Ustoz sifatida boshlash</a><span class="badge {{ 'text-bg-success' if contest.is_active else 'text-bg-secondary' }}">{{ 'Faol' if contest.is_active else 'Yopiq' }}</span><form method="post" action="{{ url_for('toggle_contest', contest_id=contest.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-primary">{{ 'Yopish' if contest.is_active else 'Faollashtirish' }}</button></form><form method="post" action="{{ url_for('delete_contest', contest_id=contest.id) }}" onsubmit="return confirm('“{{ contest.title }}” kontesti, barcha urinishlari va yuborilgan kodlari butunlay o‘chadi. Davom etasizmi?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger">O‘chirish</button></form></div>
+      </div>{% endfor %}
+    </div>{% else %}<div class="empty-state">Hozircha kontest yaratilmagan.</div>{% endif %}
+  </div></div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const contestType = document.getElementById('contest_type');
+const questionGroups = document.querySelectorAll('.question-picker[data-contest-type]');
+function toggleQuestionGroups() {
+  questionGroups.forEach((group) => {
+    const active = group.dataset.contestType === contestType.value;
+    group.classList.toggle('d-none', !active);
+    group.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+      checkbox.disabled = !active;
+      if (!active) checkbox.checked = false;
+    });
+  });
+}
+contestType.addEventListener('change', toggleQuestionGroups);
+toggleQuestionGroups();
+</script>
+{% endblock %}

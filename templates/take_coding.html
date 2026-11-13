@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Kod masalasi · {{ contest.title }}{% endblock %}
+{% block content %}
+<div class="contest-header card border-0 shadow-sm mb-4">
+  <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div><p class="eyebrow mb-2">KOD YOZISH · MASALA {{ question_number }} / {{ total_questions }}</p><h1 class="h3 mb-1">{{ contest.title }}</h1><span class="text-secondary">Avvalgi masalalar to‘liq qabul qilingach keyingisi ochiladi.</span></div>
+    <div class="timer-wrap"><span class="small text-secondary">Qolgan vaqt</span><div class="timer" id="timer" data-seconds="{{ remaining_seconds }}">--:--</div></div>
+  </div>
+</div>
+<section class="card border-0 shadow-sm mb-3">
+  <div class="card-body p-4">
+    <div class="d-flex gap-3"><span class="question-number">{{ question_number }}</span><div>
+      <h2 class="h5 mb-3">{{ question.prompt }}</h2>
+      {% if question.input_data %}<div class="small fw-semibold mb-1">Namuna Input</div><pre class="sample-input">{{ question.input_data }}</pre>{% endif %}
+      {% if question.expected_output %}<div class="small fw-semibold mb-1">Namuna Output</div><pre class="sample-input">{{ question.expected_output }}</pre>{% endif %}
+      <div class="small text-secondary">Yechimingizni yashirin testlar bilan xavfsiz, alohida muhitda tekshiring. 100% to‘g‘ri yechim qabul qilingach keyingi masalaga o‘tasiz.</div>
+    </div></div>
+  </div>
+</section>
+{% if submission %}
+<div class="alert {{ 'alert-success' if submission.status == 'accepted' else ('alert-warning' if submission.status == 'pending' else 'alert-danger') }} d-flex justify-content-between flex-wrap gap-2">
+  <span>{{ submission.judge_result or submission.reviewer_note or ('Yechimingiz tekshirilmoqda.' if submission.status == 'pending' else 'Yechim testdan o‘tmadi. Kodni tuzatib qayta yuboring.') }}</span>
+  <span class="small">Yuborilgan: {{ submission.submitted_at.strftime('%d.%m.%Y %H:%M') }}</span>
+</div>
+{% endif %}
+<form method="post" action="{{ url_for('submit_code', contest_id=contest.id, question_id=question.id) }}" class="card border-0 shadow-sm" id="codeForm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="card-body p-4">
+    <label class="form-label fw-semibold" for="language">Dasturlash tili</label>
+    <select class="form-select mb-3" id="language" name="language" required>
+      <option value="python" {% if not submission or submission.language == 'python' %}selected{% endif %}>Python 3</option>
+      <option value="cpp" {% if submission and submission.language == 'cpp' %}selected{% endif %}>C++17</option>
+    </select>
+    <label class="form-label fw-semibold" for="source_code">Yechim kodingiz</label>
+    <textarea class="form-control font-monospace code-editor mb-3" id="source_code" name="source_code" rows="18" maxlength="20000" required spellcheck="false" placeholder="Python: import sys&#10;data = list(map(int, sys.stdin.read().split()))&#10;# yoki C++17 yechimingizni yozing">{{ submission.source_code if submission else '' }}</textarea>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <span class="small text-secondary">Yechimingiz yashirin testlarda Judge0 izolyatsiyalangan muhitida tekshiriladi.</span>
+      <button class="btn btn-primary btn-lg" {% if submission and submission.status == 'pending' %}disabled{% endif %}>Yechimni tekshiruvga yuborish</button>
+    </div>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+const timer = document.getElementById('timer');
+let remaining = Number(timer.dataset.seconds);
+function showTime() {
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
+  timer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  if (remaining <= 60) timer.classList.add('timer-warning');
+  if (remaining <= 0) {
+    timer.textContent = '00:00';
+    document.getElementById('source_code').disabled = true;
+    return;
+  }
+  remaining -= 1;
+  setTimeout(showTime, 1000);
+}
+showTime();
+</script>
+{% endblock %}

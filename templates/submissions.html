@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Kod yechimlari · Bilim.Arena{% endblock %}
+{% block content %}
+<div class="page-heading"><p class="eyebrow mb-2">AVTOMATIK TEKSHIRUV</p><h1 class="page-title">Talaba kodlari</h1><p class="text-secondary">Judge0 kompilyatsiya va yashirin testlar natijalari. Barcha testlardan o‘tgan yechim avtomatik qabul qilinadi.</p></div>
+<div class="d-flex flex-column gap-3">
+{% for submission in submissions %}
+  <article class="card border-0 shadow-sm"><div class="card-body p-4">
+    <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
+      <div><span class="badge {{ 'text-bg-warning' if submission.status == 'pending' else ('text-bg-success' if submission.status == 'accepted' else 'text-bg-danger') }}">{{ 'Kutilmoqda' if submission.status == 'pending' else ('Qabul qilingan' if submission.status == 'accepted' else ('Tekshiruv xatosi' if submission.status == 'error' else 'Qaytarilgan')) }}</span>
+      <h2 class="h5 mt-2 mb-1">{{ submission.question.prompt }}</h2>
+      <div class="small text-secondary">{{ submission.attempt.student.full_name }} · {{ submission.attempt.student.hemis_id }} · {{ submission.attempt.contest.title }} · {{ 'Python 3' if submission.language == 'python' else 'C++17' }}</div></div>
+      <span class="small text-secondary">{{ submission.submitted_at.strftime('%d.%m.%Y %H:%M') }}</span>
+    </div>
+    {% if submission.judge_result %}<div class="alert alert-light py-2">{{ submission.judge_result }}</div>{% endif %}
+    <details class="mb-3"><summary class="btn btn-sm btn-outline-secondary">Yashirin testlar va namuna ma’lumotlarini ko‘rish</summary>
+      <div class="row g-3 mt-1">
+        <div class="col-md-6"><div class="small fw-semibold mb-1">Namuna Input / Output</div><pre class="sample-input">{{ submission.question.input_data or '—' }}&#10;→&#10;{{ submission.question.expected_output or '—' }}</pre></div>
+        <div class="col-md-6"><div class="small fw-semibold mb-1">Yashirin testlar</div><pre class="sample-input">{{ submission.question.test_cases_json or '[]' }}</pre></div>
+      </div>
+    </details>
+    <pre class="sample-input code-sample"><code>{{ submission.source_code }}</code></pre>
+    {% if submission.status != 'accepted' %}
+    <form method="post" action="{{ url_for('review_submission', submission_id=submission.id) }}" class="row g-2 align-items-end mt-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="col-md-6"><label class="form-label small">Izoh (ixtiyoriy)</label><input class="form-control" name="reviewer_note" maxlength="500" value="{{ submission.reviewer_note or '' }}"></div>
+      <div class="col-auto"><button class="btn btn-success" name="status" value="accepted" onclick="return confirm('Barcha yashirin testlardan 100% o‘tganini tasdiqlaysizmi?')">100% qabul qilish</button></div>
+      <div class="col-auto"><button class="btn btn-outline-danger" name="status" value="rejected">Tuzatishga qaytarish</button></div>
+    </form>
+    {% else %}<div class="text-success small">Qabul qilingan{% if submission.reviewer_note %}: {{ submission.reviewer_note }}{% endif %}</div>{% endif %}
+  </div></article>
+{% else %}<div class="card border-0 shadow-sm"><div class="empty-state">Tekshirish uchun yangi kod yuborilmagan.</div></div>{% endfor %}
+</div>
+{% endblock %}

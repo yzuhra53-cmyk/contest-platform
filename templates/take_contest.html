@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ contest.title }} · Bilim.Arena{% endblock %}
+{% block content %}
+<div class="contest-header card border-0 shadow-sm mb-4">
+  <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div><p class="eyebrow mb-2">KONTЕST</p><h1 class="h3 mb-1">{{ contest.title }}</h1><span class="text-secondary">{{ contest.questions|length }} ta savol</span></div>
+    <div class="timer-wrap"><span class="small text-secondary">Qolgan vaqt</span><div class="timer" id="timer" data-seconds="{{ remaining_seconds }}">--:--</div></div>
+  </div>
+</div>
+<form method="post" id="contestForm" data-save-url="{{ url_for('save_answer', contest_id=contest.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  {% for question in contest.questions %}
+  <section class="card border-0 shadow-sm mb-3 question-card">
+    <div class="card-body p-4">
+      <div class="d-flex gap-3"><span class="question-number">{{ loop.index }}</span><div class="flex-grow-1">
+        <div class="d-flex flex-wrap gap-2 mb-2"><span class="badge text-bg-light">{{ 'Kod natijasini toping' if question.question_type == 'code_output' else ('Test savoli' if question.question_type == 'test' else 'Dasturlash masalasi') }}</span></div>
+        <h2 class="h5 mb-3">{{ question.prompt }}</h2>
+        {% if question.question_type == 'code_output' %}
+        <pre class="sample-input code-sample"><code>{{ question.code_snippet }}</code></pre>
+        <div class="small fw-semibold mb-1">Kirish ma’lumoti (Input)</div>
+        <pre class="sample-input">{{ question.input_data or '—' }}</pre>
+        {% for letter, option in [('A',question.option_a),('B',question.option_b),('C',question.option_c),('D',question.option_d)] %}
+        <label class="answer-option"><input class="form-check-input answer-input" type="radio" name="{{ question.id }}" value="{{ letter }}" {% if answers.get(question.id|string) == letter %}checked{% endif %}><span><strong>{{ letter }}.</strong> {{ option }}</span></label>
+        {% endfor %}
+        {% elif question.question_type == 'test' %}
+        {% for letter, option in [('A',question.option_a),('B',question.option_b),('C',question.option_c),('D',question.option_d)] %}
+        <label class="answer-option"><input class="form-check-input answer-input" type="radio" name="{{ question.id }}" value="{{ letter }}" {% if answers.get(question.id|string) == letter %}checked{% endif %}><span><strong>{{ letter }}.</strong> {{ option }}</span></label>
+        {% endfor %}
+        {% else %}
+          {% if question.input_data %}<div class="small fw-semibold mb-1">Kirish ma’lumoti (Input)</div><pre class="sample-input">{{ question.input_data }}</pre>{% endif %}
+          <label class="form-label" for="answer-{{ question.id }}">Chiqish ma’lumotingiz (Output)</label>
+          <textarea class="form-control answer-input" id="answer-{{ question.id }}" name="{{ question.id }}" rows="4" placeholder="Javobni kiriting">{{ answers.get(question.id|string, '') }}</textarea>
+          <div class="form-text">Natija kutilgan chiqish bilan aniq solishtiriladi.</div>
+        {% endif %}
+      </div></div>
+    </div>
+  </section>
+  {% endfor %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 py-3">
+    <span class="text-secondary small">Javoblaringiz avtomatik saqlanadi.</span>
+    <button type="submit" class="btn btn-primary btn-lg" onclick="return confirm('Javoblarni yuborib, kontestni yakunlaysizmi?')">Testni yakunlash</button>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+const timer = document.getElementById('timer');
+const form = document.getElementById('contestForm');
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+let remaining = Number(timer.dataset.seconds);
+let saving = Promise.resolve();
+function saveField(field) {
+  const value = field.type === 'radio'
+    ? (form.querySelector(`input[name="${CSS.escape(field.name)}"]:checked`)?.value || '')
+    : field.value;
+  saving = saving.then(() => fetch(form.dataset.saveUrl, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
+    body: JSON.stringify({question_id: field.name, answer: value})
+  })).catch(() => {});
+}
+form.querySelectorAll('.answer-input').forEach((field) => {
+  let debounce;
+  field.addEventListener('change', () => saveField(field));
+  if (field.tagName === 'TEXTAREA') {
+    field.addEventListener('input', () => {
+      clearTimeout(debounce);
+      debounce = setTimeout(() => saveField(field), 500);
+    });
+  }
+});
+function showTime() {
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
+  timer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  if (remaining <= 60) timer.classList.add('timer-warning');
+  if (remaining <= 0) {
+    timer.textContent = '00:00';
+    form.requestSubmit();
+    return;
+  }
+  remaining -= 1;
+  setTimeout(showTime, 1000);
+}
+showTime();
+</script>
+{% endblock %}

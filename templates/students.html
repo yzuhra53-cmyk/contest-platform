@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Talabalar · Bilim.Arena{% endblock %}
+{% block content %}
+<div class="page-heading"><p class="eyebrow mb-2">ISHTIROKCHILAR</p><h1 class="page-title">Talabalarni boshqarish</h1><p class="text-secondary">Ishtirokchilarni alohida yoki Excel/CSV faylidan qo‘shing.</p></div>
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm mb-4"><div class="card-body p-4">
+      <h2 class="h5 mb-3">Talaba qo‘shish</h2>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label class="form-label">HEMIS ID</label><input class="form-control mb-3" name="hemis_id" required>
+        <label class="form-label">F.I.O</label><input class="form-control mb-3" name="full_name" required>
+        <label class="form-label">Guruh</label><input class="form-control mb-4" name="group_name" required>
+        <button class="btn btn-primary">Talabani qo‘shish</button>
+      </form>
+    </div></div>
+    <div class="card border-0 shadow-sm"><div class="card-body p-4">
+      <h2 class="h5 mb-1">Excel yoki CSV orqali yuklash</h2><p class="text-secondary small">Ustunlar: HEMIS ID, F.I.O, Guruh. Sarlavha Excel faylida yuqori qatorlarda ham bo‘lishi mumkin.</p>
+      <form method="post" action="{{ url_for('import_students') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input class="form-control mb-3" type="file" name="file" accept=".xlsx,.csv" required>
+        <button class="btn btn-outline-primary">Excel/CSV faylni yuklash</button>
+      </form>
+    </div></div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm"><div class="card-body p-0">
+      <div class="p-4 border-bottom d-flex justify-content-between"><h2 class="h5 mb-0">Talabalar ro‘yxati</h2><span class="badge rounded-pill text-bg-light">{{ students|length }} nafar</span></div>
+      {% if students %}
+      <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Talaba</th><th>HEMIS ID</th><th>Guruh</th><th></th></tr></thead><tbody>
+      {% for student in students %}<tr><td class="fw-medium">{{ student.full_name }}</td><td>{{ student.hemis_id }}</td><td>{{ student.group_name }}</td><td class="text-end"><form method="post" action="{{ url_for('delete_student', hemis_id=student.hemis_id) }}" onsubmit="return confirm('Talabani o‘chirmoqchimisiz?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger">O‘chirish</button></form></td></tr>{% endfor %}
+      </tbody></table></div>
+      {% else %}<div class="empty-state">Hozircha talabalar kiritilmagan.</div>{% endif %}
+    </div></div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+databases:
+  - name: contest-db
+    plan: free
+    databaseName: contest
+    user: contest_user
+
+services:
+  - type: web
+    name: contest-platform
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: contest-db
+          property: connectionString
+      # Ichki judge sozlamalari
+      - key: JUDGE_TIME_LIMIT # har bir test uchun vaqt cheklovi (soniya)
+        value: "2"
+      - key: JUDGE_MAX_PARALLEL # bir vaqtda tekshiriladigan yechimlar soni
+        value: "2"
