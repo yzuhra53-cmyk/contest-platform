@@ -62,11 +62,12 @@ body {
 .navbar-toggler:focus { box-shadow: 0 0 0 .2rem rgba(255,255,255,.25); }
 
 main.container:not(.auth-main) { min-height: calc(100vh - 154px); }
-.page-heading { margin-bottom: 1.65rem; }
+.page-heading { animation: slide-up .55s both; margin-bottom: 1.65rem; }
 .page-title { font-size: clamp(1.7rem, 3vw, 2.3rem); font-weight: 750; letter-spacing: -.04em; }
 .eyebrow { color: var(--ranch-red); font-size: .72rem; font-weight: 750; letter-spacing: .13em; }
 .card { border: 1px solid rgba(32, 24, 24, .045) !important; border-radius: 1rem; box-shadow: 0 .55rem 1.65rem rgba(34, 20, 20, .055) !important; }
 .stat-card {
+  animation: slide-up .55s both;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 1rem;
@@ -128,7 +129,7 @@ main.container:not(.auth-main) { min-height: calc(100vh - 154px); }
 .auth-main { background: #201416; min-height: calc(100vh - 82px); padding: 0; }
 .auth-hero {
   background-color: #311a1b;
-  background-image: linear-gradient(105deg, rgba(28,16,18,.89) 0%, rgba(84,17,22,.77) 48%, rgba(227,30,36,.57) 100%), url("../images/ranch_building.jpg");
+  background-image: radial-gradient(ellipse at 82% 18%, rgba(227,30,36,.5), transparent 36%), linear-gradient(105deg, #211719 0%, #4e1b20 54%, #8f2025 100%);
   background-position: center;
   background-size: cover;
   color: #fff;
@@ -171,6 +172,8 @@ main.container:not(.auth-main) { min-height: calc(100vh - 154px); }
 .auth-scroll-cue span { border: 1px solid rgba(255,255,255,.55); border-radius: 1rem; height: 23px; position: relative; width: 14px; }
 .auth-scroll-cue span::after { animation: scroll-dot 1.5s infinite; background: #fff; border-radius: 50%; content: ""; height: 3px; left: 5px; position: absolute; top: 4px; width: 3px; }
 .auth-main + .site-footer { background: #201416; color: rgba(255,255,255,.58) !important; margin: 0; max-width: none; }
+.auth-main > .alert { margin: 1.25rem auto 0; max-width: 1200px; }
+main:not(.auth-main) .card { animation: slide-up .55s both; }
 
 @keyframes slide-up {
   from { opacity: 0; transform: translateY(22px); }
