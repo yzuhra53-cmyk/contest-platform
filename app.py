@@ -439,7 +439,8 @@ def create_app(test_config=None):
             contest_type = request.form.get("contest_type", "quiz")
             start_as_teacher = request.form.get("start_as_teacher") == "on"
             allowed_type = "code_output" if contest_type == "quiz" else "code_problem"
-            selected = request.form.getlist("question_ids")
+            selected_ids = request.form.getlist("question_ids")
+            selected = [int(value) for value in selected_ids if value.isdigit()]
             questions = (
                 Question.query.filter(
                     Question.id.in_(selected),
