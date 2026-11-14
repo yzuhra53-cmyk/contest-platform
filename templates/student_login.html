@@ -2,11 +2,12 @@
 {% block title %}Talaba kirishi · Ranch University{% endblock %}
 {% block main_class %}auth-main{% endblock %}
 {% block content %}
-<section class="auth-hero">
+<section class="auth-hero auth-hero-login">
   <div class="auth-hero-inner">
     <div class="auth-intro">
       <span class="auth-kicker">RANCH UNIVERSITY <i></i> RAQAMLI TEXNOLOGIYALAR KAFEDRASI</span>
       <h1>Raqamli texnologiyalar kafedrasi uchun olimpiada va kontest platformasi</h1>
+      {% include "_staff_card.html" %}
       <p>Bilimingizni sinang, yangi marralarni zabt eting va o‘z natijalaringizni kuzatib boring.</p>
       <div class="auth-accent-line"></div>
     </div>
@@ -29,7 +30,6 @@
           <div class="auth-card-footer"><span>Ustozmisiz?</span><a href="{{ url_for('admin_login') }}">Ustoz sifatida kirish <span aria-hidden="true">→</span></a></div>
         </div>
       </section>
-      {% include "_staff_card.html" %}
     </div>
   </div>
   <div class="auth-scroll-cue" aria-hidden="true"><span></span> BILIM — KELAJAKKA YO‘L</div>
