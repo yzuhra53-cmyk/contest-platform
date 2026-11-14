@@ -1,23 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Ustoz kirishi · Bilim.Arena{% endblock %}
+{% block title %}Ustoz kirishi · Ranch University{% endblock %}
+{% block main_class %}auth-main{% endblock %}
 {% block content %}
-<div class="row justify-content-center align-items-center auth-row">
-  <div class="col-sm-10 col-md-6 col-lg-4">
-    <div class="card border-0 shadow-sm">
-      <div class="card-body p-4 p-lg-5">
-        <div class="icon-tile mb-3">✦</div>
-        <h1 class="h3 mb-1">Ustoz paneli</h1>
-        <p class="text-secondary mb-4">Boshqaruv paneliga kirish</p>
-        <form method="post">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <label class="form-label" for="username">Login</label>
-          <input class="form-control mb-3" id="username" name="username" autocomplete="username" required autofocus>
-          <label class="form-label" for="password">Parol</label>
-          <input class="form-control mb-4" id="password" name="password" type="password" autocomplete="current-password" required>
-          <button class="btn btn-primary w-100">Kirish</button>
-        </form>
-      </div>
+<section class="auth-hero">
+  <div class="auth-hero-inner">
+    <div class="auth-intro">
+      <span class="auth-kicker">RANCH UNIVERSITY <i></i> RAQAMLI TEXNOLOGIYALAR KAFEDRASI</span>
+      <h1>Raqamli texnologiyalar kafedrasi uchun olimpiada va kontest platformasi</h1>
+      <p>Olimpiada va kontestlarni boshqarish uchun ustoz paneliga kiring.</p>
+      <div class="auth-accent-line"></div>
+    </div>
+    <div class="auth-side">
+      <section class="card auth-card">
+        <div class="card-body">
+          <div class="auth-card-mark">02 <span>· USTOZ KIRISHI</span></div>
+          <h2 class="h3 mb-2">Ustoz paneli</h2>
+          <p class="text-secondary mb-4">Boshqaruv paneliga xavfsiz kirish</p>
+          <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <label class="form-label" for="username">Login</label>
+            <input class="form-control mb-3" id="username" name="username" autocomplete="username" required autofocus>
+            <label class="form-label" for="password">Parol</label>
+            <input class="form-control mb-4" id="password" name="password" type="password" autocomplete="current-password" required>
+            <button class="btn btn-primary w-100">Kirish <span aria-hidden="true">→</span></button>
+          </form>
+          <div class="auth-card-footer"><span>Talabamisiz?</span><a href="{{ url_for('student_login') }}">Talaba sifatida kirish <span aria-hidden="true">→</span></a></div>
+        </div>
+      </section>
+      {% include "_staff_card.html" %}
     </div>
   </div>
-</div>
+  <div class="auth-scroll-cue" aria-hidden="true"><span></span> BILIM — KELAJAKKA YO‘L</div>
+</section>
 {% endblock %}
