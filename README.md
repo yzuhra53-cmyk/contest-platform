@@ -47,6 +47,8 @@ git push -u origin main
 
 Bu loyiha **Flask** (Django ham, FastAPI ham emas). `Procfile`, `render.yaml`, `.python-version`, `gunicorn` va `psycopg` Render uchun kiritilgan; Flask statik fayllarni o‘zi tarqatgani uchun WhiteNoise shart emas. `render.yaml` bilan Render Blueprint yaratib GitHub repozitoriysini ulang, `ADMIN_USERNAME` va kuchli `ADMIN_PASSWORD` ni kiriting, keyin deploy qiling. Blueprint PostgreSQL bazasini yaratib, `DATABASE_URL` ni web servisga bog‘laydi. `/health` endpoint bazaga ulanishni tekshiradi.
 
+Ilova ishga tushganda bazada savol bo‘lmasa, `questions_data.json` faylidagi 340 ta test va kod masalasi avtomatik yuklanadi. Bazada kamida bitta savol bo‘lsa, mavjud savollar o‘zgartirilmaydi.
+
 Render boshqaruv panelida `SECRET_KEY` maxfiy qiymat bo‘lishi kerak; Blueprint uni yaratadi. `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD` va `SECRET_KEY` ni GitHub'ga yozmang. Ilova PostgreSQL `postgres://` va `postgresql://` URL'larini psycopg 3 formatiga moslaydi. `DEBUG` deployda o‘chirilgan; Flask `TRUSTED_HOSTS` ni Render host nomi bilan cheklaydi.
 
 ## Bepul hosting va ma’lumotlarni saqlash

@@ -846,6 +846,17 @@ def create_app(test_config=None):
             db.session.execute(db.text("ALTER TABLE code_submission ADD COLUMN judge_result VARCHAR(500)"))
             db.session.commit()
 
+        if Question.query.count() == 0:
+            questions_file = os.path.join(application.root_path, "questions_data.json")
+            with open(questions_file, encoding="utf-8") as file:
+                questions_data = json.load(file)
+            if not isinstance(questions_data, list) or not questions_data:
+                raise RuntimeError("questions_data.json bo‘sh yoki ro‘yxat formatida emas.")
+            if any(not isinstance(question, dict) for question in questions_data):
+                raise RuntimeError("questions_data.json ichida noto‘g‘ri savol ma’lumoti bor.")
+            db.session.add_all(Question(**question) for question in questions_data)
+            db.session.commit()
+
     return application
 
 
