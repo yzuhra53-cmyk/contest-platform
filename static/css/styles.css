@@ -41,17 +41,12 @@ body {
 
 .brand-logo {
   align-items: center;
-  background: #fff;
-  border-radius: .55rem;
   display: flex;
-  flex: 0 0 94px;
-  height: 53px;
+  flex: 0 0 124px;
   justify-content: center;
-  overflow: hidden;
-  padding: .22rem;
 }
 
-.brand-logo img { display: block; height: 100%; object-fit: contain; width: 100%; }
+.brand-logo img { display: block; height: auto; object-fit: contain; width: 100%; }
 .brand-copy { display: grid; gap: .18rem; line-height: 1.15; }
 .brand-copy strong { font-size: .9rem; letter-spacing: .1em; }
 .brand-copy > span { color: rgba(255,255,255,.86); font-size: .76rem; font-weight: 400; letter-spacing: .015em; }
@@ -192,7 +187,7 @@ main:not(.auth-main) .card { animation: slide-up .55s both; }
 }
 @media (max-width: 767.98px) {
   .site-navbar { min-height: 72px; }
-  .brand-logo { flex-basis: 76px; height: 45px; }
+  .brand-logo { flex-basis: 104px; }
   .brand-copy strong { font-size: .74rem; }
   .brand-copy > span { font-size: .67rem; }
   .university-brand { gap: .6rem; margin-right: .25rem; }
