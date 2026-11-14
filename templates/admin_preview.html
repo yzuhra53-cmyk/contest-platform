@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Ustoz ko‘rigi · {{ contest.title }}{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <p class="eyebrow mb-2">USTOZ KO‘RIGI</p>
+  <h1 class="page-title">{{ contest.title }}</h1>
+  <p class="text-secondary">Bu sinov talaba natijalariga qo‘shilmaydi. Talabalar kirishi uchun kontestni alohida faollashtiring.</p>
+</div>
+{% if score %}
+<div class="alert alert-primary">Natija: {{ score.correct }} / {{ score.total }} · {{ '%.2f'|format(score.percentage) }}%</div>
+{% endif %}
+{% if contest.contest_type == 'quiz' %}
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  {% for question in contest.questions %}
+  <section class="card border-0 shadow-sm mb-3">
+    <div class="card-body p-4">
+      <h2 class="h5">{{ loop.index }}. {{ question.prompt }}</h2>
+      {% if question.question_type == 'code_output' %}
+      <pre class="sample-input"><code>{{ question.code_snippet }}</code></pre>
+      <div class="small fw-semibold mb-1">Input</div><pre class="sample-input">{{ question.input_data or '—' }}</pre>
+      {% endif %}
+      {% for letter, option in [('A',question.option_a),('B',question.option_b),('C',question.option_c),('D',question.option_d)] %}
+      <label class="answer-option"><input class="form-check-input" type="radio" name="{{ question.id }}" value="{{ letter }}"><span><strong>{{ letter }}.</strong> {{ option }}</span></label>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+  <button class="btn btn-primary btn-lg">Sinovni yakunlash</button>
+</form>
+{% else %}
+<div class="d-flex flex-column gap-3">
+  {% for question in contest.questions %}
+  <article class="card border-0 shadow-sm"><div class="card-body p-4">
+    <span class="badge text-bg-warning mb-2">Masala {{ loop.index }}</span>
+    <h2 class="h5">{{ question.prompt }}</h2>
+    <div class="small fw-semibold mb-1">Namuna Input</div><pre class="sample-input">{{ question.input_data or '—' }}</pre>
+    <div class="small fw-semibold mb-1">Namuna Output</div><pre class="sample-input">{{ question.expected_output or '—' }}</pre>
+  </div></article>
+  {% endfor %}
+</div>
+{% endif %}
+<a class="btn btn-outline-secondary mt-4" href="{{ url_for('admin_contests') }}">Kontestlarga qaytish</a>
+{% endblock %}
