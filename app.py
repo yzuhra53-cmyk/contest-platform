@@ -58,6 +58,7 @@ LOGIN_WINDOW_SECONDS = 15 * 60
 ADMIN_MAX_FAILURES = 5
 STUDENT_MAX_FAILURES = 10
 PENDING_RESUBMIT_SECONDS = 180
+DEFAULT_MAX_VIOLATIONS = 5
 ICPC_WRONG_PENALTY_MINUTES = 20
 
 # Bazada vaqt UTC'da saqlanadi; ekranda va formalarda mahalliy vaqt (Toshkent: UTC+5).
@@ -182,6 +183,8 @@ def create_app(test_config=None):
         SESSION_COOKIE_SECURE=bool(os.environ.get("RENDER")),
         # True bo'lsa yechim so'rov ichida tekshiriladi (testlar uchun qulay).
         JUDGE_SYNC=False,
+        # Bitta talabaning ketma-ket yechim yuborishlari orasidagi minimal oraliq.
+        SUBMIT_COOLDOWN_SECONDS=int(os.environ.get("SUBMIT_COOLDOWN_SECONDS", "20")),
     )
     if test_config:
         application.config.update(test_config)
@@ -221,9 +224,20 @@ def create_app(test_config=None):
         def wrapped(*args, **kwargs):
             if not session.get("student_id"):
                 return redirect(url_for("student_login"))
-            if db.session.get(Student, session["student_id"]) is None:
+            student = db.session.get(Student, session["student_id"])
+            if student is None:
                 session.clear()
                 flash("Talaba hisobi topilmadi. Qayta kiring.", "warning")
+                return redirect(url_for("student_login"))
+            if student.session_token and not hmac.compare_digest(
+                str(session.get("student_token", "")), student.session_token
+            ):
+                # Bir vaqtda faqat bitta qurilma/brauzer: yangi kirish eskisini chiqaradi.
+                session.clear()
+                flash(
+                    "Hisobingizga boshqa qurilma yoki brauzerdan kirildi. Bir vaqtda faqat bitta joyda ishlash mumkin.",
+                    "warning",
+                )
                 return redirect(url_for("student_login"))
             return view(*args, **kwargs)
 
@@ -340,8 +354,20 @@ def create_app(test_config=None):
                 and check_password_hash(student.access_code_hash, access_code)
             ):
                 throttle.reset(id_key)
+                had_session = bool(student.session_token)
+                student.session_token = secrets.token_hex(24)
+                if had_session:
+                    open_attempts = Attempt.query.filter(
+                        Attempt.student_id == student.hemis_id, Attempt.completed_at.is_(None)
+                    ).all()
+                    for open_attempt in open_attempts:
+                        if utcnow() < attempt_deadline(open_attempt):
+                            record_proctor_event(open_attempt, "new_device_login", request.headers.get("User-Agent", ""))
+                            enforce_violation_limit(open_attempt)
+                db.session.commit()
                 session.clear()
                 session["student_id"] = student.hemis_id
+                session["student_token"] = student.session_token
                 return redirect(url_for("student_dashboard"))
             throttle.fail(id_key)
             throttle.fail(ip_key)
@@ -697,6 +723,7 @@ def create_app(test_config=None):
                     public_leaderboard=request.form.get("public_leaderboard") == "on",
                     proctoring=request.form.get("proctoring") == "on",
                     require_seb=request.form.get("require_seb") == "on",
+                    max_violations=read_max_violations(request.form),
                 )
                 db.session.add(contest)
                 db.session.commit()
@@ -707,10 +734,18 @@ def create_app(test_config=None):
             return redirect(url_for("admin_contests"))
         return render_template(
             "contests.html",
+            seb_configured=bool(proctoring.seb_config_keys()),
+            default_max_violations=DEFAULT_MAX_VIOLATIONS,
             contests=Contest.query.order_by(Contest.id.desc()).all(),
             quiz_questions=Question.query.filter_by(question_type="code_output").order_by(Question.id.desc()).all(),
             coding_questions=Question.query.filter_by(question_type="code_problem").order_by(Question.id.desc()).all(),
         )
+
+    def read_max_violations(form):
+        try:
+            return max(0, min(50, int(form.get("max_violations", "0") or 0)))
+        except ValueError:
+            return 0
 
     def read_contest_window(form):
         try:
@@ -736,6 +771,7 @@ def create_app(test_config=None):
         contest.public_leaderboard = request.form.get("public_leaderboard") == "on"
         contest.proctoring = request.form.get("proctoring") == "on"
         contest.require_seb = request.form.get("require_seb") == "on"
+        contest.max_violations = read_max_violations(request.form)
         db.session.commit()
         flash(f"“{contest.title}” sozlamalari saqlandi.", "success")
         return redirect(url_for("admin_contests"))
@@ -1068,6 +1104,7 @@ def create_app(test_config=None):
     def seb_required_response(contest, attempt=None):
         if attempt is not None and attempt.completed_at is None:
             record_proctor_event(attempt, "seb_missing", request.headers.get("User-Agent", "")[:300])
+            enforce_violation_limit(attempt)
             db.session.commit()
         return render_template(
             "seb_required.html",
@@ -1096,6 +1133,33 @@ def create_app(test_config=None):
         db.session.add(event)
         return event
 
+    def violation_count(attempt):
+        return ProctorEvent.query.filter(
+            ProctorEvent.attempt_id == attempt.id,
+            ProctorEvent.kind.in_(proctoring.VIOLATION_KINDS),
+        ).count()
+
+    def enforce_violation_limit(attempt):
+        """Limitdan oshsa urinishni yakunlaydi (javoblar/qabul qilingan yechimlar baholanadi)."""
+        limit = attempt.contest.max_violations or 0
+        if not limit or attempt.completed_at is not None:
+            return False
+        count = violation_count(attempt)
+        if count < limit:
+            return False
+        db.session.add(
+            ProctorEvent(attempt_id=attempt.id, kind="auto_finished", detail=f"{count} ta qoidabuzarlik (limit {limit})")
+        )
+        score_attempt(attempt, json.loads(attempt.answers_json or "{}"), commit=False)
+        return True
+
+    def violation_payload(attempt, finished):
+        return {
+            "violations": violation_count(attempt),
+            "max_violations": attempt.contest.max_violations or 0,
+            "finished": finished,
+        }
+
     def camera_is_live(attempt):
         state = proctor_state(attempt, create=False)
         return (
@@ -1115,6 +1179,23 @@ def create_app(test_config=None):
         if not seb_ok(contest, allow_session=True):
             abort(403)
         return contest, attempt
+
+    def shuffled_question_order(contest):
+        """Output testida har bir talabaga savollar boshqa tartibda (yonidagidan ko'chirish qiyinlashadi)."""
+        if contest.contest_type != "quiz":
+            return None
+        ids = [question.id for question in contest.questions]
+        secrets.SystemRandom().shuffle(ids)
+        return json.dumps(ids)
+
+    def ordered_questions(contest, attempt):
+        questions = list(contest.questions)
+        try:
+            order = json.loads(attempt.question_order or "[]")
+        except json.JSONDecodeError:
+            order = []
+        position = {question_id: index for index, question_id in enumerate(order)}
+        return sorted(questions, key=lambda question: position.get(question.id, len(position) + question.id))
 
     @application.route("/contest/<int:contest_id>/proctor/frame", methods=["POST"])
     @student_required
@@ -1143,8 +1224,10 @@ def create_app(test_config=None):
             alert = "multiple_faces"
         if alert and record_proctor_event(attempt, alert, f"Yuzlar soni: {faces}", image) is not None:
             state.face_alert_count = (state.face_alert_count or 0) + 1
+        finished = enforce_violation_limit(attempt)
+        payload = violation_payload(attempt, finished)
         db.session.commit()
-        return jsonify({"ok": True, "faces": faces, "interval": proctoring.FRAME_INTERVAL_SECONDS})
+        return jsonify({"ok": True, "faces": faces, "interval": proctoring.FRAME_INTERVAL_SECONDS, **payload})
 
     @application.route("/contest/<int:contest_id>/proctor/event", methods=["POST"])
     @student_required
@@ -1160,8 +1243,10 @@ def create_app(test_config=None):
         elif kind == "paste":
             state.paste_count = (state.paste_count or 0) + 1
         record_proctor_event(attempt, kind, str(payload.get("detail", ""))[:300])
+        finished = enforce_violation_limit(attempt)
+        result = violation_payload(attempt, finished)
         db.session.commit()
-        return jsonify({"ok": True})
+        return jsonify({"ok": True, **result})
 
     def purge_old_proctor_data():
         days = int(os.environ.get("PROCTOR_RETENTION_DAYS", "30"))
@@ -1181,6 +1266,15 @@ def create_app(test_config=None):
         event_counts = dict(
             db.session.query(ProctorEvent.attempt_id, db.func.count(ProctorEvent.id))
             .filter(ProctorEvent.attempt_id.in_([attempt.id for attempt in attempts] or [0]))
+            .group_by(ProctorEvent.attempt_id)
+            .all()
+        )
+        violation_counts = dict(
+            db.session.query(ProctorEvent.attempt_id, db.func.count(ProctorEvent.id))
+            .filter(
+                ProctorEvent.attempt_id.in_([attempt.id for attempt in attempts] or [0]),
+                ProctorEvent.kind.in_(proctoring.VIOLATION_KINDS),
+            )
             .group_by(ProctorEvent.attempt_id)
             .all()
         )
@@ -1208,6 +1302,8 @@ def create_app(test_config=None):
                 "paste": state.paste_count if state else 0,
                 "face_alerts": state.face_alert_count if state else 0,
                 "events": event_counts.get(attempt.id, 0),
+                "violations": violation_counts.get(attempt.id, 0),
+                "max_violations": contest.max_violations or 0,
                 # Ustoz e'tibori kerak bo'lganlar yuqorida.
                 "alert": active and (not live or (state is not None and state.last_faces not in (1, None))),
             })
@@ -1311,6 +1407,7 @@ def create_app(test_config=None):
                 contest_id=contest.id,
                 total_questions=len(contest.questions),
                 answers_json="{}",
+                question_order=shuffled_question_order(contest),
             )
             db.session.add(attempt)
             try:
@@ -1370,6 +1467,7 @@ def create_app(test_config=None):
             "take_contest.html",
             contest=contest,
             attempt=attempt,
+            questions=ordered_questions(contest, attempt),
             answers=saved_answers,
             remaining_seconds=remaining_seconds,
         )
@@ -1409,6 +1507,16 @@ def create_app(test_config=None):
             abort(400)
         if not source_code or len(source_code) > 20000:
             flash("Kodingizni kiriting (ko‘pi bilan 20 000 belgi).", "danger")
+            return redirect(url_for("take_contest", contest_id=contest_id))
+        cooldown = application.config["SUBMIT_COOLDOWN_SECONDS"]
+        last_submitted = db.session.execute(
+            db.select(db.func.max(SubmissionLog.submitted_at))
+            .join(CodeSubmission, SubmissionLog.submission_id == CodeSubmission.id)
+            .where(CodeSubmission.attempt_id == attempt.id)
+        ).scalar()
+        if cooldown and last_submitted and (utcnow() - last_submitted).total_seconds() < cooldown:
+            wait = int(cooldown - (utcnow() - last_submitted).total_seconds()) + 1
+            flash(f"Yechimlar orasida kamida {cooldown} soniya bo‘lishi kerak. {wait} soniyadan so‘ng yuboring.", "warning")
             return redirect(url_for("take_contest", contest_id=contest_id))
         submission = submissions.get(question.id)
         if (
@@ -1564,10 +1672,18 @@ def create_app(test_config=None):
             ("public_leaderboard", "BOOLEAN NOT NULL DEFAULT FALSE"),
             ("proctoring", "BOOLEAN NOT NULL DEFAULT FALSE"),
             ("require_seb", "BOOLEAN NOT NULL DEFAULT FALSE"),
+            ("max_violations", "INTEGER NOT NULL DEFAULT 0"),
         ):
             if name not in contest_columns:
                 db.session.execute(db.text(f"ALTER TABLE contests ADD COLUMN {name} {ddl}"))
                 db.session.commit()
+        if "session_token" not in student_columns:
+            db.session.execute(db.text("ALTER TABLE students ADD COLUMN session_token VARCHAR(64)"))
+            db.session.commit()
+        attempt_columns = {column["name"] for column in db.inspect(db.engine).get_columns("attempts")}
+        if "question_order" not in attempt_columns:
+            db.session.execute(db.text("ALTER TABLE attempts ADD COLUMN question_order TEXT"))
+            db.session.commit()
         if "access_code_hash" not in student_columns:
             db.session.execute(db.text("ALTER TABLE students ADD COLUMN access_code_hash VARCHAR(255)"))
             db.session.commit()

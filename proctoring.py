@@ -28,7 +28,20 @@ EVENT_LABELS = {
     "camera_denied": "Kameraga ruxsat bermadi",
     "camera_lost": "Kamera uzildi",
     "seb_missing": "Safe Exam Browser'siz kirishga urindi",
+    "new_device_login": "Boshqa qurilma/brauzerdan kirdi",
+    "auto_finished": "Qoidabuzarlik limiti: urinish avtomatik yakunlandi",
 }
+# Limitga hisoblanadigan qoidabuzarliklar. tab_hidden hisoblanmaydi: tab almashganda
+# window_blur ham keladi, ikki marta sanalmasin. camera_denied — kontest boshlanmasdan oldin.
+VIOLATION_KINDS = (
+    "no_face",
+    "multiple_faces",
+    "window_blur",
+    "paste",
+    "camera_lost",
+    "seb_missing",
+    "new_device_login",
+)
 CLIENT_EVENT_KINDS = {"tab_hidden", "window_blur", "paste", "camera_denied", "camera_lost"}
 
 _cascade = None

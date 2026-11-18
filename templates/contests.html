@@ -22,9 +22,12 @@
       <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="public_leaderboard" name="public_leaderboard"><label class="form-check-label" for="public_leaderboard">Reyting talabalarga ham ko‘rinsin</label></div>
       <div class="border rounded-3 p-3 mb-3">
         <div class="form-label fw-semibold mb-2">Nazorat</div>
-        <div class="form-check"><input class="form-check-input" type="checkbox" id="proctoring" name="proctoring"><label class="form-check-label" for="proctoring">Kamera + kod kuzatuvi (proktoring)</label></div>
-        <div class="form-check"><input class="form-check-input" type="checkbox" id="require_seb" name="require_seb"><label class="form-check-label" for="require_seb">Faqat Safe Exam Browser orqali</label></div>
-        <div class="form-text">Proktoringda talaba kamerasidan har 10 soniyada kadr va yozayotgan kodi ustozga yuboriladi. SEB boshqa dastur, brauzer va AI xizmatlarini bloklaydi.</div>
+        <div class="form-check"><input class="form-check-input" type="checkbox" id="proctoring" name="proctoring" checked><label class="form-check-label" for="proctoring">Kamera + kod kuzatuvi (proktoring)</label></div>
+        <div class="form-check"><input class="form-check-input" type="checkbox" id="require_seb" name="require_seb" {% if seb_configured %}checked{% endif %}><label class="form-check-label" for="require_seb">Faqat Safe Exam Browser orqali</label></div>
+        <label class="form-label small mt-2 mb-1" for="max_violations">Qoidabuzarlik limiti (0 — o‘chiq)</label>
+        <input class="form-control form-control-sm mb-1" type="number" id="max_violations" name="max_violations" min="0" max="50" value="{{ default_max_violations }}">
+        <div class="form-text">Proktoringda talaba kamerasidan har 10 soniyada kadr va yozayotgan kodi ustozga yuboriladi. SEB boshqa dastur, brauzer va AI xizmatlarini bloklaydi. Limitga yetganda (oynadan chiqish, yuz yo‘q, paste, boshqa qurilmadan kirish…) urinish avtomatik yakunlanadi.</div>
+        {% if not seb_configured %}<div class="alert alert-warning small py-2 mt-2 mb-0">SEB_CONFIG_KEYS sozlanmagan: SEB faqat User-Agent bo‘yicha tekshiriladi (ishonchsiz). README’dagi yo‘riqnoma bo‘yicha Config Key’ni kiriting.</div>{% endif %}
       </div>
       <div class="border rounded-3 p-3 mb-3">
         <div class="form-label fw-semibold">Kontest savollari</div>
@@ -60,6 +63,7 @@
                   <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="pl{{ contest.id }}" name="public_leaderboard" {% if contest.public_leaderboard %}checked{% endif %}><label class="form-check-label small" for="pl{{ contest.id }}">Reyting talabalarga ko‘rinsin</label></div>
                   <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="pr{{ contest.id }}" name="proctoring" {% if contest.proctoring %}checked{% endif %}><label class="form-check-label small" for="pr{{ contest.id }}">Kamera + kod kuzatuvi</label></div>
                   <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="sb{{ contest.id }}" name="require_seb" {% if contest.require_seb %}checked{% endif %}><label class="form-check-label small" for="sb{{ contest.id }}">Faqat Safe Exam Browser</label></div>
+                  <label class="small mt-1">Qoidabuzarlik limiti <input class="form-control form-control-sm d-inline-block ms-1" style="width:5rem" type="number" name="max_violations" min="0" max="50" value="{{ contest.max_violations }}"></label>
                 </div>
                 <button class="btn btn-sm btn-primary">Saqlash</button>
               </div>

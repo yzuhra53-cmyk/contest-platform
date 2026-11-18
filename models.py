@@ -25,6 +25,8 @@ class Student(db.Model):
     group_name = db.Column(db.String(100), nullable=False)
     # Shaxsiy kirish kodi xeshi (ochiq kod bazada saqlanmaydi).
     access_code_hash = db.Column(db.String(255))
+    # Oxirgi kirish tokeni: yangi qurilmadan kirilsa, eski sessiya bekor bo'ladi.
+    session_token = db.Column(db.String(64))
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
     attempts = db.relationship("Attempt", back_populates="student")
@@ -68,6 +70,8 @@ class Contest(db.Model):
     proctoring = db.Column(db.Boolean, nullable=False, default=False)
     # Faqat Safe Exam Browser orqali kirishga ruxsat.
     require_seb = db.Column(db.Boolean, nullable=False, default=False)
+    # Shuncha qoidabuzarlikdan keyin urinish avtomatik yakunlanadi (0 — o'chiq).
+    max_violations = db.Column(db.Integer, nullable=False, default=0)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
     questions = db.relationship(
@@ -88,6 +92,8 @@ class Attempt(db.Model):
     started_at = db.Column(db.DateTime, nullable=False, default=utcnow)
     completed_at = db.Column(db.DateTime)
     answers_json = db.Column(db.Text, nullable=False, default="{}")
+    # Talabaga ko'rsatiladigan savollar tartibi (aralashtirilgan id ro'yxati, JSON).
+    question_order = db.Column(db.Text)
     correct_count = db.Column(db.Integer)
     total_questions = db.Column(db.Integer, nullable=False)
     score = db.Column(db.Float)

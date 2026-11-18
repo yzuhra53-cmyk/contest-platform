@@ -10,6 +10,7 @@
 <div class="proctor-cam" aria-live="polite">
   <video id="proctorVideo" autoplay muted playsinline></video>
   <span id="proctorStatus" class="badge text-bg-secondary">Kamera ulanmoqda…</span>
+  <span id="proctorViolations" class="badge text-bg-dark" hidden></span>
 </div>
 <script>
 (() => {
@@ -35,6 +36,23 @@
     statusEl.className = `badge text-bg-${kind}`;
   }
 
+  const violationsEl = document.getElementById('proctorViolations');
+  // Urinish yakunlangan (limit) yoki sessiya bekor qilingan bo'lsa, sahifani yangilaymiz:
+  // server natija yoki kirish sahifasiga yo'naltiradi.
+  function handleResponse(response, data) {
+    if (response.redirected || response.status === 409 || response.status === 403 || (data && data.finished)) {
+      leaving = true;
+      window.location.reload();
+      return true;
+    }
+    if (data && data.max_violations) {
+      violationsEl.hidden = false;
+      violationsEl.textContent = `Qoidabuzarlik: ${data.violations} / ${data.max_violations}`;
+      violationsEl.className = `badge ${data.violations >= data.max_violations - 1 ? 'text-bg-danger' : 'text-bg-dark'}`;
+    }
+    return false;
+  }
+
   function sendEvent(kind, detail) {
     if (leaving) return;
     fetch(eventUrl, {
@@ -42,6 +60,9 @@
       keepalive: true,
       headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrf},
       body: JSON.stringify({kind, detail: detail || ''}),
+    }).then(async (response) => {
+      const data = response.headers.get('Content-Type')?.includes('json') ? await response.json() : null;
+      handleResponse(response, data);
     }).catch(() => {});
   }
 
@@ -62,8 +83,9 @@
     }
     try {
       const response = await fetch(frameUrl, {method: 'POST', headers: {'X-CSRF-Token': csrf}, body: form});
-      if (!response.ok) { setStatus('Kadr qabul qilinmadi', 'danger'); return; }
-      const data = await response.json();
+      const data = response.headers.get('Content-Type')?.includes('json') ? await response.json() : null;
+      if (handleResponse(response, data)) return;
+      if (!response.ok || !data) { setStatus('Kadr qabul qilinmadi', 'danger'); return; }
       if (data.faces === 0) setStatus('Yuzingiz ko‘rinmayapti!', 'danger');
       else if (data.faces > 1) setStatus('Kadrda bir nechta odam!', 'danger');
       else setStatus('● Kuzatuv yoqilgan', 'success');

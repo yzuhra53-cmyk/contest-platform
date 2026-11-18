@@ -57,6 +57,7 @@ function card(row) {
         <span title="Boshqa tab/oynaga o‘tishlar">↗ ${row.focus_lost}</span>
         <span title="Paste urinishlari">📋 ${row.paste}</span>
         <span title="Yuz bo‘yicha ogohlantirishlar">👤 ${row.face_alerts}</span>
+        <span title="Qoidabuzarliklar / limit" class="${row.max_violations && row.violations >= row.max_violations - 1 ? 'text-danger fw-semibold' : ''}">⚠ ${row.violations}${row.max_violations ? '/' + row.max_violations : ''}</span>
         <a class="ms-auto" href="${detailUrl(row.attempt_id)}">Hodisalar (${row.events}) →</a>
       </div>
       ${code}

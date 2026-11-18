@@ -9,7 +9,7 @@
 </div>
 <form method="post" id="contestForm" data-save-url="{{ url_for('save_answer', contest_id=contest.id) }}">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-  {% for question in contest.questions %}
+  {% for question in questions %}
   <section class="card border-0 shadow-sm mb-3 question-card">
     <div class="card-body p-4">
       <div class="d-flex gap-3"><span class="question-number">{{ loop.index }}</span><div class="flex-grow-1">

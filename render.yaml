@@ -1,6 +1,12 @@
+# Doimiy (uxlamaydigan) ishlash uchun pullik rejalar:
+#   web: starter  — bepul rejadagi 15 daqiqalik uyqu yo'q, 24/7 ishlaydi;
+#   db:  basic-256mb — bepul Postgres 30 kundan keyin o'chiriladi, pulligi doimiy
+#        va kunlik zaxira nusxalari bilan.
+# Narxlar va reja nomlarini deploydan oldin render.com/pricing'da tekshiring.
 databases:
   - name: contest-db
-    plan: free
+    plan: basic-256mb
+    diskSizeGB: 5
     databaseName: contest
     user: contest_user
 
@@ -10,8 +16,9 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    plan: free
+    plan: starter
     healthCheckPath: /health
+    autoDeploy: true
     envVars:
       - key: SECRET_KEY
         generateValue: true
@@ -28,3 +35,18 @@ services:
         value: "2"
       - key: JUDGE_MAX_PARALLEL # bir vaqtda tekshiriladigan yechimlar soni
         value: "2"
+      # Ekrandagi vaqt mintaqasi (Toshkent = UTC+5)
+      - key: APP_UTC_OFFSET_HOURS
+        value: "5"
+      # Safe Exam Browser Config Key(lar)i — SEB Config Tool'dan (README'ga qarang)
+      - key: SEB_CONFIG_KEYS
+        sync: false
+      # Ixtiyoriy: talabalarga ko'rsatiladigan sebs://... havola
+      - key: SEB_START_LINK
+        sync: false
+      # Kamera kadrlari va hodisalar necha kundan keyin o'chiriladi
+      - key: PROCTOR_RETENTION_DAYS
+        value: "30"
+      # Bitta talabaning ketma-ket yechimlari orasidagi minimal oraliq (soniya)
+      - key: SUBMIT_COOLDOWN_SECONDS
+        value: "20"

@@ -49,6 +49,14 @@ Kamera faqat HTTPS (Render) yoki `localhost` orqali ishlaydi.
 
 Cheklov: hech qanday tizim talabaning telefoni yoki ikkinchi qurilmasini to‘liq to‘sa olmaydi — kamera kuzatuvi shu uchun.
 
+## Qat’iy rejim
+
+- **Bitta qurilma.** Talaba boshqa qurilma yoki brauzerdan kirsa, oldingi sessiya darhol bekor bo‘ladi; ochiq urinish bo‘lsa, bu qoidabuzarlik sifatida qayd qilinadi.
+- **Qoidabuzarlik limiti** (kontest sozlamasi, yangi kontestlarda standart 5). Oynadan chiqish, kadrda yuz yo‘qligi yoki bir nechta yuz, paste, kamera uzilishi, SEB’siz kirish, boshqa qurilmadan kirish sanaladi (bir xil hodisa 30 soniyada bir marta). Limitga yetganda urinish avtomatik yakunlanadi va shu paytgacha to‘g‘ri bo‘lganlar baholanadi. Talaba ekranida hisoblagich ko‘rinib turadi.
+- **Savollar tartibi** Output testida har bir talabaga aralashtirib beriladi.
+- **Yechim yuborish oralig‘i** — kamida 20 soniya (`SUBMIT_COOLDOWN_SECONDS`), tanlab-tekshirib ko‘rishni cheklaydi.
+- Yangi kontestlarda proktoring standart yoqilgan; `SEB_CONFIG_KEYS` sozlangan bo‘lsa, SEB ham standart yoqiladi.
+
 ## GitHub'ga tayyorlash
 
 Kutubxonalar ro‘yxatini `requirements.txt` ga yozish va keyin yangilash:
@@ -82,11 +90,26 @@ Ilova ishga tushganda bazada savol bo‘lmasa, `questions_data.json` faylidagi 3
 
 Render boshqaruv panelida `SECRET_KEY` maxfiy qiymat bo‘lishi kerak; Blueprint uni yaratadi. `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD` va `SECRET_KEY` ni GitHub'ga yozmang. Ilova PostgreSQL `postgres://` va `postgresql://` URL'larini psycopg 3 formatiga moslaydi. `DEBUG` deployda o‘chirilgan; Flask `TRUSTED_HOSTS` ni Render host nomi bilan cheklaydi.
 
-## Bepul hosting va ma’lumotlarni saqlash
+## Doimiy ishlaydigan server (24/7)
 
-Bepul web servislar ko‘pincha faollik bo‘lmaganda uxlaydi yoki resurs/ma’lumotlar saqlanishiga cheklov qo‘yadi. Shuning uchun bepul planda 24/7 ishlash kafolatlanmaydi. Doimiy ishlash uchun provayderning amaldagi rejasini tekshirib, uxlamaydigan servis va doimiy PostgreSQL saqlash rejasini tanlang. Render'ning bepul PostgreSQL muddati/limitlarini deploy vaqtida alohida tekshiring.
+Bepul Render rejasida servis 15 daqiqa so‘rov bo‘lmasa uxlaydi (birinchi kirish ~1 daqiqa kutadi), bepul PostgreSQL esa 30 kundan keyin o‘chiriladi. Talabalar istalgan paytda kirib topshira olishi uchun `render.yaml` pullik rejalarga o‘tkazilgan:
 
-SQLite bazasi faqat lokal ishlab chiqish uchun. Deployda `DATABASE_URL` PostgreSQL'ga ulanadi; SQLite fayli `.gitignore` bilan repoga kiritilmaydi va Render'ning vaqtinchalik diskida saqlanmasligi kerak. Avvalgi lokal bazadagi talabalar savollari avtomatik ko‘chmaydi: ularni Excel/CSV orqali qayta import qiling yoki alohida ma’lumot migratsiyasini bajaring.
+| Qism | Reja | Nima beradi |
+|---|---|---|
+| Web servis | `starter` | uxlamaydi, 24/7 |
+| PostgreSQL | `basic-256mb`, 5 GB disk | doimiy saqlash, kunlik zaxira |
+
+Narxlarni [render.com/pricing](https://render.com/pricing) da tekshiring (taxminan oyiga $7 + $6 atrofida). Bir vaqtda 50+ talaba C++ yozadigan olimpiadalarda web servisni `standard` rejaga ko‘tarish tavsiya qilinadi — kompilyatsiya va kamera tahlili CPU talab qiladi.
+
+Yoqish tartibi:
+
+1. Render Dashboard → **Billing** bo‘limida to‘lov kartasini qo‘shing (buni faqat hisob egasi qila oladi).
+2. `main` branchga push qilingach, Blueprint `render.yaml` ni o‘qib, rejalarni yangilaydi. Agar servis Blueprint’siz yaratilgan bo‘lsa, Dashboard’da servis → **Settings → Instance Type → Starter**, bazada **Upgrade** ni qo‘lda tanlang.
+3. Eski bepul baza muddati o‘tgan bo‘lsa, yangi baza bo‘sh ochiladi: talabalarni Excel’dan qayta import qiling va kirish kodlarini yarating.
+4. Environment bo‘limida `ADMIN_PASSWORD` (kuchli parol) va SEB ishlatilsa `SEB_CONFIG_KEYS` ni kiriting.
+5. `https://<sayt>/health` `{"status": "ok"}` qaytarishini tekshiring.
+
+Kamera faqat HTTPS orqali ishlaydi — Render buni avtomatik beradi.
 
 ## Kod masalalarini tekshirish
 
