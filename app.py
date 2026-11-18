@@ -36,6 +36,7 @@ load_dotenv()
 
 from models import (
     Attempt,
+    BankImport,
     CodeSubmission,
     Contest,
     ProctorEvent,
@@ -1699,7 +1700,39 @@ def create_app(test_config=None):
             db.session.add_all(Question(**question) for question in questions_data)
             db.session.commit()
 
+        import_problem_bank(application)
+
     return application
+
+
+def import_problem_bank(application):
+    """problem_bank.json dagi olimpiada masalalarini bazaga bir marta qo'shadi."""
+    bank_file = os.path.join(application.root_path, "problem_bank.json")
+    if not os.path.exists(bank_file):
+        return
+    with open(bank_file, encoding="utf-8") as file:
+        bank = json.load(file)
+    done = set(db.session.execute(db.select(BankImport.key)).scalars())
+    added = 0
+    for item in bank:
+        if item["key"] in done:
+            continue
+        db.session.add(Question(
+            question_type="code_problem",
+            prompt=item["prompt"],
+            input_data=item["input_data"],
+            expected_output=item["expected_output"],
+            test_cases_json=json.dumps(item["test_cases"], ensure_ascii=False),
+        ))
+        db.session.add(BankImport(key=item["key"]))
+        added += 1
+    if added:
+        try:
+            db.session.commit()
+            application.logger.info("Olimpiada bankidan %s ta masala qo'shildi.", added)
+        except IntegrityError:
+            # Bir nechta jarayon bir vaqtda ishga tushsa, boshqasi allaqachon qo'shgan.
+            db.session.rollback()
 
 
 app = create_app()

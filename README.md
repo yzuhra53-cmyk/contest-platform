@@ -20,6 +20,21 @@ Talabalarni ustoz sahifasidan alohida, `.xlsx` yoki `.csv` fayllaridan import qi
 
 Savollar bazasida kod natijasini topish testlari va dasturlash masalalari mavjud. Python 3 yoki C++17 yechimlari ichki judge (`judge.py`) orqali avtomatik baholanadi. Vaqt serverda tekshiriladi, ammo masofadan topshirishda internetdan yordam olish yoki boshqa qurilmadan foydalanishni to‘liq texnik yo‘l bilan to‘sib bo‘lmaydi.
 
+## Olimpiada masalalar banki (OB-01 … OB-30)
+
+`problem_bank.json` da 30 ta original masala bor — oson (massiv, satr), o‘rta (prefiks yig‘indi, ikki ko‘rsatkich, binar qidiruv, Eratosfen g‘alviri, katta sonlar) va qiyin (DP, BFS, DSU, Dijkstra, LIS, topologik saralash). Har birida 9–14 ta yashirin test: qo‘lda yozilgan chegaraviy holatlar, tasodifiy testlar va 100 KB gacha katta testlar (samarasiz yechim vaqt limitidan o‘tmaydi).
+
+Ilova ishga tushganda bank masalalari **Savollar** bazasiga avtomatik qo‘shiladi (Render’da ham). Har bir masala bir marta qo‘shiladi: ustoz uni o‘chirsa, qayta paydo bo‘lmaydi. Kontest yaratishda «Python / C++ kod yozish» turini tanlab, `[OB-..]` masalalarini belgilang.
+
+Bankni o‘zgartirish yoki yangi masala qo‘shish: `tools/build_problem_bank.py` da masala (shart, generator, etalon yechim) yozing, so‘ng
+
+```powershell
+uv run python tools/build_problem_bank.py
+uv run python tools/validate_problem_bank.py
+```
+
+Birinchisi testlarni etalon yechimni ishga tushirib yaratadi (ko‘p masalada kichik testlar brute-force yechim bilan ham solishtiriladi). Ikkinchisi har bir etalon yechimni haqiqiy judge orqali vaqt limiti bilan o‘tkazadi va faqat namuna javobini chiqaradigan yechim rad etilishini tekshiradi.
+
 ## Kontest vaqti va reyting
 
 Kontest yaratishda (yoki keyin «Vaqt va reyting sozlamalari» orqali) ixtiyoriy **boshlanish** va **tugash** vaqtini Toshkent vaqtida belgilash mumkin. Boshlanishgacha talaba kontestni ocha olmaydi; tugash vaqtida barcha urinishlar yakunlanadi, hatto shaxsiy taymer hali tugamagan bo‘lsa ham. Vaqt mintaqasi `APP_UTC_OFFSET_HOURS` (standart 5).

@@ -241,3 +241,6 @@ main:not(.auth-main) .card { animation: slide-up .55s both; }
 .proctor-frame { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #e2e8f0; display: block; transform: scaleX(-1); }
 .proctor-frame-empty { width: 100%; aspect-ratio: 4 / 3; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: .875rem; }
 .proctor-code { max-height: 160px; overflow: auto; font-size: .75rem; margin: 0; white-space: pre; }
+
+/* Masala sharti: qatorlar va bo'sh qatorlar saqlansin */
+.problem-statement { white-space: pre-line; font-weight: 500; line-height: 1.55; }

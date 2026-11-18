@@ -10,7 +10,7 @@
 <section class="card border-0 shadow-sm mb-3">
   <div class="card-body p-4">
     <div class="d-flex gap-3"><span class="question-number">{{ question_number }}</span><div>
-      <h2 class="h5 mb-3">{{ question.prompt }}</h2>
+      <h2 class="h5 mb-3 problem-statement">{{ question.prompt }}</h2>
       {% if question.input_data %}<div class="small fw-semibold mb-1">Namuna Input</div><pre class="sample-input">{{ question.input_data }}</pre>{% endif %}
       {% if question.expected_output %}<div class="small fw-semibold mb-1">Namuna Output</div><pre class="sample-input">{{ question.expected_output }}</pre>{% endif %}
       <div class="small text-secondary">Yechimingizni yashirin testlar bilan xavfsiz, alohida muhitda tekshiring. 100% to‘g‘ri yechim qabul qilingach keyingi masalaga o‘tasiz.</div>

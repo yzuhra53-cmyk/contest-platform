@@ -170,6 +170,18 @@ class ProctorEvent(db.Model):
     attempt = db.relationship("Attempt")
 
 
+class BankImport(db.Model):
+    """problem_bank.json dan qaysi masalalar bir marta qo'shilganini eslab qoladi.
+
+    Ustoz bank masalasini o'chirsa, keyingi ishga tushishda u qayta qo'shilmaydi.
+    """
+
+    __tablename__ = "bank_import"
+
+    key = db.Column(db.String(20), primary_key=True)
+    imported_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+
+
 class SubmissionLog(db.Model):
     """Har bir yuborilgan yechimning o'zgarmas nusxasi (yechimlar tarixi)."""
 

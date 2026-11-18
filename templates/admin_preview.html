@@ -33,7 +33,7 @@
   {% for question in contest.questions %}
   <article class="card border-0 shadow-sm"><div class="card-body p-4">
     <span class="badge text-bg-warning mb-2">Masala {{ loop.index }}</span>
-    <h2 class="h5">{{ question.prompt }}</h2>
+    <h2 class="h5 problem-statement">{{ question.prompt }}</h2>
     <div class="small fw-semibold mb-1">Namuna Input</div><pre class="sample-input">{{ question.input_data or '—' }}</pre>
     <div class="small fw-semibold mb-1">Namuna Output</div><pre class="sample-input">{{ question.expected_output or '—' }}</pre>
   </div></article>

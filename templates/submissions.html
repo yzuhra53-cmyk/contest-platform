@@ -15,7 +15,7 @@
     <details class="mb-3"><summary class="btn btn-sm btn-outline-secondary">Yashirin testlar va namuna ma’lumotlarini ko‘rish</summary>
       <div class="row g-3 mt-1">
         <div class="col-md-6"><div class="small fw-semibold mb-1">Namuna Input / Output</div><pre class="sample-input">{{ submission.question.input_data or '—' }}&#10;→&#10;{{ submission.question.expected_output or '—' }}</pre></div>
-        <div class="col-md-6"><div class="small fw-semibold mb-1">Yashirin testlar</div><pre class="sample-input">{{ submission.question.test_cases_json or '[]' }}</pre></div>
+        <div class="col-md-6"><div class="small fw-semibold mb-1">Yashirin testlar</div><pre class="sample-input">{{ (submission.question.test_cases_json or '[]')|truncate(3000, True, ' …(qisqartirildi)') }}</pre></div>
       </div>
     </details>
     <pre class="sample-input code-sample"><code>{{ submission.source_code }}</code></pre>

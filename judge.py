@@ -47,7 +47,7 @@ PYTHON_BIN = os.environ.get("JUDGE_PYTHON") or sys.executable
 
 MAX_TESTS = 20
 MAX_SOURCE_CHARS = 20000
-MAX_CASE_CHARS = 10000
+MAX_CASE_CHARS = 100_000  # bitta test kirishi/chiqishi, belgi
 MAX_OUTPUT_BYTES = 1024 * 1024  # dastur chiqishi, 1 MB
 MAX_PROCESSES = 32
 # Dockerfile'dagi oldindan kompilyatsiya qilingan sarlavha (PCH) aynan shu
