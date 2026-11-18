@@ -7,6 +7,6 @@
 </div>
 <div class="card border-0 shadow-sm"><div class="table-responsive"><table class="table align-middle mb-0">
   <thead><tr><th>Talaba</th><th>HEMIS ID</th><th>Guruh</th><th>Kontest</th><th>To‘g‘ri</th><th>Ball</th><th>Yakunlagan vaqt</th></tr></thead>
-  <tbody>{% for attempt in attempts %}<tr><td class="fw-medium">{{ attempt.student.full_name }}</td><td>{{ attempt.student.hemis_id }}</td><td>{{ attempt.student.group_name }}</td><td>{{ attempt.contest.title }}</td><td>{{ attempt.correct_count }}/{{ attempt.total_questions }}</td><td><span class="badge text-bg-primary">{{ '%.2f'|format(attempt.score or 0) }}%</span></td><td class="text-nowrap">{{ attempt.completed_at.strftime('%d.%m.%Y %H:%M') }}</td></tr>{% else %}<tr><td colspan="7" class="empty-state">Hali yakunlangan urinishlar yo‘q.</td></tr>{% endfor %}</tbody>
+  <tbody>{% for attempt in attempts %}<tr><td class="fw-medium">{{ attempt.student.full_name }}</td><td>{{ attempt.student.hemis_id }}</td><td>{{ attempt.student.group_name }}</td><td>{{ attempt.contest.title }}</td><td>{{ attempt.correct_count }}/{{ attempt.total_questions }}</td><td><span class="badge text-bg-primary">{{ '%.2f'|format(attempt.score or 0) }}%</span></td><td class="text-nowrap">{{ attempt.completed_at|local }}</td></tr>{% else %}<tr><td colspan="7" class="empty-state">Hali yakunlangan urinishlar yo‘q.</td></tr>{% endfor %}</tbody>
 </table></div></div>
 {% endblock %}

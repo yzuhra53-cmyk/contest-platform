@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Kuzatuv · {{ attempt.student.full_name }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+  <div class="page-heading mb-0">
+    <p class="eyebrow mb-2">KUZATUV TAFSILOTI</p>
+    <h1 class="page-title">{{ attempt.student.full_name }}</h1>
+    <p class="text-secondary mb-0">{{ attempt.student.hemis_id }} · {{ attempt.student.group_name }} · {{ attempt.contest.title }} · boshlagan: {{ attempt.started_at|local }}{% if attempt.completed_at %} · yakunlagan: {{ attempt.completed_at|local }}{% endif %}</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('admin_proctor', contest_id=attempt.contest_id) }}">← Kuzatuv</a>
+</div>
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm mb-4"><div class="card-body p-3">
+      <h2 class="h6">Oxirgi kadr{% if state and state.last_seen_at %} · {{ state.last_seen_at|local('%H:%M:%S') }}{% endif %}</h2>
+      {% if state and state.last_image %}<img class="proctor-frame rounded" alt="Oxirgi kadr" src="{{ url_for('admin_proctor_frame', attempt_id=attempt.id) }}">
+      {% else %}<div class="proctor-frame-empty rounded">Kadr yo‘q</div>{% endif %}
+      {% if state %}<div class="small d-flex flex-wrap gap-3 mt-2"><span>↗ Tab/oyna: {{ state.focus_lost_count }}</span><span>📋 Paste: {{ state.paste_count }}</span><span>👤 Yuz ogohlantirishi: {{ state.face_alert_count }}</span></div>{% endif %}
+    </div></div>
+    {% if state and state.last_code %}
+    <div class="card border-0 shadow-sm"><div class="card-body p-3">
+      <h2 class="h6">Oxirgi yozilgan kod ({{ 'C++17' if state.last_language == 'cpp' else 'Python 3' }})</h2>
+      <pre class="sample-input code-sample mb-0"><code>{{ state.last_code }}</code></pre>
+    </div></div>
+    {% endif %}
+  </div>
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm"><div class="card-body p-0">
+      <div class="p-3 border-bottom"><h2 class="h6 mb-0">Hodisalar ({{ events|length }})</h2></div>
+      {% if events %}
+      <div class="table-responsive"><table class="table align-middle mb-0">
+        <thead><tr><th>Vaqt</th><th>Hodisa</th><th>Tafsilot</th><th>Kadr</th></tr></thead>
+        <tbody>
+        {% for event in events %}
+          <tr>
+            <td class="text-nowrap small">{{ event.created_at|local('%H:%M:%S') }}</td>
+            <td><span class="badge {{ 'text-bg-danger' if event.kind in ('no_face', 'multiple_faces', 'seb_missing', 'camera_denied', 'camera_lost') else 'text-bg-warning' }}">{{ labels.get(event.kind, event.kind) }}</span></td>
+            <td class="small text-secondary">{{ event.detail or '' }}</td>
+            <td>{% if event.image %}<a href="{{ url_for('admin_proctor_event_image', event_id=event.id) }}" target="_blank"><img src="{{ url_for('admin_proctor_event_image', event_id=event.id) }}" alt="" width="96" class="rounded" style="transform: scaleX(-1)"></a>{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}<div class="empty-state">Hodisa qayd qilinmagan.</div>{% endif %}
+    </div></div>
+  </div>
+</div>
+{% endblock %}

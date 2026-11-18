@@ -14,7 +14,7 @@
           <div class="col-6"><div class="result-metric"><span>To‘g‘ri javoblar</span><strong>{{ attempt.correct_count }} / {{ attempt.total_questions }}</strong></div></div>
           <div class="col-6"><div class="result-metric"><span>To‘plangan ball</span><strong>{{ '%.2f'|format(attempt.score or 0) }} / 100</strong></div></div>
         </div>
-        <p class="text-secondary small">Yakunlangan vaqt: {{ attempt.completed_at.strftime('%d.%m.%Y %H:%M') }}</p>
+        <p class="text-secondary small">Yakunlangan vaqt: {{ attempt.completed_at|local }}</p>
         <a class="btn btn-primary" href="{{ url_for('student_dashboard') }}">Kontestlar sahifasiga qaytish</a>
       </div>
     </div>

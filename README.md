@@ -20,6 +20,35 @@ Talabalarni ustoz sahifasidan alohida, `.xlsx` yoki `.csv` fayllaridan import qi
 
 Savollar bazasida kod natijasini topish testlari va dasturlash masalalari mavjud. Python 3 yoki C++17 yechimlari ichki judge (`judge.py`) orqali avtomatik baholanadi. Vaqt serverda tekshiriladi, ammo masofadan topshirishda internetdan yordam olish yoki boshqa qurilmadan foydalanishni to‘liq texnik yo‘l bilan to‘sib bo‘lmaydi.
 
+## Kontest vaqti va reyting
+
+Kontest yaratishda (yoki keyin «Vaqt va reyting sozlamalari» orqali) ixtiyoriy **boshlanish** va **tugash** vaqtini Toshkent vaqtida belgilash mumkin. Boshlanishgacha talaba kontestni ocha olmaydi; tugash vaqtida barcha urinishlar yakunlanadi, hatto shaxsiy taymer hali tugamagan bo‘lsa ham. Vaqt mintaqasi `APP_UTC_OFFSET_HOURS` (standart 5).
+
+Har bir kontestning **Reyting** sahifasi bor (har 30 soniyada yangilanadi, Excel'ga eksport qilinadi):
+
+- **Kod yozish** — ICPC uslubi: yechilgan masalalar soni, teng bo‘lsa jarima. Jarima = har bir yechilgan masala uchun boshlagandan qabul qilingungacha o‘tgan daqiqalar + har bir noto‘g‘ri urinish uchun 20 daqiqa (kompilyatsiya va tizim xatolari hisobga olinmaydi).
+- **Output testi** — to‘g‘ri javoblar soni, teng bo‘lsa kamroq sarflangan vaqt.
+
+«Reyting talabalarga ko‘rinsin» belgilansa, talabalar ham jonli reytingni ko‘radi.
+
+## Proktoring va Safe Exam Browser
+
+Kontest sozlamalarida ikki bayroq bor:
+
+**Kamera + kod kuzatuvi (proktoring).** Talaba kontestni ochganda kameraga ruxsat beradi; ruxsatsiz sahifa yopiq turadi. Har 10 soniyada kameradan bitta kadr (320 px JPEG) va yozayotgan kodi serverga yuboriladi. OpenCV (Haar cascade) har bir kadrda yuzlarni sanaydi: yuz yo‘q yoki bir nechta yuz bo‘lsa, ogohlantirish kadri bilan saqlanadi. Boshqa tab/dasturga o‘tish, oynadan chiqish, kod joylashtirish (paste — bloklanadi), kamera uzilishi ham qayd qilinadi. Kamera 60 soniyadan ko‘p ishlamasa, kod yuborish va javoblarni avtomatik saqlash to‘xtaydi.
+
+Ustoz **Kontestlar → 📹 Kuzatuv** sahifasida barcha talabalarning oxirgi kadri va kodini jonli ko‘radi (har 5 soniyada yangilanadi); muammoli talabalar qizil bo‘lib yuqoriga chiqadi. Har bir talabaning hodisalar tarixi kadrlar bilan alohida sahifada. Joy tejash uchun har bir talabadan faqat oxirgi kadr va shubhali kadrlar saqlanadi; ular `PROCTOR_RETENTION_DAYS` (standart 30) kundan keyin o‘chadi yoki «Kadrlarni o‘chirish» tugmasi bilan darhol o‘chiriladi. **Talabalarni kamera kuzatuvi haqida oldindan ogohlantiring.**
+
+Kamera faqat HTTPS (Render) yoki `localhost` orqali ishlaydi.
+
+**Faqat Safe Exam Browser orqali.** Veb-sayt o‘zi talaba kompyuterida boshqa dastur yoki AI’ni bloklay olmaydi — buni [Safe Exam Browser](https://safeexambrowser.org) (bepul, Windows/macOS) qiladi: kiosk rejimi, boshqa dasturlar va saytlar yopiq. Sozlash:
+
+1. SEB Config Tool’da yangi konfiguratsiya: *Start URL* = sayt manzili (masalan `https://<sayt>/login`), *Use Browser Exam Key and Configuration Key* yoqilgan; proktoring ishlatilsa, kamera ruxsatini yoqing (*Browser → Enable camera*). URL filtrda faqat sayt domenini ruxsat eting.
+2. Konfiguratsiyani `.seb` fayl qilib saqlang va talabalarga tarqating (yoki saytga joylab, `sebs://` havolasini `SEB_START_LINK` ga yozing).
+3. Config Tool ko‘rsatgan **Config Key** ni `SEB_CONFIG_KEYS` muhit o‘zgaruvchisiga yozing. Server har so‘rovdagi `X-SafeExamBrowser-ConfigKeyHash` sarlavhasini SHA256(URL + Config Key) bilan solishtiradi. Kalit berilmasa, faqat User-Agent tekshiriladi — buni soxtalashtirish oson, shuning uchun kalitni albatta kiriting.
+
+Cheklov: hech qanday tizim talabaning telefoni yoki ikkinchi qurilmasini to‘liq to‘sa olmaydi — kamera kuzatuvi shu uchun.
+
 ## GitHub'ga tayyorlash
 
 Kutubxonalar ro‘yxatini `requirements.txt` ga yozish va keyin yangilash:

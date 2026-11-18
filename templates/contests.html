@@ -14,6 +14,18 @@
       </select>
       <label class="form-label">Kontest nomi</label><input class="form-control mb-3" name="title" required>
       <label class="form-label">Davomiyligi (daqiqa)</label><input class="form-control mb-3" type="number" name="duration_minutes" min="1" max="600" value="45" required>
+      <div class="row g-2 mb-1">
+        <div class="col-sm-6"><label class="form-label small">Boshlanish (ixtiyoriy)</label><input class="form-control" type="datetime-local" name="start_at"></div>
+        <div class="col-sm-6"><label class="form-label small">Tugash (ixtiyoriy)</label><input class="form-control" type="datetime-local" name="end_at"></div>
+      </div>
+      <p class="form-text mt-0 mb-3">Toshkent vaqti. Boshlanishgacha talabalar kira olmaydi; tugash vaqtida barcha urinishlar yakunlanadi.</p>
+      <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="public_leaderboard" name="public_leaderboard"><label class="form-check-label" for="public_leaderboard">Reyting talabalarga ham ko‘rinsin</label></div>
+      <div class="border rounded-3 p-3 mb-3">
+        <div class="form-label fw-semibold mb-2">Nazorat</div>
+        <div class="form-check"><input class="form-check-input" type="checkbox" id="proctoring" name="proctoring"><label class="form-check-label" for="proctoring">Kamera + kod kuzatuvi (proktoring)</label></div>
+        <div class="form-check"><input class="form-check-input" type="checkbox" id="require_seb" name="require_seb"><label class="form-check-label" for="require_seb">Faqat Safe Exam Browser orqali</label></div>
+        <div class="form-text">Proktoringda talaba kamerasidan har 10 soniyada kadr va yozayotgan kodi ustozga yuboriladi. SEB boshqa dastur, brauzer va AI xizmatlarini bloklaydi.</div>
+      </div>
       <div class="border rounded-3 p-3 mb-3">
         <div class="form-label fw-semibold">Kontest savollari</div>
         <div class="question-picker" data-contest-type="quiz">
@@ -36,8 +48,25 @@
     <div class="p-4 border-bottom"><h2 class="h5 mb-0">Kontestlar <span class="badge rounded-pill text-bg-light">{{ contests|length }}</span></h2></div>
     {% if contests %}<div class="list-group list-group-flush">
       {% for contest in contests %}<div class="list-group-item p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div><h3 class="h6 mb-1">{{ contest.title }}</h3><div class="small text-secondary">{{ 'Kod yozish' if contest.contest_type == 'coding' else 'Output testi' }} · {{ contest.questions|length }} ta masala · {{ contest.duration_minutes }} daqiqa · {{ contest.attempts|length }} ta urinish</div></div>
-        <div class="d-flex align-items-center gap-2"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin_preview_contest', contest_id=contest.id) }}">Ustoz sifatida boshlash</a><span class="badge {{ 'text-bg-success' if contest.is_active else 'text-bg-secondary' }}">{{ 'Faol' if contest.is_active else 'Yopiq' }}</span><form method="post" action="{{ url_for('toggle_contest', contest_id=contest.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-primary">{{ 'Yopish' if contest.is_active else 'Faollashtirish' }}</button></form><form method="post" action="{{ url_for('delete_contest', contest_id=contest.id) }}" onsubmit="return confirm('“{{ contest.title }}” kontesti, barcha urinishlari va yuborilgan kodlari butunlay o‘chadi. Davom etasizmi?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger">O‘chirish</button></form></div>
+        <div><h3 class="h6 mb-1">{{ contest.title }}</h3><div class="small text-secondary">{{ 'Kod yozish' if contest.contest_type == 'coding' else 'Output testi' }} · {{ contest.questions|length }} ta masala · {{ contest.duration_minutes }} daqiqa · {{ contest.attempts|length }} ta urinish</div>
+          {% if contest.start_at or contest.end_at %}<div class="small text-secondary">🕑 {{ contest.start_at|local or '…' }} — {{ contest.end_at|local or '…' }}</div>{% endif %}
+          <details class="mt-2"><summary class="small text-primary" style="cursor:pointer">Vaqt va reyting sozlamalari</summary>
+            <form method="post" action="{{ url_for('update_contest_settings', contest_id=contest.id) }}" class="row g-2 align-items-end mt-1">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <div class="col-sm-6"><label class="form-label small mb-1">Boshlanish</label><input class="form-control form-control-sm" type="datetime-local" name="start_at" value="{{ contest.start_at|local('%Y-%m-%dT%H:%M') }}"></div>
+              <div class="col-sm-6"><label class="form-label small mb-1">Tugash</label><input class="form-control form-control-sm" type="datetime-local" name="end_at" value="{{ contest.end_at|local('%Y-%m-%dT%H:%M') }}"></div>
+              <div class="col-12 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="d-flex flex-column">
+                  <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="pl{{ contest.id }}" name="public_leaderboard" {% if contest.public_leaderboard %}checked{% endif %}><label class="form-check-label small" for="pl{{ contest.id }}">Reyting talabalarga ko‘rinsin</label></div>
+                  <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="pr{{ contest.id }}" name="proctoring" {% if contest.proctoring %}checked{% endif %}><label class="form-check-label small" for="pr{{ contest.id }}">Kamera + kod kuzatuvi</label></div>
+                  <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="sb{{ contest.id }}" name="require_seb" {% if contest.require_seb %}checked{% endif %}><label class="form-check-label small" for="sb{{ contest.id }}">Faqat Safe Exam Browser</label></div>
+                </div>
+                <button class="btn btn-sm btn-primary">Saqlash</button>
+              </div>
+            </form>
+          </details>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2"><a class="btn btn-sm btn-outline-success" href="{{ url_for('admin_leaderboard', contest_id=contest.id) }}">Reyting</a>{% if contest.proctoring %}<a class="btn btn-sm btn-outline-dark" href="{{ url_for('admin_proctor', contest_id=contest.id) }}">📹 Kuzatuv</a>{% endif %}{% if contest.require_seb %}<span class="badge text-bg-dark">SEB</span>{% endif %}<a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin_preview_contest', contest_id=contest.id) }}">Ustoz sifatida boshlash</a>{% set state = contest_state(contest) %}<span class="badge {{ {'open': 'text-bg-success', 'upcoming': 'text-bg-info', 'finished': 'text-bg-dark'}.get(state, 'text-bg-secondary') }}">{{ {'open': 'Faol', 'upcoming': 'Kutilmoqda', 'finished': 'Tugagan'}.get(state, 'Yopiq') }}</span><form method="post" action="{{ url_for('toggle_contest', contest_id=contest.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-primary">{{ 'Yopish' if contest.is_active else 'Faollashtirish' }}</button></form><form method="post" action="{{ url_for('delete_contest', contest_id=contest.id) }}" onsubmit="return confirm('“{{ contest.title }}” kontesti, barcha urinishlari va yuborilgan kodlari butunlay o‘chadi. Davom etasizmi?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger">O‘chirish</button></form></div>
       </div>{% endfor %}
     </div>{% else %}<div class="empty-state">Hozircha kontest yaratilmagan.</div>{% endif %}
   </div></div></div>

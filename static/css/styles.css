@@ -227,3 +227,17 @@ main:not(.auth-main) .card { animation: slide-up .55s both; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
+
+/* Proktoring */
+.proctor-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(15, 23, 42, .92); display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.proctor-overlay[hidden] { display: none; }
+.proctor-overlay-card { background: #fff; border-radius: 1rem; padding: 2rem; max-width: 520px; text-align: center; }
+.proctor-cam { position: fixed; right: 1rem; bottom: 1rem; z-index: 1500; width: 168px; background: #0f172a; border-radius: .75rem; overflow: hidden; box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.3); }
+.proctor-cam video { width: 100%; display: block; aspect-ratio: 4 / 3; object-fit: cover; transform: scaleX(-1); }
+.proctor-cam .badge { display: block; border-radius: 0; white-space: normal; }
+.proctor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.proctor-card { border: 2px solid transparent; }
+.proctor-card.is-alert { border-color: #dc3545; }
+.proctor-frame { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #e2e8f0; display: block; transform: scaleX(-1); }
+.proctor-frame-empty { width: 100%; aspect-ratio: 4 / 3; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: .875rem; }
+.proctor-code { max-height: 160px; overflow: auto; font-size: .75rem; margin: 0; white-space: pre; }

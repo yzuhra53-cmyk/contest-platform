@@ -59,6 +59,15 @@ class Contest(db.Model):
     duration_minutes = db.Column(db.Integer, nullable=False)
     is_active = db.Column(db.Boolean, nullable=False, default=False)
     contest_type = db.Column(db.String(20), nullable=False, default="quiz")
+    # Ixtiyoriy vaqt oynasi (UTC). start_at gacha boshlab bo'lmaydi; end_at da
+    # barcha urinishlar yakunlanadi (shaxsiy taymer qolgan bo'lsa ham).
+    start_at = db.Column(db.DateTime)
+    end_at = db.Column(db.DateTime)
+    public_leaderboard = db.Column(db.Boolean, nullable=False, default=False)
+    # Kamera snapshotlari + kod kuzatuvi + oyna/tab nazorati.
+    proctoring = db.Column(db.Boolean, nullable=False, default=False)
+    # Faqat Safe Exam Browser orqali kirishga ruxsat.
+    require_seb = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
     questions = db.relationship(
@@ -116,6 +125,43 @@ class CodeSubmission(db.Model):
     __table_args__ = (
         db.UniqueConstraint("attempt_id", "question_id", name="uq_submission_attempt_question"),
     )
+
+
+class ProctorState(db.Model):
+    """Urinishning joriy kuzatuv holati: oxirgi kadr, oxirgi kod va hisoblagichlar.
+
+    Joy tejash uchun har bir urinishda faqat oxirgi kadr saqlanadi; shubhali
+    kadrlar alohida ProctorEvent sifatida qoladi.
+    """
+
+    __tablename__ = "proctor_state"
+
+    attempt_id = db.Column(db.Integer, db.ForeignKey("attempts.id", ondelete="CASCADE"), primary_key=True)
+    last_seen_at = db.Column(db.DateTime)
+    last_image = db.Column(db.LargeBinary)
+    last_faces = db.Column(db.Integer)
+    last_code = db.Column(db.Text)
+    last_language = db.Column(db.String(10))
+    last_question_id = db.Column(db.Integer)
+    focus_lost_count = db.Column(db.Integer, nullable=False, default=0)
+    paste_count = db.Column(db.Integer, nullable=False, default=0)
+    face_alert_count = db.Column(db.Integer, nullable=False, default=0)
+
+    attempt = db.relationship("Attempt")
+
+
+class ProctorEvent(db.Model):
+    __tablename__ = "proctor_event"
+
+    id = db.Column(db.Integer, primary_key=True)
+    attempt_id = db.Column(db.Integer, db.ForeignKey("attempts.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+    # no_face, multiple_faces, tab_hidden, window_blur, paste, camera_denied, camera_lost, seb_missing
+    kind = db.Column(db.String(30), nullable=False)
+    detail = db.Column(db.String(300))
+    image = db.Column(db.LargeBinary)
+
+    attempt = db.relationship("Attempt")
 
 
 class SubmissionLog(db.Model):

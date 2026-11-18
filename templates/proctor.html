@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Kuzatuv · {{ contest.title }}{% endblock %}
+{% block main_class %}container-fluid px-lg-5 py-4{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+  <div class="page-heading mb-0">
+    <p class="eyebrow mb-2">JONLI KUZATUV</p>
+    <h1 class="page-title">{{ contest.title }}</h1>
+    <p class="text-secondary mb-0">Kadrlar har 10 soniyada yangilanadi. {{ stale_seconds }} soniyadan ko‘p kadr kelmasa yoki yuz soni 1 ta bo‘lmasa, kartochka qizil bo‘ladi va yuqoriga chiqadi.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    <span class="small text-secondary" id="proctorUpdated"></span>
+    <a class="btn btn-outline-success" href="{{ url_for('admin_leaderboard', contest_id=contest.id) }}">Reyting</a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin_contests') }}">← Kontestlar</a>
+    <form method="post" action="{{ url_for('clear_proctor_data', contest_id=contest.id) }}" onsubmit="return confirm('Bu kontestning barcha kadrlari va hodisalari o‘chiriladi. Davom etasizmi?')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="btn btn-outline-danger">Kadrlarni o‘chirish</button>
+    </form>
+  </div>
+</div>
+{% if not contest.proctoring %}<div class="alert alert-warning">Bu kontestda proktoring hozir o‘chirilgan — yangi kadrlar kelmaydi.</div>{% endif %}
+<div class="d-flex flex-wrap gap-3 mb-3 small" id="proctorSummary"></div>
+<div class="proctor-grid" id="proctorGrid"></div>
+<div class="empty-state d-none" id="proctorEmpty">Hali hech kim kontestni boshlamagan.</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const dataUrl = "{{ url_for('admin_proctor_json', contest_id=contest.id) }}";
+const frameUrl = (id, version) => `{{ url_for('admin_proctor_frame', attempt_id=0) }}`.replace('/0/', `/${id}/`) + `?v=${version}`;
+const detailUrl = (id) => `{{ url_for('admin_proctor_attempt', attempt_id=0) }}`.replace(/\/0$/, `/${id}`);
+const grid = document.getElementById('proctorGrid');
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch]));
+
+function card(row) {
+  const status = !row.active
+    ? '<span class="badge text-bg-secondary">Yakunlagan</span>'
+    : row.live
+      ? '<span class="badge text-bg-success">● Jonli</span>'
+      : '<span class="badge text-bg-danger">Kamera yo‘q</span>';
+  let faces = '';
+  if (row.faces === 0) faces = '<span class="badge text-bg-danger">Yuz yo‘q</span>';
+  else if (row.faces > 1) faces = `<span class="badge text-bg-danger">${row.faces} ta yuz</span>`;
+  else if (row.faces === 1) faces = '<span class="badge text-bg-light">1 yuz</span>';
+  const image = row.has_image
+    ? `<img class="proctor-frame" alt="" src="${frameUrl(row.attempt_id, row.frame_version)}">`
+    : '<div class="proctor-frame-empty">Kadr hali kelmagan</div>';
+  const seen = row.seen_ago === null ? '—' : `${row.seen_ago} s oldin`;
+  const code = row.code
+    ? `<pre class="sample-input proctor-code"><code>${escapeHtml(row.code.split('\n').slice(-25).join('\n'))}</code></pre>`
+    : '';
+  return `<article class="card border-0 shadow-sm proctor-card ${row.alert ? 'is-alert' : ''}">
+    ${image}
+    <div class="card-body p-3">
+      <div class="d-flex justify-content-between gap-2 mb-1"><strong>${escapeHtml(row.name)}</strong><span class="d-flex gap-1">${status}${faces}</span></div>
+      <div class="small text-secondary mb-2">${escapeHtml(row.hemis_id)} · ${escapeHtml(row.group)} · kadr: ${seen}</div>
+      <div class="small d-flex flex-wrap gap-2 mb-2">
+        <span title="Boshqa tab/oynaga o‘tishlar">↗ ${row.focus_lost}</span>
+        <span title="Paste urinishlari">📋 ${row.paste}</span>
+        <span title="Yuz bo‘yicha ogohlantirishlar">👤 ${row.face_alerts}</span>
+        <a class="ms-auto" href="${detailUrl(row.attempt_id)}">Hodisalar (${row.events}) →</a>
+      </div>
+      ${code}
+    </div>
+  </article>`;
+}
+
+async function refresh() {
+  try {
+    const response = await fetch(dataUrl, {cache: 'no-store'});
+    if (!response.ok) throw new Error(response.status);
+    const {rows} = await response.json();
+    grid.innerHTML = rows.map(card).join('');
+    document.getElementById('proctorEmpty').classList.toggle('d-none', rows.length > 0);
+    const active = rows.filter((row) => row.active).length;
+    const alerts = rows.filter((row) => row.alert).length;
+    document.getElementById('proctorSummary').innerHTML =
+      `<span class="badge text-bg-light">Jami: ${rows.length}</span>` +
+      `<span class="badge text-bg-success">Faol: ${active}</span>` +
+      `<span class="badge ${alerts ? 'text-bg-danger' : 'text-bg-light'}">Diqqat talab: ${alerts}</span>`;
+    document.getElementById('proctorUpdated').textContent = `Yangilandi: ${new Date().toLocaleTimeString()}`;
+  } catch (error) {
+    document.getElementById('proctorUpdated').textContent = 'Yangilab bo‘lmadi, qayta urinilmoqda…';
+  }
+}
+refresh();
+setInterval(refresh, 5000);
+</script>
+{% endblock %}

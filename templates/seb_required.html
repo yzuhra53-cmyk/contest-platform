@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Safe Exam Browser kerak · {{ contest.title }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4 p-lg-5">
+        <p class="eyebrow mb-2">XAVFSIZ REJIM</p>
+        <h1 class="h3 mb-3">«{{ contest.title }}» faqat Safe Exam Browser orqali ochiladi</h1>
+        <p>Bu kontest davomida boshqa dasturlar, brauzerlar va sun’iy intellekt xizmatlaridan foydalanish taqiqlangan. Shuning uchun kontest maxsus <strong>Safe Exam Browser (SEB)</strong> dasturida ochiladi.</p>
+        <ol class="mb-4">
+          <li><a href="https://safeexambrowser.org/download_en.html" target="_blank" rel="noopener">safeexambrowser.org</a> saytidan SEB’ni o‘rnating (Windows yoki macOS).</li>
+          <li>Ustozingiz bergan kontest konfiguratsiya faylini (<code>.seb</code>) oching{% if seb_link %} yoki quyidagi tugmani bosing{% endif %}.</li>
+          <li>SEB ichida HEMIS ID va kirish kodingiz bilan qayta kiring.</li>
+        </ol>
+        {% if seb_link %}<a class="btn btn-primary btn-lg mb-3" href="{{ seb_link }}">Kontestni SEB’da ochish</a>{% endif %}
+        <p class="small text-secondary mb-0">Oddiy brauzerdan kirishga urinish ustozga qayd qilinadi.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

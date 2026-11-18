@@ -34,8 +34,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from models import Attempt, CodeSubmission, Contest, Question, Student, SubmissionLog, db, utcnow
+from models import (
+    Attempt,
+    CodeSubmission,
+    Contest,
+    ProctorEvent,
+    ProctorState,
+    Question,
+    Student,
+    SubmissionLog,
+    db,
+    utcnow,
+)
 from judge import MAX_PARALLEL, JudgeError, judge_solution
+import proctoring
 
 # Kirish kodi: chalkash belgilarsiz (0/O, 1/I/L yo'q), 8 belgi = ~40 bit.
 ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -46,6 +58,39 @@ LOGIN_WINDOW_SECONDS = 15 * 60
 ADMIN_MAX_FAILURES = 5
 STUDENT_MAX_FAILURES = 10
 PENDING_RESUBMIT_SECONDS = 180
+ICPC_WRONG_PENALTY_MINUTES = 20
+
+# Bazada vaqt UTC'da saqlanadi; ekranda va formalarda mahalliy vaqt (Toshkent: UTC+5).
+UTC_OFFSET = timedelta(hours=float(os.environ.get("APP_UTC_OFFSET_HOURS", "5")))
+LOCAL_INPUT_FORMAT = "%Y-%m-%dT%H:%M"
+
+
+def to_local(value):
+    return value + UTC_OFFSET if value is not None else None
+
+
+def format_local(value, fmt="%d.%m.%Y %H:%M"):
+    return to_local(value).strftime(fmt) if value is not None else ""
+
+
+def parse_local(value):
+    """<input type="datetime-local"> qiymatini UTC'ga o'tkazadi. Bo'sh bo'lsa None."""
+    value = (value or "").strip()
+    if not value:
+        return None
+    return datetime.strptime(value[:16], LOCAL_INPUT_FORMAT) - UTC_OFFSET
+
+
+def contest_state(contest, now=None):
+    """closed — ustoz yopgan; upcoming — hali boshlanmagan; finished — vaqti tugagan; open."""
+    now = now or utcnow()
+    if not contest.is_active:
+        return "closed"
+    if contest.start_at is not None and now < contest.start_at:
+        return "upcoming"
+    if contest.end_at is not None and now >= contest.end_at:
+        return "finished"
+    return "open"
 
 
 def generate_access_code():
@@ -141,6 +186,8 @@ def create_app(test_config=None):
     if test_config:
         application.config.update(test_config)
     db.init_app(application)
+    application.jinja_env.filters["local"] = format_local
+    application.jinja_env.globals["contest_state"] = contest_state
     throttle = LoginThrottle()
     judge_pool = ThreadPoolExecutor(max_workers=MAX_PARALLEL, thread_name_prefix="judge")
 
@@ -186,7 +233,10 @@ def create_app(test_config=None):
         return "\n".join(line.rstrip() for line in (value or "").replace("\r\n", "\n").split("\n")).strip()
 
     def attempt_deadline(attempt):
-        return attempt.started_at + timedelta(minutes=attempt.contest.duration_minutes)
+        deadline = attempt.started_at + timedelta(minutes=attempt.contest.duration_minutes)
+        if attempt.contest.end_at is not None:
+            deadline = min(deadline, attempt.contest.end_at)
+        return deadline
 
     def score_attempt(attempt, answers, commit=True):
         questions = attempt.contest.questions
@@ -625,8 +675,16 @@ def create_app(test_config=None):
                 if selected
                 else []
             )
+            window_error = None
+            try:
+                start_at, end_at = read_contest_window(request.form)
+            except ValueError as error:
+                start_at = end_at = None
+                window_error = str(error)
             if contest_type not in {"quiz", "coding"} or not title or not 1 <= duration <= 600 or not questions:
                 flash("Kontest turi, nomi, 1–600 daqiqalik vaqt va shu turga mos kamida bitta masala kerak.", "danger")
+            elif window_error:
+                flash(window_error, "danger")
             else:
                 contest = Contest(
                     title=title,
@@ -634,6 +692,11 @@ def create_app(test_config=None):
                     is_active=False if start_as_teacher else request.form.get("is_active") == "on",
                     contest_type=contest_type,
                     questions=questions,
+                    start_at=start_at,
+                    end_at=end_at,
+                    public_leaderboard=request.form.get("public_leaderboard") == "on",
+                    proctoring=request.form.get("proctoring") == "on",
+                    require_seb=request.form.get("require_seb") == "on",
                 )
                 db.session.add(contest)
                 db.session.commit()
@@ -648,6 +711,34 @@ def create_app(test_config=None):
             quiz_questions=Question.query.filter_by(question_type="code_output").order_by(Question.id.desc()).all(),
             coding_questions=Question.query.filter_by(question_type="code_problem").order_by(Question.id.desc()).all(),
         )
+
+    def read_contest_window(form):
+        try:
+            start_at = parse_local(form.get("start_at"))
+            end_at = parse_local(form.get("end_at"))
+        except ValueError:
+            raise ValueError("Boshlanish yoki tugash vaqti noto‘g‘ri formatda.") from None
+        if start_at and end_at and end_at <= start_at:
+            raise ValueError("Tugash vaqti boshlanish vaqtidan keyin bo‘lishi kerak.")
+        return start_at, end_at
+
+    @application.route("/admin/contests/<int:contest_id>/settings", methods=["POST"])
+    @admin_required
+    def update_contest_settings(contest_id):
+        contest = db.session.get(Contest, contest_id)
+        if contest is None:
+            abort(404)
+        try:
+            contest.start_at, contest.end_at = read_contest_window(request.form)
+        except ValueError as error:
+            flash(str(error), "danger")
+            return redirect(url_for("admin_contests"))
+        contest.public_leaderboard = request.form.get("public_leaderboard") == "on"
+        contest.proctoring = request.form.get("proctoring") == "on"
+        contest.require_seb = request.form.get("require_seb") == "on"
+        db.session.commit()
+        flash(f"“{contest.title}” sozlamalari saqlandi.", "success")
+        return redirect(url_for("admin_contests"))
 
     @application.route("/admin/contests/<int:contest_id>/preview", methods=["GET", "POST"])
     @admin_required
@@ -727,11 +818,177 @@ def create_app(test_config=None):
             CodeSubmission.query.filter(CodeSubmission.attempt_id.in_(attempt_ids)).delete(
                 synchronize_session=False
             )
+            ProctorEvent.query.filter(ProctorEvent.attempt_id.in_(attempt_ids)).delete(synchronize_session=False)
+            ProctorState.query.filter(ProctorState.attempt_id.in_(attempt_ids)).delete(synchronize_session=False)
             Attempt.query.filter(Attempt.id.in_(attempt_ids)).delete(synchronize_session=False)
         db.session.delete(contest)
         db.session.commit()
         flash("Kontest, urinishlari va yuborilgan kodlari butunlay o‘chirildi. Savollar bazada saqlandi.", "success")
         return redirect(url_for("admin_contests"))
+
+    def build_leaderboard(contest):
+        """Kontest reytingi.
+
+        Kod yozish (ICPC uslubi): yechilgan masalalar soni bo'yicha, teng bo'lsa
+        jarima bo'yicha. Jarima = har bir yechilgan masala uchun urinish boshidan
+        qabul qilingungacha o'tgan daqiqalar + har bir noto'g'ri urinish uchun 20 daqiqa
+        (kompilyatsiya va tizim xatolari hisobga olinmaydi).
+        Output testi: to'g'ri javoblar soni, teng bo'lsa sarflangan vaqt bo'yicha.
+        """
+        now = utcnow()
+        questions = contest.questions
+        attempts = Attempt.query.filter_by(contest_id=contest.id).join(Attempt.student).all()
+        rows = []
+        if contest.contest_type == "coding":
+            attempt_ids = [attempt.id for attempt in attempts]
+            submissions = (
+                CodeSubmission.query.filter(CodeSubmission.attempt_id.in_(attempt_ids)).all() if attempt_ids else []
+            )
+            logs_by_submission = {}
+            if submissions:
+                for log in SubmissionLog.query.filter(
+                    SubmissionLog.submission_id.in_([item.id for item in submissions])
+                ).order_by(SubmissionLog.submitted_at, SubmissionLog.id):
+                    logs_by_submission.setdefault(log.submission_id, []).append(log)
+            by_attempt = {}
+            for item in submissions:
+                by_attempt.setdefault(item.attempt_id, {})[item.question_id] = item
+            for attempt in attempts:
+                cells, solved, penalty, last_accept = [], 0, 0, None
+                for question in questions:
+                    submission = by_attempt.get(attempt.id, {}).get(question.id)
+                    logs = logs_by_submission.get(submission.id, []) if submission else []
+                    accepted_at = next((log.submitted_at for log in logs if log.status == "accepted"), None)
+                    if accepted_at is None and submission is not None and submission.status == "accepted":
+                        # Ustoz qo'lda qabul qilgan yoki tarixdan oldingi yechim.
+                        accepted_at = submission.reviewed_at or submission.submitted_at
+                    wrong = sum(
+                        1
+                        for log in logs
+                        if log.status == "rejected"
+                        and not (log.judge_result or "").startswith("Compilation Error")
+                        and (accepted_at is None or log.submitted_at < accepted_at)
+                    )
+                    pending = any(log.status == "pending" for log in logs)
+                    cell = {"solved": accepted_at is not None, "wrong": wrong, "pending": pending, "minutes": None}
+                    if accepted_at is not None:
+                        minutes = max(0, int((accepted_at - attempt.started_at).total_seconds() // 60))
+                        cell["minutes"] = minutes
+                        solved += 1
+                        penalty += minutes + ICPC_WRONG_PENALTY_MINUTES * wrong
+                        last_accept = max(last_accept or accepted_at, accepted_at)
+                    cells.append(cell)
+                rows.append({
+                    "attempt": attempt,
+                    "student": attempt.student,
+                    "cells": cells,
+                    "solved": solved,
+                    "penalty": penalty,
+                    "finished": attempt.completed_at is not None or now >= attempt_deadline(attempt),
+                    "sort_key": (-solved, penalty, last_accept or datetime.max),
+                })
+        else:
+            for attempt in attempts:
+                finished = attempt.completed_at is not None
+                used = (
+                    int((attempt.completed_at - attempt.started_at).total_seconds() // 60) if finished else None
+                )
+                rows.append({
+                    "attempt": attempt,
+                    "student": attempt.student,
+                    "cells": [],
+                    "solved": attempt.correct_count if finished else None,
+                    "penalty": used,
+                    "finished": finished,
+                    # Davom etayotganlar ro'yxat oxirida.
+                    "sort_key": (0, -(attempt.correct_count or 0), used) if finished else (1, 0, 0),
+                })
+        rows.sort(key=lambda row: (row["sort_key"], row["student"].full_name))
+        previous_key, rank = None, 0
+        for position, row in enumerate(rows, start=1):
+            ranked = row["solved"] is not None
+            if ranked and row["sort_key"] != previous_key:
+                rank, previous_key = position, row["sort_key"]
+            row["rank"] = rank if ranked else None
+        return rows
+
+    def render_leaderboard(contest, viewer_student_id=None):
+        return render_template(
+            "leaderboard.html",
+            contest=contest,
+            rows=build_leaderboard(contest),
+            state=contest_state(contest),
+            viewer_student_id=viewer_student_id,
+            wrong_penalty=ICPC_WRONG_PENALTY_MINUTES,
+        )
+
+    @application.route("/admin/contests/<int:contest_id>/leaderboard")
+    @admin_required
+    def admin_leaderboard(contest_id):
+        contest = db.session.get(Contest, contest_id)
+        if contest is None:
+            abort(404)
+        finalize_expired_attempts()
+        return render_leaderboard(contest)
+
+    @application.route("/admin/contests/<int:contest_id>/leaderboard.xlsx")
+    @admin_required
+    def export_leaderboard(contest_id):
+        contest = db.session.get(Contest, contest_id)
+        if contest is None:
+            abort(404)
+        finalize_expired_attempts()
+        rows = build_leaderboard(contest)
+        coding = contest.contest_type == "coding"
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Reyting"
+        header = ["O‘rin", "HEMIS ID", "F.I.O", "Guruh"]
+        if coding:
+            header += [f"Masala {index}" for index in range(1, len(contest.questions) + 1)]
+            header += ["Yechilgan", "Jarima (daqiqa)"]
+        else:
+            header += ["To‘g‘ri javob", "Jami savol", "Sarflangan vaqt (daqiqa)"]
+        header.append("Holat")
+        sheet.append(header)
+        for row in rows:
+            line = [row["rank"] or "—", row["student"].hemis_id, row["student"].full_name, row["student"].group_name]
+            if coding:
+                for cell in row["cells"]:
+                    if cell["solved"]:
+                        line.append(f"+{cell['wrong'] or ''} ({cell['minutes']})")
+                    else:
+                        line.append(f"-{cell['wrong']}" if cell["wrong"] else "")
+                line += [row["solved"], row["penalty"]]
+            else:
+                line += [
+                    row["solved"] if row["solved"] is not None else "",
+                    row["attempt"].total_questions,
+                    row["penalty"] if row["penalty"] is not None else "",
+                ]
+            line.append("Yakunlangan" if row["finished"] else "Davom etmoqda")
+            sheet.append(line)
+        output = io.BytesIO()
+        workbook.save(output)
+        output.seek(0)
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=f"reyting_kontest_{contest.id}.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+    @application.route("/contest/<int:contest_id>/leaderboard")
+    @student_required
+    def student_leaderboard(contest_id):
+        contest = db.session.get(Contest, contest_id)
+        if contest is None or not contest.public_leaderboard:
+            abort(404)
+        student_id = session["student_id"]
+        if not contest.is_active and get_attempt(student_id, contest_id) is None:
+            abort(404)
+        finalize_expired_attempts()
+        return render_leaderboard(contest, viewer_student_id=student_id)
 
     @application.route("/admin/results")
     @admin_required
@@ -771,7 +1028,7 @@ def create_app(test_config=None):
                     attempt.correct_count,
                     attempt.total_questions,
                     attempt.score,
-                    attempt.completed_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    format_local(attempt.completed_at, "%Y-%m-%d %H:%M:%S"),
                 ]
             )
         output = io.BytesIO()
@@ -794,6 +1051,239 @@ def create_app(test_config=None):
         contests = [contest for contest in all_contests if contest.is_active or contest.id in attempts]
         return render_template("student_dashboard.html", student=db.session.get(Student, student_id), contests=contests, attempts=attempts)
 
+    def seb_ok(contest, allow_session=False):
+        """Kontest SEB talab qilsa, so'rov SEB'dan kelganini tekshiradi.
+
+        Sahifa so'rovlarida SEB sarlavhasi tekshiriladi va sessiyaga belgi qo'yiladi;
+        fon (fetch) so'rovlarida esa shu belgi yetarli (allow_session=True).
+        """
+        if not contest.require_seb:
+            return True
+        flag = f"seb_ok_{contest.id}"
+        if proctoring.verify_seb_request(request.url, request.headers):
+            session[flag] = True
+            return True
+        return allow_session and session.get(flag) is True
+
+    def seb_required_response(contest, attempt=None):
+        if attempt is not None and attempt.completed_at is None:
+            record_proctor_event(attempt, "seb_missing", request.headers.get("User-Agent", "")[:300])
+            db.session.commit()
+        return render_template(
+            "seb_required.html",
+            contest=contest,
+            seb_link=os.environ.get("SEB_START_LINK", ""),
+        ), 403
+
+    def proctor_state(attempt, create=True):
+        state = db.session.get(ProctorState, attempt.id)
+        if state is None and create:
+            state = ProctorState(attempt_id=attempt.id, focus_lost_count=0, paste_count=0, face_alert_count=0)
+            db.session.add(state)
+        return state
+
+    def record_proctor_event(attempt, kind, detail=None, image=None):
+        """Hodisani yozadi; bir xil hodisa EVENT_COOLDOWN_SECONDS ichida takrorlanmaydi."""
+        since = utcnow() - timedelta(seconds=proctoring.EVENT_COOLDOWN_SECONDS)
+        recent = ProctorEvent.query.filter(
+            ProctorEvent.attempt_id == attempt.id,
+            ProctorEvent.kind == kind,
+            ProctorEvent.created_at >= since,
+        ).first()
+        if recent is not None:
+            return None
+        event = ProctorEvent(attempt_id=attempt.id, kind=kind, detail=(detail or "")[:300] or None, image=image)
+        db.session.add(event)
+        return event
+
+    def camera_is_live(attempt):
+        state = proctor_state(attempt, create=False)
+        return (
+            state is not None
+            and state.last_seen_at is not None
+            and (utcnow() - state.last_seen_at).total_seconds() <= proctoring.FRAME_STALE_SECONDS
+        )
+
+    def open_proctored_attempt(contest_id):
+        """Proktoring endpointlari uchun: faol, SEB tekshiruvidan o'tgan urinish."""
+        contest = db.session.get(Contest, contest_id)
+        if contest is None or not contest.proctoring:
+            abort(404)
+        attempt = get_attempt(session["student_id"], contest_id)
+        if attempt is None or attempt.completed_at is not None or utcnow() >= attempt_deadline(attempt):
+            abort(409)
+        if not seb_ok(contest, allow_session=True):
+            abort(403)
+        return contest, attempt
+
+    @application.route("/contest/<int:contest_id>/proctor/frame", methods=["POST"])
+    @student_required
+    def proctor_frame(contest_id):
+        contest, attempt = open_proctored_attempt(contest_id)
+        uploaded = request.files.get("frame")
+        image = uploaded.read(proctoring.MAX_FRAME_BYTES + 1) if uploaded else b""
+        if not image or len(image) > proctoring.MAX_FRAME_BYTES or not proctoring.is_jpeg(image):
+            abort(400)
+        faces = proctoring.detect_faces(image)
+        state = proctor_state(attempt)
+        state.last_seen_at = utcnow()
+        state.last_image = image
+        state.last_faces = faces
+        if contest.contest_type == "coding":
+            code = request.form.get("code")
+            if code is not None:
+                state.last_code = code[:20000]
+                state.last_language = request.form.get("language", "")[:10] or None
+                question_id = request.form.get("question_id", "")
+                state.last_question_id = int(question_id) if question_id.isdigit() else None
+        alert = None
+        if faces == 0:
+            alert = "no_face"
+        elif faces is not None and faces > 1:
+            alert = "multiple_faces"
+        if alert and record_proctor_event(attempt, alert, f"Yuzlar soni: {faces}", image) is not None:
+            state.face_alert_count = (state.face_alert_count or 0) + 1
+        db.session.commit()
+        return jsonify({"ok": True, "faces": faces, "interval": proctoring.FRAME_INTERVAL_SECONDS})
+
+    @application.route("/contest/<int:contest_id>/proctor/event", methods=["POST"])
+    @student_required
+    def proctor_client_event(contest_id):
+        _, attempt = open_proctored_attempt(contest_id)
+        payload = request.get_json(silent=True) or {}
+        kind = payload.get("kind")
+        if kind not in proctoring.CLIENT_EVENT_KINDS:
+            abort(400)
+        state = proctor_state(attempt)
+        if kind in {"tab_hidden", "window_blur"}:
+            state.focus_lost_count = (state.focus_lost_count or 0) + 1
+        elif kind == "paste":
+            state.paste_count = (state.paste_count or 0) + 1
+        record_proctor_event(attempt, kind, str(payload.get("detail", ""))[:300])
+        db.session.commit()
+        return jsonify({"ok": True})
+
+    def purge_old_proctor_data():
+        days = int(os.environ.get("PROCTOR_RETENTION_DAYS", "30"))
+        cutoff = utcnow() - timedelta(days=days)
+        ProctorEvent.query.filter(ProctorEvent.created_at < cutoff).delete(synchronize_session=False)
+        ProctorState.query.filter(ProctorState.last_seen_at < cutoff).delete(synchronize_session=False)
+        db.session.commit()
+
+    def proctor_rows(contest):
+        attempts = Attempt.query.filter_by(contest_id=contest.id).join(Attempt.student).all()
+        states = {
+            state.attempt_id: state
+            for state in ProctorState.query.filter(
+                ProctorState.attempt_id.in_([attempt.id for attempt in attempts] or [0])
+            )
+        }
+        event_counts = dict(
+            db.session.query(ProctorEvent.attempt_id, db.func.count(ProctorEvent.id))
+            .filter(ProctorEvent.attempt_id.in_([attempt.id for attempt in attempts] or [0]))
+            .group_by(ProctorEvent.attempt_id)
+            .all()
+        )
+        now = utcnow()
+        rows = []
+        for attempt in sorted(attempts, key=lambda item: item.student.full_name):
+            state = states.get(attempt.id)
+            seen = state.last_seen_at if state else None
+            active = attempt.completed_at is None and now < attempt_deadline(attempt)
+            live = bool(seen and (now - seen).total_seconds() <= proctoring.FRAME_STALE_SECONDS)
+            rows.append({
+                "attempt_id": attempt.id,
+                "name": attempt.student.full_name,
+                "hemis_id": attempt.student.hemis_id,
+                "group": attempt.student.group_name,
+                "active": active,
+                "live": live,
+                "seen_ago": int((now - seen).total_seconds()) if seen else None,
+                "faces": state.last_faces if state else None,
+                "has_image": bool(state and state.last_image),
+                "frame_version": int(seen.timestamp()) if seen else 0,
+                "code": (state.last_code or "") if state else "",
+                "language": (state.last_language or "") if state else "",
+                "focus_lost": state.focus_lost_count if state else 0,
+                "paste": state.paste_count if state else 0,
+                "face_alerts": state.face_alert_count if state else 0,
+                "events": event_counts.get(attempt.id, 0),
+                # Ustoz e'tibori kerak bo'lganlar yuqorida.
+                "alert": active and (not live or (state is not None and state.last_faces not in (1, None))),
+            })
+        rows.sort(key=lambda row: (not row["alert"], not row["active"], row["name"]))
+        return rows
+
+    @application.route("/admin/contests/<int:contest_id>/proctor")
+    @admin_required
+    def admin_proctor(contest_id):
+        contest = db.session.get(Contest, contest_id)
+        if contest is None:
+            abort(404)
+        purge_old_proctor_data()
+        return render_template(
+            "proctor.html",
+            contest=contest,
+            rows=proctor_rows(contest),
+            stale_seconds=proctoring.FRAME_STALE_SECONDS,
+        )
+
+    @application.route("/admin/contests/<int:contest_id>/proctor.json")
+    @admin_required
+    def admin_proctor_json(contest_id):
+        contest = db.session.get(Contest, contest_id)
+        if contest is None:
+            abort(404)
+        return jsonify({"rows": proctor_rows(contest)})
+
+    @application.route("/admin/proctor/<int:attempt_id>/frame.jpg")
+    @admin_required
+    def admin_proctor_frame(attempt_id):
+        state = db.session.get(ProctorState, attempt_id)
+        if state is None or not state.last_image:
+            abort(404)
+        response = send_file(io.BytesIO(state.last_image), mimetype="image/jpeg")
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    @application.route("/admin/proctor/event/<int:event_id>.jpg")
+    @admin_required
+    def admin_proctor_event_image(event_id):
+        event = db.session.get(ProctorEvent, event_id)
+        if event is None or not event.image:
+            abort(404)
+        return send_file(io.BytesIO(event.image), mimetype="image/jpeg")
+
+    @application.route("/admin/proctor/<int:attempt_id>")
+    @admin_required
+    def admin_proctor_attempt(attempt_id):
+        attempt = db.session.get(Attempt, attempt_id)
+        if attempt is None:
+            abort(404)
+        events = (
+            ProctorEvent.query.filter_by(attempt_id=attempt.id).order_by(ProctorEvent.created_at.desc()).limit(300).all()
+        )
+        return render_template(
+            "proctor_attempt.html",
+            attempt=attempt,
+            state=db.session.get(ProctorState, attempt.id),
+            events=events,
+            labels=proctoring.EVENT_LABELS,
+        )
+
+    @application.route("/admin/contests/<int:contest_id>/proctor/clear", methods=["POST"])
+    @admin_required
+    def clear_proctor_data(contest_id):
+        contest = db.session.get(Contest, contest_id)
+        if contest is None:
+            abort(404)
+        attempt_ids = db.select(Attempt.id).where(Attempt.contest_id == contest.id)
+        ProctorEvent.query.filter(ProctorEvent.attempt_id.in_(attempt_ids)).delete(synchronize_session=False)
+        ProctorState.query.filter(ProctorState.attempt_id.in_(attempt_ids)).delete(synchronize_session=False)
+        db.session.commit()
+        flash("Kontestning barcha kamera kadrlari va kuzatuv hodisalari o‘chirildi.", "success")
+        return redirect(url_for("admin_proctor", contest_id=contest.id))
+
     @application.route("/contest/<int:contest_id>", methods=["GET", "POST"])
     @student_required
     def take_contest(contest_id):
@@ -802,11 +1292,19 @@ def create_app(test_config=None):
             abort(404)
         student_id = session["student_id"]
         attempt = get_attempt(student_id, contest_id)
+        if not (attempt and attempt.completed_at) and not seb_ok(contest):
+            return seb_required_response(contest, attempt)
         if attempt and attempt.completed_at:
             return redirect(url_for("student_result", attempt_id=attempt.id))
         if not attempt:
-            if not contest.is_active:
-                flash("Bu kontest hozir faol emas.", "warning")
+            state = contest_state(contest)
+            if state != "open":
+                messages = {
+                    "closed": "Bu kontest hozir faol emas.",
+                    "upcoming": f"Kontest {format_local(contest.start_at)} da boshlanadi.",
+                    "finished": "Kontest vaqti tugagan.",
+                }
+                flash(messages[state], "warning")
                 return redirect(url_for("student_dashboard"))
             attempt = Attempt(
                 student_id=student_id,
@@ -822,8 +1320,8 @@ def create_app(test_config=None):
                 attempt = get_attempt(student_id, contest_id)
                 if attempt is None:
                     raise
-        deadline = (attempt.started_at - datetime(1970, 1, 1)).total_seconds() + contest.duration_minutes * 60
-        now_epoch = (utcnow() - datetime(1970, 1, 1)).total_seconds()
+        deadline = attempt_deadline(attempt)
+        now = utcnow()
         saved_answers = json.loads(attempt.answers_json or "{}")
         if contest.contest_type == "coding":
             questions = contest.questions
@@ -839,7 +1337,7 @@ def create_app(test_config=None):
             if current_question is None:
                 score_attempt(attempt, saved_answers)
                 return redirect(url_for("student_result", attempt_id=attempt.id))
-            remaining_seconds = max(0, int(deadline - now_epoch))
+            remaining_seconds = max(0, int((deadline - now).total_seconds()))
             if remaining_seconds == 0:
                 flash("Kontest vaqti tugadi. Qabul qilingan masalalaringiz natijaga qo‘shildi.", "warning")
                 score_attempt(attempt, saved_answers)
@@ -856,7 +1354,7 @@ def create_app(test_config=None):
                 remaining_seconds=remaining_seconds,
             )
         if request.method == "POST":
-            if now_epoch < deadline:
+            if now < deadline:
                 submitted = {}
                 for question in contest.questions:
                     key = str(question.id)
@@ -864,7 +1362,7 @@ def create_app(test_config=None):
                 saved_answers.update(submitted)
             score_attempt(attempt, saved_answers)
             return redirect(url_for("student_result", attempt_id=attempt.id))
-        remaining_seconds = max(0, int(deadline - now_epoch))
+        remaining_seconds = max(0, int((deadline - now).total_seconds()))
         if remaining_seconds == 0:
             score_attempt(attempt, saved_answers)
             return redirect(url_for("student_result", attempt_id=attempt.id))
@@ -886,9 +1384,13 @@ def create_app(test_config=None):
         attempt = get_attempt(session["student_id"], contest_id)
         if not attempt or attempt.completed_at:
             abort(409)
-        seconds = (utcnow() - attempt.started_at).total_seconds()
-        if seconds >= contest.duration_minutes * 60:
+        if utcnow() >= attempt_deadline(attempt):
             flash("Kontest vaqti tugagan.", "warning")
+            return redirect(url_for("take_contest", contest_id=contest_id))
+        if not seb_ok(contest):
+            return seb_required_response(contest, attempt)
+        if contest.proctoring and not camera_is_live(attempt):
+            flash("Kamera ishlamayapti: yechim yuborish uchun kamerani yoqing va sahifani yangilang.", "danger")
             return redirect(url_for("take_contest", contest_id=contest_id))
         submissions = {
             submission.question_id: submission
@@ -996,9 +1498,12 @@ def create_app(test_config=None):
         attempt = get_attempt(session["student_id"], contest_id)
         if not attempt or attempt.completed_at:
             abort(409)
-        seconds = (utcnow() - attempt.started_at).total_seconds()
-        if seconds >= contest.duration_minutes * 60:
+        if utcnow() >= attempt_deadline(attempt):
             return jsonify({"saved": False, "expired": True}), 409
+        if not seb_ok(contest, allow_session=True):
+            return jsonify({"saved": False, "seb": False}), 403
+        if contest.proctoring and not camera_is_live(attempt):
+            return jsonify({"saved": False, "camera": False}), 409
         payload = request.get_json(silent=True)
         if not isinstance(payload, dict):
             abort(400)
@@ -1053,6 +1558,16 @@ def create_app(test_config=None):
             db.session.execute(db.text("ALTER TABLE code_submission ADD COLUMN judge_result VARCHAR(500)"))
             db.session.commit()
         student_columns = {column["name"] for column in db.inspect(db.engine).get_columns("students")}
+        for name, ddl in (
+            ("start_at", "TIMESTAMP"),
+            ("end_at", "TIMESTAMP"),
+            ("public_leaderboard", "BOOLEAN NOT NULL DEFAULT FALSE"),
+            ("proctoring", "BOOLEAN NOT NULL DEFAULT FALSE"),
+            ("require_seb", "BOOLEAN NOT NULL DEFAULT FALSE"),
+        ):
+            if name not in contest_columns:
+                db.session.execute(db.text(f"ALTER TABLE contests ADD COLUMN {name} {ddl}"))
+                db.session.commit()
         if "access_code_hash" not in student_columns:
             db.session.execute(db.text("ALTER TABLE students ADD COLUMN access_code_hash VARCHAR(255)"))
             db.session.commit()

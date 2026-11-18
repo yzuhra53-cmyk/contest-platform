@@ -9,7 +9,7 @@
       <div><span class="badge {{ 'text-bg-warning' if submission.status == 'pending' else ('text-bg-success' if submission.status == 'accepted' else 'text-bg-danger') }}">{{ 'Kutilmoqda' if submission.status == 'pending' else ('Qabul qilingan' if submission.status == 'accepted' else ('Tekshiruv xatosi' if submission.status == 'error' else 'Qaytarilgan')) }}</span>
       <h2 class="h5 mt-2 mb-1">{{ submission.question.prompt }}</h2>
       <div class="small text-secondary">{{ submission.attempt.student.full_name }} · {{ submission.attempt.student.hemis_id }} · {{ submission.attempt.contest.title }} · {{ 'Python 3' if submission.language == 'python' else 'C++17' }}</div></div>
-      <span class="small text-secondary">{{ submission.submitted_at.strftime('%d.%m.%Y %H:%M') }}</span>
+      <span class="small text-secondary">{{ submission.submitted_at|local }}</span>
     </div>
     {% if submission.judge_result %}<div class="alert alert-light py-2">{{ submission.judge_result }}</div>{% endif %}
     <details class="mb-3"><summary class="btn btn-sm btn-outline-secondary">Yashirin testlar va namuna ma’lumotlarini ko‘rish</summary>
@@ -24,7 +24,7 @@
       <div class="d-flex flex-column gap-2 mt-2">
       {% for item in submission.history %}
         <div class="border rounded p-2">
-          <div class="small d-flex flex-wrap gap-2 mb-1"><strong>#{{ loop.revindex }}</strong><span>{{ item.submitted_at.strftime('%d.%m.%Y %H:%M:%S') }}</span><span>{{ 'Python 3' if item.language == 'python' else 'C++17' }}</span><span class="badge {{ 'text-bg-warning' if item.status == 'pending' else ('text-bg-success' if item.status == 'accepted' else 'text-bg-danger') }}">{{ item.status }}</span><span class="text-secondary">{{ item.judge_result or '' }}</span></div>
+          <div class="small d-flex flex-wrap gap-2 mb-1"><strong>#{{ loop.revindex }}</strong><span>{{ item.submitted_at|local('%d.%m.%Y %H:%M:%S') }}</span><span>{{ 'Python 3' if item.language == 'python' else 'C++17' }}</span><span class="badge {{ 'text-bg-warning' if item.status == 'pending' else ('text-bg-success' if item.status == 'accepted' else 'text-bg-danger') }}">{{ item.status }}</span><span class="text-secondary">{{ item.judge_result or '' }}</span></div>
           <pre class="sample-input code-sample mb-0"><code>{{ item.source_code }}</code></pre>
         </div>
       {% endfor %}
