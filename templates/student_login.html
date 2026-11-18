@@ -16,15 +16,13 @@
         <div class="card-body">
           <div class="auth-card-mark">01 <span>· TALABA KIRISHI</span></div>
           <h2 class="h3 mb-2">Xush kelibsiz!</h2>
-          <p class="text-secondary mb-4">Kirish uchun ustoz ro‘yxatga kiritgan ma’lumotlaringizni to‘ldiring.</p>
+          <p class="text-secondary mb-4">Kirish uchun HEMIS ID va ustozingiz bergan shaxsiy kirish kodini kiriting.</p>
           <form method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <label class="form-label" for="hemis_id">HEMIS ID</label>
             <input class="form-control mb-3" id="hemis_id" name="hemis_id" autocomplete="username" maxlength="40" required autofocus>
-            <label class="form-label" for="full_name">F.I.O</label>
-            <input class="form-control mb-3" id="full_name" name="full_name" autocomplete="name" maxlength="180" required>
-            <label class="form-label" for="group_name">Guruh</label>
-            <input class="form-control mb-4" id="group_name" name="group_name" maxlength="100" required>
+            <label class="form-label" for="access_code">Kirish kodi</label>
+            <input class="form-control mb-4 font-monospace" id="access_code" name="access_code" type="password" autocomplete="current-password" maxlength="20" placeholder="XXXX-XXXX" required>
             <button class="btn btn-primary w-100">Davom etish <span aria-hidden="true">→</span></button>
           </form>
           <div class="auth-card-footer"><span>Ustozmisiz?</span><a href="{{ url_for('admin_login') }}">Ustoz sifatida kirish <span aria-hidden="true">→</span></a></div>

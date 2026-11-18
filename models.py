@@ -23,6 +23,8 @@ class Student(db.Model):
     hemis_id = db.Column(db.String(40), primary_key=True)
     full_name = db.Column(db.String(180), nullable=False)
     group_name = db.Column(db.String(100), nullable=False)
+    # Shaxsiy kirish kodi xeshi (ochiq kod bazada saqlanmaydi).
+    access_code_hash = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
     attempts = db.relationship("Attempt", back_populates="student")
@@ -104,7 +106,32 @@ class CodeSubmission(db.Model):
 
     attempt = db.relationship("Attempt", back_populates="code_submissions")
     question = db.relationship("Question", back_populates="code_submissions")
+    history = db.relationship(
+        "SubmissionLog",
+        back_populates="submission",
+        order_by="SubmissionLog.id.desc()",
+        cascade="all, delete-orphan",
+    )
 
     __table_args__ = (
         db.UniqueConstraint("attempt_id", "question_id", name="uq_submission_attempt_question"),
     )
+
+
+class SubmissionLog(db.Model):
+    """Har bir yuborilgan yechimning o'zgarmas nusxasi (yechimlar tarixi)."""
+
+    __tablename__ = "submission_log"
+
+    id = db.Column(db.Integer, primary_key=True)
+    submission_id = db.Column(
+        db.Integer, db.ForeignKey("code_submission.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    language = db.Column(db.String(10), nullable=False)
+    source_code = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="pending")
+    judge_result = db.Column(db.String(500))
+    submitted_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+    judged_at = db.Column(db.DateTime)
+
+    submission = db.relationship("CodeSubmission", back_populates="history")

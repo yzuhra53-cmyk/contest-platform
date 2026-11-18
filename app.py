@@ -2,12 +2,13 @@ import hmac
 import io
 import json
 import os
-import re
 import secrets
 import csv
+import threading
+import time
 import unicodedata
-from itertools import chain
-from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta
 from functools import wraps
 
 from flask import (
@@ -23,6 +24,8 @@ from flask import (
     url_for,
 )
 from sqlalchemy.exc import IntegrityError
+from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.security import check_password_hash, generate_password_hash
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 from zipfile import BadZipFile
@@ -31,12 +34,73 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from models import Attempt, CodeSubmission, Contest, Question, Student, db, utcnow
-from judge import JudgeError, judge_solution
+from models import Attempt, CodeSubmission, Contest, Question, Student, SubmissionLog, db, utcnow
+from judge import MAX_PARALLEL, JudgeError, judge_solution
+
+# Kirish kodi: chalkash belgilarsiz (0/O, 1/I/L yo'q), 8 belgi = ~40 bit.
+ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+ACCESS_CODE_LENGTH = 8
+ACCESS_CODE_HASH_METHOD = "pbkdf2:sha256:60000"
+
+LOGIN_WINDOW_SECONDS = 15 * 60
+ADMIN_MAX_FAILURES = 5
+STUDENT_MAX_FAILURES = 10
+PENDING_RESUBMIT_SECONDS = 180
+
+
+def generate_access_code():
+    return "".join(secrets.choice(ACCESS_CODE_ALPHABET) for _ in range(ACCESS_CODE_LENGTH))
+
+
+def format_access_code(code):
+    return f"{code[:4]}-{code[4:]}"
+
+
+def normalize_access_code(value):
+    return "".join(char for char in (value or "").upper() if char.isalnum())
+
+
+def hash_access_code(code):
+    return generate_password_hash(normalize_access_code(code), method=ACCESS_CODE_HASH_METHOD)
+
+
+class LoginThrottle:
+    """Muvaffaqiyatsiz kirishlarni xotirada sanaydi (bitta gunicorn worker uchun yetarli)."""
+
+    def __init__(self):
+        self._failures = {}
+        self._lock = threading.Lock()
+
+    def _recent(self, key, now):
+        stamps = [stamp for stamp in self._failures.get(key, ()) if now - stamp < LOGIN_WINDOW_SECONDS]
+        if stamps:
+            self._failures[key] = stamps
+        else:
+            self._failures.pop(key, None)
+        return stamps
+
+    def blocked(self, key, limit):
+        with self._lock:
+            return len(self._recent(key, time.monotonic())) >= limit
+
+    def fail(self, key):
+        now = time.monotonic()
+        with self._lock:
+            if len(self._failures) > 10000:
+                for stale_key in list(self._failures):
+                    self._recent(stale_key, now)
+            self._failures.setdefault(key, []).append(now)
+
+    def reset(self, key):
+        with self._lock:
+            self._failures.pop(key, None)
 
 
 def create_app(test_config=None):
     application = Flask(__name__)
+    if os.environ.get("RENDER"):
+        # Render proksi ortida: haqiqiy mijoz IP manzili X-Forwarded-For'da keladi.
+        application.wsgi_app = ProxyFix(application.wsgi_app, x_for=1, x_proto=1)
     database_url = os.environ.get("DATABASE_URL", "sqlite:///contest.db")
     if database_url.startswith("postgres://"):
         database_url = "postgresql+psycopg://" + database_url.removeprefix("postgres://")
@@ -45,6 +109,17 @@ def create_app(test_config=None):
     secret_key = os.environ.get("SECRET_KEY")
     if os.environ.get("RENDER") and not secret_key:
         raise RuntimeError("Render deploy uchun SECRET_KEY environment variable belgilang.")
+    admin_password = os.environ.get("ADMIN_PASSWORD", "")
+    if not admin_password:
+        if os.environ.get("RENDER"):
+            raise RuntimeError("Render deploy uchun ADMIN_PASSWORD environment variable belgilang.")
+        # Lokal ishga tushirishda standart parol yo'q: har safar tasodifiy parol yaratiladi.
+        admin_password = secrets.token_urlsafe(12)
+        print(
+            "\n[Bilim.Arena] ADMIN_PASSWORD .env faylida belgilanmagan.\n"
+            f"[Bilim.Arena] Bu safar uchun vaqtinchalik ustoz paroli: {admin_password}\n",
+            flush=True,
+        )
     application.config.update(
         SECRET_KEY=secret_key or secrets.token_hex(32),
         SQLALCHEMY_DATABASE_URI=database_url,
@@ -52,15 +127,22 @@ def create_app(test_config=None):
         SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping": True},
         MAX_CONTENT_LENGTH=5 * 1024 * 1024,
         ADMIN_USERNAME=os.environ.get("ADMIN_USERNAME", "Zuhra"),
-        ADMIN_PASSWORD=os.environ.get("ADMIN_PASSWORD", "1211"),
+        ADMIN_PASSWORD=admin_password,
         DEBUG=not bool(os.environ.get("RENDER")) and os.environ.get("FLASK_DEBUG", "").lower() == "true",
         TRUSTED_HOSTS=[os.environ["RENDER_EXTERNAL_HOSTNAME"]]
         if os.environ.get("RENDER_EXTERNAL_HOSTNAME")
         else None,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=bool(os.environ.get("RENDER")),
+        # True bo'lsa yechim so'rov ichida tekshiriladi (testlar uchun qulay).
+        JUDGE_SYNC=False,
     )
     if test_config:
         application.config.update(test_config)
     db.init_app(application)
+    throttle = LoginThrottle()
+    judge_pool = ThreadPoolExecutor(max_workers=MAX_PARALLEL, thread_name_prefix="judge")
 
     @application.before_request
     def protect_post_requests():
@@ -103,7 +185,10 @@ def create_app(test_config=None):
     def normalize_output(value):
         return "\n".join(line.rstrip() for line in (value or "").replace("\r\n", "\n").split("\n")).strip()
 
-    def score_attempt(attempt, answers):
+    def attempt_deadline(attempt):
+        return attempt.started_at + timedelta(minutes=attempt.contest.duration_minutes)
+
+    def score_attempt(attempt, answers, commit=True):
         questions = attempt.contest.questions
         correct = 0
         for question in questions:
@@ -124,11 +209,33 @@ def create_app(test_config=None):
         attempt.correct_count = correct
         attempt.total_questions = total
         attempt.score = round(correct * 100 / total, 2) if total else 0
-        attempt.completed_at = utcnow()
-        db.session.commit()
+        # Vaqt tugagach yakunlangan urinish uchun yakun vaqti — muddat oxiri.
+        attempt.completed_at = min(utcnow(), attempt_deadline(attempt))
+        if commit:
+            db.session.commit()
+
+    def finalize_expired_attempts(student_id=None):
+        """Vaqti tugagan, lekin talaba qaytib kelmagan urinishlarni baholaydi.
+
+        Aks holda brauzerni yopib ketgan talabalar natijalar ro'yxatiga tushmaydi.
+        """
+        query = Attempt.query.filter(Attempt.completed_at.is_(None))
+        if student_id is not None:
+            query = query.filter(Attempt.student_id == student_id)
+        now = utcnow()
+        finalized = False
+        for attempt in query.all():
+            if now >= attempt_deadline(attempt):
+                score_attempt(attempt, json.loads(attempt.answers_json or "{}"), commit=False)
+                finalized = True
+        if finalized:
+            db.session.commit()
 
     def get_attempt(student_id, contest_id):
         return Attempt.query.filter_by(student_id=student_id, contest_id=contest_id).first()
+
+    def client_ip():
+        return request.remote_addr or "unknown"
 
     @application.route("/")
     def index():
@@ -146,14 +253,20 @@ def create_app(test_config=None):
     @application.route("/admin/login", methods=["GET", "POST"])
     def admin_login():
         if request.method == "POST":
+            throttle_key = ("admin", client_ip())
+            if throttle.blocked(throttle_key, ADMIN_MAX_FAILURES):
+                flash("Juda ko‘p noto‘g‘ri urinish. 15 daqiqadan so‘ng qayta urinib ko‘ring.", "danger")
+                return render_template("admin_login.html"), 429
             username = request.form.get("username", "")
             password = request.form.get("password", "")
-            valid_user = hmac.compare_digest(username, application.config["ADMIN_USERNAME"])
-            valid_password = hmac.compare_digest(password, application.config["ADMIN_PASSWORD"])
+            valid_user = hmac.compare_digest(username.encode(), application.config["ADMIN_USERNAME"].encode())
+            valid_password = hmac.compare_digest(password.encode(), application.config["ADMIN_PASSWORD"].encode())
             if valid_user and valid_password:
+                throttle.reset(throttle_key)
                 session.clear()
                 session["is_admin"] = True
                 return redirect(url_for("admin_dashboard"))
+            throttle.fail(throttle_key)
             flash("Login yoki parol noto‘g‘ri.", "danger")
         return render_template("admin_login.html")
 
@@ -161,36 +274,28 @@ def create_app(test_config=None):
     def student_login():
         if request.method == "POST":
             hemis_id = request.form.get("hemis_id", "").strip()
-            full_name = " ".join(request.form.get("full_name", "").split())
-            group_name = " ".join(request.form.get("group_name", "").split())
-            student = db.session.get(Student, hemis_id)
-
-            def normalize_name(value):
-                value = unicodedata.normalize("NFKC", value).casefold()
-                value = value.translate(str.maketrans({
-                    "\u2018": "'", "\u2019": "'", "\u02bb": "'", "\u02bc": "'",
-                    "\u2010": "-", "\u2011": "-", "\u2012": "-", "\u2013": "-",
-                    "\u2014": "-", "\u2212": "-",
-                }))
-                return " ".join(value.replace(".", "").split())
-
-            def normalize_group(value):
-                value = unicodedata.normalize("NFKC", value).casefold()
-                value = value.translate(str.maketrans({
-                    "\u2010": "-", "\u2011": "-", "\u2012": "-", "\u2013": "-",
-                    "\u2014": "-", "\u2212": "-",
-                }))
-                return re.sub(r"\s*-\s*", "-", " ".join(value.split()))
-
+            access_code = normalize_access_code(request.form.get("access_code", ""))
+            # HEMIS ID bo'yicha ham, IP bo'yicha ham cheklanadi: bitta talabaning
+            # kodini tanlab topish ham, ko'p talabani ketma-ket sinash ham sekinlashadi.
+            id_key = ("student-id", hemis_id.casefold())
+            ip_key = ("student-ip", client_ip())
+            if throttle.blocked(id_key, STUDENT_MAX_FAILURES) or throttle.blocked(ip_key, STUDENT_MAX_FAILURES * 5):
+                flash("Juda ko‘p noto‘g‘ri urinish. 15 daqiqadan so‘ng qayta urinib ko‘ring.", "danger")
+                return render_template("student_login.html"), 429
+            student = db.session.get(Student, hemis_id) if hemis_id else None
             if (
                 student
-                and normalize_name(student.full_name) == normalize_name(full_name)
-                and normalize_group(student.group_name) == normalize_group(group_name)
+                and student.access_code_hash
+                and access_code
+                and check_password_hash(student.access_code_hash, access_code)
             ):
+                throttle.reset(id_key)
                 session.clear()
                 session["student_id"] = student.hemis_id
                 return redirect(url_for("student_dashboard"))
-            flash("Ma’lumotlar bazadagi talaba ma’lumotlariga mos kelmadi. Ustoz bilan bog‘laning.", "danger")
+            throttle.fail(id_key)
+            throttle.fail(ip_key)
+            flash("HEMIS ID yoki kirish kodi noto‘g‘ri. Kirish kodini ustozingizdan oling.", "danger")
         return render_template("student_login.html")
 
     @application.route("/logout", methods=["POST"])
@@ -207,6 +312,7 @@ def create_app(test_config=None):
     @application.route("/admin")
     @admin_required
     def admin_dashboard():
+        finalize_expired_attempts()
         return render_template(
             "admin_dashboard.html",
             student_count=Student.query.count(),
@@ -228,12 +334,81 @@ def create_app(test_config=None):
             elif db.session.get(Student, hemis_id):
                 flash("Bu HEMIS ID avval ro‘yxatga qo‘shilgan.", "warning")
             else:
-                db.session.add(Student(hemis_id=hemis_id, full_name=full_name, group_name=group_name))
+                code = generate_access_code()
+                db.session.add(
+                    Student(
+                        hemis_id=hemis_id,
+                        full_name=full_name,
+                        group_name=group_name,
+                        access_code_hash=hash_access_code(code),
+                    )
+                )
                 db.session.commit()
-                flash("Talaba muvaffaqiyatli qo‘shildi.", "success")
+                flash(
+                    f"Talaba qo‘shildi. Kirish kodi: {format_access_code(code)} — uni talabaga bering, "
+                    "kod qayta ko‘rsatilmaydi.",
+                    "success",
+                )
             return redirect(url_for("admin_students"))
         students = Student.query.order_by(Student.full_name).all()
-        return render_template("students.html", students=students)
+        return render_template(
+            "students.html",
+            students=students,
+            missing_code_count=sum(1 for student in students if not student.access_code_hash),
+        )
+
+    @application.route("/admin/students/codes.xlsx", methods=["POST"])
+    @admin_required
+    def export_access_codes():
+        """Kirish kodlarini yaratadi va Excel fayl sifatida beradi.
+
+        Bazada faqat xesh saqlanadi, shuning uchun kodlar faqat shu faylda ko'rinadi.
+        scope=missing — faqat kodi yo'q talabalar; scope=all — barchasiga yangi kod.
+        """
+        scope = request.form.get("scope", "missing")
+        if scope not in {"missing", "all"}:
+            abort(400)
+        query = Student.query.order_by(Student.group_name, Student.full_name)
+        if scope == "missing":
+            query = query.filter(Student.access_code_hash.is_(None))
+        students = query.all()
+        if not students:
+            flash("Kirish kodi kerak bo‘lgan talaba topilmadi.", "info")
+            return redirect(url_for("admin_students"))
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Kirish kodlari"
+        sheet.append(["HEMIS ID", "F.I.O", "Guruh", "Kirish kodi"])
+        for student in students:
+            code = generate_access_code()
+            student.access_code_hash = hash_access_code(code)
+            sheet.append([student.hemis_id, student.full_name, student.group_name, format_access_code(code)])
+        output = io.BytesIO()
+        workbook.save(output)
+        output.seek(0)
+        db.session.commit()
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=f"kirish_kodlari_{utcnow():%Y%m%d_%H%M}.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+    @application.route("/admin/students/<hemis_id>/reset-code", methods=["POST"])
+    @admin_required
+    def reset_access_code(hemis_id):
+        student = db.session.get(Student, hemis_id)
+        if student is None:
+            abort(404)
+        code = generate_access_code()
+        student.access_code_hash = hash_access_code(code)
+        db.session.commit()
+        flash(
+            f"{student.full_name} uchun yangi kirish kodi: {format_access_code(code)} "
+            "(eski kod endi ishlamaydi).",
+            "success",
+        )
+        return redirect(url_for("admin_students"))
 
     @application.route("/admin/students/import", methods=["POST"])
     @admin_required
@@ -306,7 +481,7 @@ def create_app(test_config=None):
             group_col = column("guruh", "group", "group_name")
             added = 0
             skipped = 0
-            for row in chain(data_rows):
+            for row in data_rows:
                 values = [row[position] if position < len(row) else None for position in (id_col, name_col, group_col)]
                 hemis_id, full_name, group_name = [str(value).strip() if value is not None else "" for value in values]
                 if not all((hemis_id, full_name, group_name)) or db.session.get(Student, hemis_id):
@@ -315,7 +490,8 @@ def create_app(test_config=None):
                 db.session.add(Student(hemis_id=hemis_id, full_name=full_name, group_name=group_name))
                 added += 1
             db.session.commit()
-            flash(f"{added} ta talaba qo‘shildi, {skipped} ta qator o‘tkazib yuborildi.", "success")
+            flash(f"{added} ta talaba qo‘shildi, {skipped} ta qator o‘tkazib yuborildi. "
+                "Yangi talabalar uchun «Kodlarni yaratish» tugmasi orqali kirish kodlarini oling.", "success")
         except (ValueError, KeyError) as error:
             db.session.rollback()
             flash(str(error), "danger")
@@ -544,6 +720,10 @@ def create_app(test_config=None):
             db.select(Attempt.id).where(Attempt.contest_id == contest.id)
         ).scalars().all()
         if attempt_ids:
+            submission_ids = db.select(CodeSubmission.id).where(CodeSubmission.attempt_id.in_(attempt_ids))
+            SubmissionLog.query.filter(SubmissionLog.submission_id.in_(submission_ids)).delete(
+                synchronize_session=False
+            )
             CodeSubmission.query.filter(CodeSubmission.attempt_id.in_(attempt_ids)).delete(
                 synchronize_session=False
             )
@@ -556,6 +736,7 @@ def create_app(test_config=None):
     @application.route("/admin/results")
     @admin_required
     def admin_results():
+        finalize_expired_attempts()
         attempts = (
             Attempt.query.filter(Attempt.completed_at.is_not(None))
             .join(Attempt.student)
@@ -568,6 +749,7 @@ def create_app(test_config=None):
     @application.route("/admin/results.xlsx")
     @admin_required
     def export_results():
+        finalize_expired_attempts()
         workbook = Workbook()
         sheet = workbook.active
         sheet.title = "Natijalar"
@@ -606,6 +788,7 @@ def create_app(test_config=None):
     @student_required
     def student_dashboard():
         student_id = session["student_id"]
+        finalize_expired_attempts(student_id)
         attempts = {attempt.contest_id: attempt for attempt in Attempt.query.filter_by(student_id=student_id).all()}
         all_contests = Contest.query.order_by(Contest.id.desc()).all()
         contests = [contest for contest in all_contests if contest.is_active or contest.id in attempts]
@@ -669,6 +852,7 @@ def create_app(test_config=None):
                 question_number=questions.index(current_question) + 1,
                 total_questions=len(questions),
                 submission=submissions.get(current_question.id),
+                history=submissions[current_question.id].history[:10] if current_question.id in submissions else [],
                 remaining_seconds=remaining_seconds,
             )
         if request.method == "POST":
@@ -729,57 +913,79 @@ def create_app(test_config=None):
             submission
             and submission.status == "pending"
             and submission.submitted_at is not None
-            and (utcnow() - submission.submitted_at).total_seconds() < 180
+            and (utcnow() - submission.submitted_at).total_seconds() < PENDING_RESUBMIT_SECONDS
         ):
             # Tekshiruv hali ketmoqda. 3 daqiqadan eski "pending" — uzilib qolgan
             # tekshiruv deb hisoblanadi va talaba qayta yuborishi mumkin.
             flash("Oldingi yechimingiz hali tekshirilmoqda. Biroz kuting.", "warning")
             return redirect(url_for("take_contest", contest_id=contest_id))
+        now = utcnow()
         if submission is None:
-            submission = CodeSubmission(
-                attempt_id=attempt.id,
-                question_id=question.id,
-                language=language,
-                source_code=source_code,
-                status="pending",
-                judge_result="Avtomatik tekshiruv boshlandi.",
-            )
+            submission = CodeSubmission(attempt_id=attempt.id, question_id=question.id)
             db.session.add(submission)
-        else:
-            submission.language = language
-            submission.source_code = source_code
-            submission.status = "pending"
-            submission.submitted_at = utcnow()
-            submission.reviewed_at = None
-            submission.reviewer_note = None
-            submission.judge_result = "Avtomatik tekshiruv boshlandi."
+        submission.language = language
+        submission.source_code = source_code
+        submission.status = "pending"
+        submission.submitted_at = now
+        submission.reviewed_at = None
+        submission.reviewer_note = None
+        submission.judge_result = "Yechim navbatda, tekshirilmoqda…"
+        log_entry = SubmissionLog(
+            submission=submission,
+            language=language,
+            source_code=source_code,
+            status="pending",
+            judge_result=submission.judge_result,
+            submitted_at=now,
+        )
+        db.session.add(log_entry)
         db.session.commit()
-        try:
-            test_cases = json.loads(question.test_cases_json or "[]")
-            # Ichki (local) judge: kod shu serverda, vaqtinchalik papkada ishlaydi.
-            accepted, result_message = judge_solution(language, source_code, test_cases)
-        except JudgeError as error:
-            result_message = str(error)
-            submission.status = "error"
-        except json.JSONDecodeError:
-            result_message = "Masala testlari JSON formati noto‘g‘ri."
-            submission.status = "error"
-        except Exception:
-            application.logger.exception("Ichki judge kutilmagan xatolik berdi")
-            result_message = "Tekshiruv serverida ichki xatolik yuz berdi."
-            submission.status = "error"
+        job = (submission.id, log_entry.id, language, source_code, question.test_cases_json)
+        if application.config["JUDGE_SYNC"]:
+            run_judge_job(*job)
         else:
-            submission.status = "accepted" if accepted else "rejected"
-        submission.judge_result = result_message[:500]
-        submission.reviewed_at = utcnow()
-        db.session.commit()
-        if submission.status == "accepted":
-            flash("Yechim barcha yashirin testlardan o‘tdi. Keyingi masala ochildi.", "success")
-        elif submission.status == "error":
-            flash(f"Avtomatik tekshiruv ishlamadi: {result_message}", "danger")
-        else:
-            flash(f"Yechim testdan o‘tmadi: {result_message}", "warning")
+            # Tekshiruv fon oqimida: veb-so'rov darhol qaytadi, sahifa natijani o'zi yangilaydi.
+            judge_pool.submit(run_judge_job, *job)
+        flash("Yechim qabul qilindi va tekshiruv navbatiga qo‘yildi.", "info")
         return redirect(url_for("take_contest", contest_id=contest_id))
+
+    def run_judge_job(submission_id, log_id, language, source_code, test_cases_json):
+        """Yechimni tekshiradi va natijani tarixga hamda joriy holatga yozadi."""
+        with application.app_context():
+            try:
+                try:
+                    test_cases = json.loads(test_cases_json or "[]")
+                    accepted, result_message = judge_solution(language, source_code, test_cases)
+                    status = "accepted" if accepted else "rejected"
+                except JudgeError as error:
+                    result_message, status = str(error), "error"
+                except json.JSONDecodeError:
+                    result_message, status = "Masala testlari JSON formati noto‘g‘ri.", "error"
+                except Exception:
+                    application.logger.exception("Ichki judge kutilmagan xatolik berdi")
+                    result_message, status = "Tekshiruv serverida ichki xatolik yuz berdi.", "error"
+                result_message = result_message[:500]
+                now = utcnow()
+                log_entry = db.session.get(SubmissionLog, log_id)
+                if log_entry is not None:
+                    log_entry.status = status
+                    log_entry.judge_result = result_message
+                    log_entry.judged_at = now
+                latest_log_id = db.session.execute(
+                    db.select(db.func.max(SubmissionLog.id)).where(SubmissionLog.submission_id == submission_id)
+                ).scalar()
+                submission = db.session.get(CodeSubmission, submission_id)
+                # Joriy holatni faqat eng so'nggi yuborilgan yechim natijasi yangilaydi.
+                if submission is not None and latest_log_id == log_id and submission.status != "accepted":
+                    submission.status = status
+                    submission.judge_result = result_message
+                    submission.reviewed_at = now
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                application.logger.exception("Tekshiruv natijasini saqlab bo‘lmadi")
+            finally:
+                db.session.remove()
 
     @application.route("/contest/<int:contest_id>/save", methods=["POST"])
     @student_required
@@ -845,6 +1051,10 @@ def create_app(test_config=None):
             db.session.commit()
         if "judge_result" not in submission_columns:
             db.session.execute(db.text("ALTER TABLE code_submission ADD COLUMN judge_result VARCHAR(500)"))
+            db.session.commit()
+        student_columns = {column["name"] for column in db.inspect(db.engine).get_columns("students")}
+        if "access_code_hash" not in student_columns:
+            db.session.execute(db.text("ALTER TABLE students ADD COLUMN access_code_hash VARCHAR(255)"))
             db.session.commit()
 
         if Question.query.count() == 0:

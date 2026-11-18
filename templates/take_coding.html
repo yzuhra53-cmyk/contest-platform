@@ -34,14 +34,38 @@
     <label class="form-label fw-semibold" for="source_code">Yechim kodingiz</label>
     <textarea class="form-control font-monospace code-editor mb-3" id="source_code" name="source_code" rows="18" maxlength="20000" required spellcheck="false" placeholder="Python: import sys&#10;data = list(map(int, sys.stdin.read().split()))&#10;# yoki C++17 yechimingizni yozing">{{ submission.source_code if submission else '' }}</textarea>
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-      <span class="small text-secondary">Yechimingiz yashirin testlarda Judge0 izolyatsiyalangan muhitida tekshiriladi.</span>
+      <span class="small text-secondary">Yechimingiz yashirin testlarda avtomatik tekshiriladi (har bir test uchun vaqt va xotira cheklovi bor).</span>
       <button class="btn btn-primary btn-lg" {% if submission and submission.status == 'pending' %}disabled{% endif %}>Yechimni tekshiruvga yuborish</button>
     </div>
   </div>
 </form>
+{% if history %}
+<section class="card border-0 shadow-sm mt-3">
+  <div class="card-body p-4">
+    <h2 class="h6 mb-3">Shu masala bo‘yicha yuborishlaringiz</h2>
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Vaqt (UTC)</th><th>Til</th><th>Holat</th><th>Natija</th></tr></thead>
+      <tbody>
+      {% for item in history %}
+        <tr>
+          <td class="text-nowrap">{{ item.submitted_at.strftime('%d.%m %H:%M:%S') }}</td>
+          <td>{{ 'Python 3' if item.language == 'python' else 'C++17' }}</td>
+          <td><span class="badge {{ 'text-bg-warning' if item.status == 'pending' else ('text-bg-success' if item.status == 'accepted' else 'text-bg-danger') }}">{{ {'pending': 'Tekshirilmoqda', 'accepted': 'Qabul', 'rejected': 'Xato', 'error': 'Tizim xatosi'}.get(item.status, item.status) }}</span></td>
+          <td class="small">{{ item.judge_result or '' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+</section>
+{% endif %}
 {% endblock %}
 {% block scripts %}
 <script>
+{% if submission and submission.status == 'pending' %}
+// Tekshiruv tugashi bilan natijani ko'rsatish uchun sahifa o'zi yangilanadi.
+setTimeout(() => window.location.reload(), 3000);
+{% endif %}
 const timer = document.getElementById('timer');
 let remaining = Number(timer.dataset.seconds);
 function showTime() {

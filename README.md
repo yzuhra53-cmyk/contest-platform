@@ -12,11 +12,13 @@ Copy-Item .env.example .env
 uv run python app.py
 ```
 
-Ilova `http://127.0.0.1:5000` manzilida ochiladi. `.env` ichidagi parol va maxfiy kalitni o‘zingizga moslab o‘zgartiring. Ustozning dastlabki lokal login/paroli `Zuhra` / `1211`; talaba HEMIS ID, F.I.O. va guruh ma’lumotlari bazadagi yozuvga mos kelsa kiradi.
+Ilova `http://127.0.0.1:5000` manzilida ochiladi. `.env` ichida `SECRET_KEY` va kuchli `ADMIN_PASSWORD` ni belgilang. Standart ustoz paroli yo‘q: `ADMIN_PASSWORD` bo‘sh bo‘lsa, ilova har ishga tushganda konsolga vaqtinchalik parol chiqaradi (Render'da esa ishga tushmaydi). Noto‘g‘ri parol 5 marta kiritilsa, shu IP 15 daqiqaga bloklanadi.
+
+Talaba **HEMIS ID va shaxsiy kirish kodi** bilan kiradi. Ustoz **Talabalar** sahifasida «Kodsizlar uchun kod yaratish (Excel)» tugmasini bosib, kodlar ro‘yxatini yuklab oladi va talabalarga tarqatadi. Bazada faqat kod xeshi saqlanadi, shuning uchun kodni yo‘qotgan talabaga «Yangi kod» tugmasi bilan yangisi beriladi.
 
 Talabalarni ustoz sahifasidan alohida, `.xlsx` yoki `.csv` fayllaridan import qilish mumkin. Jadvalda `HEMIS ID`, `F.I.O`, `Guruh` ustunlari bo‘lishi kerak; Excel faylida sarlavha birinchi qator bo‘lishi shart emas. CSV UTF-8/UTF-8 BOM va Windows-1251 kodlashini, vergul/nuqta-vergul/tab ajratkichlarini qabul qiladi.
 
-Savollar bazasida kod natijasini topish testlari va dasturlash masalalari mavjud. Python 3 yoki C++17 yechimlari Judge0 sozlangandan keyin avtomatik baholanadi. Judge0 manzili va tokenni `.env.example` ga emas, `.env` yoki hosting maxfiy environment variables bo‘limiga kiriting. Vaqt serverda tekshiriladi, ammo masofadan topshirishda internetdan yordam olish yoki boshqa qurilmadan foydalanishni to‘liq texnik yo‘l bilan to‘sib bo‘lmaydi.
+Savollar bazasida kod natijasini topish testlari va dasturlash masalalari mavjud. Python 3 yoki C++17 yechimlari ichki judge (`judge.py`) orqali avtomatik baholanadi. Vaqt serverda tekshiriladi, ammo masofadan topshirishda internetdan yordam olish yoki boshqa qurilmadan foydalanishni to‘liq texnik yo‘l bilan to‘sib bo‘lmaydi.
 
 ## GitHub'ga tayyorlash
 
@@ -57,9 +59,13 @@ Bepul web servislar ko‘pincha faollik bo‘lmaganda uxlaydi yoki resurs/ma’l
 
 SQLite bazasi faqat lokal ishlab chiqish uchun. Deployda `DATABASE_URL` PostgreSQL'ga ulanadi; SQLite fayli `.gitignore` bilan repoga kiritilmaydi va Render'ning vaqtinchalik diskida saqlanmasligi kerak. Avvalgi lokal bazadagi talabalar savollari avtomatik ko‘chmaydi: ularni Excel/CSV orqali qayta import qiling yoki alohida ma’lumot migratsiyasini bajaring.
 
-## Kod masalalarini xavfsiz tekshirish
+## Kod masalalarini tekshirish
 
-Talaba yuborgan kod Flask/Gunicorn jarayonida emas, Judge0 CE izolyatsiyalangan sandboxida kompilyatsiya qilinib ishga tushadi. `.env` faylida `JUDGE0_URL` ni o‘zingiz boshqaradigan, autentifikatsiyalangan va tarmoqdan cheklangan Judge0 instansiga sozlang; kerak bo‘lsa `JUDGE0_API_KEY` ni kiriting. Judge0 Python 3 (language ID 71) va C++17 (54) ni ishlatadi. Web ilova har bir yashirin testni topshiradi; hammasidan o‘tgan kod qabul qilinib keyingi masalani ochadi. Judge0 sozlanmagan yoki ishlamayotgan bo‘lsa, yechim qabul qilinmaydi va talaba xato xabarini ko‘radi. Internetdagi umumiy judge manzilidan foydalanish o‘rniga maxfiylik va resurs cheklovlari nazorat qilinadigan alohida instans tavsiya qilinadi.
+Talaba yuborgan kod ichki judge (`judge.py`) orqali tekshiriladi. Yechim fon oqimida navbatga qo‘yiladi, sahifa natija chiqquncha o‘zi yangilanadi; bir vaqtda `JUDGE_MAX_PARALLEL` ta yechim tekshiriladi. Har bir test uchun vaqt (`JUDGE_TIME_LIMIT`) va xotira (`JUDGE_MEMORY_MB`) cheklovi bor. Har bir yuborish tarixda saqlanadi va ustoz **Kod yechimlari** sahifasida barcha urinishlarni ko‘radi.
+
+**Muhim:** izolyatsiya faqat Docker konteynerida (root + `runner` foydalanuvchisi + `prlimit`) ishlaydi. Windows'da yoki Docker'siz lokal ishga tushirilganda talaba kodi server huquqlari bilan bajariladi — buni faqat sinov uchun ishlating. Ilova `--workers 1` bilan ishlashi kerak (navbat va login cheklovi bitta jarayon xotirasida).
+
+Kontest vaqti tugagan, lekin talaba qaytib kirmagan urinishlar ustoz natijalar sahifasini ochganda avtomatik baholanadi.
 
 40 ta boshlang‘ich masalani bazaga bir marta qo‘shish:
 
