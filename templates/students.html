@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Talabalar · Bilim.Arena{% endblock %}
 {% block content %}
-<div class="page-heading"><p class="eyebrow mb-2">ISHTIROKCHILAR</p><h1 class="page-title">Talabalarni boshqarish</h1><p class="text-secondary">Ishtirokchilarni alohida yoki Excel/CSV faylidan qo‘shing.</p></div>
+<div class="page-heading"><p class="eyebrow mb-2">ISHTIROKCHILAR</p><h1 class="page-title">Talabalarni boshqarish</h1><p class="text-secondary">Ishtirokchilarni alohida yoki Excel/CSV faylidan qo‘shing. Ro‘yxatdagi talaba HEMIS ID, F.I.Sh. va guruhini yozib kiradi.</p></div>
 <div class="row g-4">
   <div class="col-lg-5">
     <div class="card border-0 shadow-sm mb-4"><div class="card-body p-4">
@@ -22,29 +22,13 @@
         <button class="btn btn-outline-primary">Excel/CSV faylni yuklash</button>
       </form>
     </div></div>
-    <div class="card border-0 shadow-sm mt-4"><div class="card-body p-4">
-      <h2 class="h5 mb-1">Kirish kodlari</h2>
-      <p class="text-secondary small">Talabalar HEMIS ID va shaxsiy kirish kodi bilan kiradi. Bazada faqat kod xeshi saqlanadi — kodlar faqat yuklab olingan Excel faylda ko‘rinadi.{% if missing_code_count %} <strong class="text-danger">{{ missing_code_count }} nafar talabada kod yo‘q, ular kira olmaydi.</strong>{% endif %}</p>
-      <div class="d-flex flex-wrap gap-2">
-        <form method="post" action="{{ url_for('export_access_codes') }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <input type="hidden" name="scope" value="missing">
-          <button class="btn btn-primary" {% if not missing_code_count %}disabled{% endif %}>Kodsizlar uchun kod yaratish (Excel)</button>
-        </form>
-        <form method="post" action="{{ url_for('export_access_codes') }}" onsubmit="return confirm('Barcha talabalarning eski kodlari bekor qilinadi. Davom etasizmi?')">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <input type="hidden" name="scope" value="all">
-          <button class="btn btn-outline-danger">Barchaga yangi kod (Excel)</button>
-        </form>
-      </div>
-    </div></div>
   </div>
   <div class="col-lg-7">
     <div class="card border-0 shadow-sm"><div class="card-body p-0">
       <div class="p-4 border-bottom d-flex justify-content-between"><h2 class="h5 mb-0">Talabalar ro‘yxati</h2><span class="badge rounded-pill text-bg-light">{{ students|length }} nafar</span></div>
       {% if students %}
-      <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Talaba</th><th>HEMIS ID</th><th>Guruh</th><th>Kod</th><th></th></tr></thead><tbody>
-      {% for student in students %}<tr><td class="fw-medium">{{ student.full_name }}</td><td>{{ student.hemis_id }}</td><td>{{ student.group_name }}</td><td>{% if student.access_code_hash %}<span class="badge text-bg-success">bor</span>{% else %}<span class="badge text-bg-danger">yo‘q</span>{% endif %}</td><td class="text-end"><div class="d-flex justify-content-end gap-2"><form method="post" action="{{ url_for('reset_access_code', hemis_id=student.hemis_id) }}" onsubmit="return confirm('Yangi kod yaratilsinmi? Eski kod ishlamay qoladi.')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-secondary">Yangi kod</button></form><form method="post" action="{{ url_for('delete_student', hemis_id=student.hemis_id) }}" onsubmit="return confirm('Talabani o‘chirmoqchimisiz?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger">O‘chirish</button></form></div></td></tr>{% endfor %}
+      <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Talaba</th><th>HEMIS ID</th><th>Guruh</th><th></th></tr></thead><tbody>
+      {% for student in students %}<tr><td class="fw-medium">{{ student.full_name }}</td><td>{{ student.hemis_id }}</td><td>{{ student.group_name }}</td><td class="text-end"><div class="d-flex justify-content-end gap-2"><form method="post" action="{{ url_for('delete_student', hemis_id=student.hemis_id) }}" onsubmit="return confirm('Talabani o‘chirmoqchimisiz?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger">O‘chirish</button></form></div></td></tr>{% endfor %}
       </tbody></table></div>
       {% else %}<div class="empty-state">Hozircha talabalar kiritilmagan.</div>{% endif %}
     </div></div>

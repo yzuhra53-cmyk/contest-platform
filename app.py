@@ -25,7 +25,7 @@ from flask import (
 )
 from sqlalchemy.exc import IntegrityError
 from werkzeug.middleware.proxy_fix import ProxyFix
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import generate_password_hash
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 from zipfile import BadZipFile
@@ -339,22 +339,18 @@ def create_app(test_config=None):
     def student_login():
         if request.method == "POST":
             hemis_id = request.form.get("hemis_id", "").strip()
-            access_code = normalize_access_code(request.form.get("access_code", ""))
-            # HEMIS ID bo'yicha ham, IP bo'yicha ham cheklanadi: bitta talabaning
-            # kodini tanlab topish ham, ko'p talabani ketma-ket sinash ham sekinlashadi.
-            id_key = ("student-id", hemis_id.casefold())
+            full_name = " ".join(request.form.get("full_name", "").split())
+            group_name = " ".join(request.form.get("group_name", "").split())
+            if not hemis_id or not full_name or not group_name:
+                flash("HEMIS ID, F.I.Sh. va guruhni to‘liq kiriting.", "danger")
+                return render_template("student_login.html", form=request.form), 400
+            # Bazada yo'q HEMIS ID larni ketma-ket sinash IP bo'yicha sekinlashtiriladi.
             ip_key = ("student-ip", client_ip())
-            if throttle.blocked(id_key, STUDENT_MAX_FAILURES) or throttle.blocked(ip_key, STUDENT_MAX_FAILURES * 5):
+            if throttle.blocked(ip_key, STUDENT_MAX_FAILURES * 5):
                 flash("Juda ko‘p noto‘g‘ri urinish. 15 daqiqadan so‘ng qayta urinib ko‘ring.", "danger")
-                return render_template("student_login.html"), 429
-            student = db.session.get(Student, hemis_id) if hemis_id else None
-            if (
-                student
-                and student.access_code_hash
-                and access_code
-                and check_password_hash(student.access_code_hash, access_code)
-            ):
-                throttle.reset(id_key)
+                return render_template("student_login.html", form=request.form), 429
+            student = db.session.get(Student, hemis_id)
+            if student:
                 had_session = bool(student.session_token)
                 student.session_token = secrets.token_hex(24)
                 if had_session:
@@ -370,10 +366,10 @@ def create_app(test_config=None):
                 session["student_id"] = student.hemis_id
                 session["student_token"] = student.session_token
                 return redirect(url_for("student_dashboard"))
-            throttle.fail(id_key)
             throttle.fail(ip_key)
-            flash("HEMIS ID yoki kirish kodi noto‘g‘ri. Kirish kodini ustozingizdan oling.", "danger")
-        return render_template("student_login.html")
+            flash("Bu HEMIS ID ro‘yxatda topilmadi. Ustozingizga murojaat qiling.", "danger")
+            return render_template("student_login.html", form=request.form)
+        return render_template("student_login.html", form={})
 
     @application.route("/logout", methods=["POST"])
     def logout():
@@ -411,21 +407,9 @@ def create_app(test_config=None):
             elif db.session.get(Student, hemis_id):
                 flash("Bu HEMIS ID avval ro‘yxatga qo‘shilgan.", "warning")
             else:
-                code = generate_access_code()
-                db.session.add(
-                    Student(
-                        hemis_id=hemis_id,
-                        full_name=full_name,
-                        group_name=group_name,
-                        access_code_hash=hash_access_code(code),
-                    )
-                )
+                db.session.add(Student(hemis_id=hemis_id, full_name=full_name, group_name=group_name))
                 db.session.commit()
-                flash(
-                    f"Talaba qo‘shildi. Kirish kodi: {format_access_code(code)} — uni talabaga bering, "
-                    "kod qayta ko‘rsatilmaydi.",
-                    "success",
-                )
+                flash("Talaba qo‘shildi. U HEMIS ID, F.I.Sh. va guruhini yozib kira oladi.", "success")
             return redirect(url_for("admin_students"))
         students = Student.query.order_by(Student.full_name).all()
         return render_template(

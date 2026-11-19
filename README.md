@@ -14,7 +14,7 @@ uv run python app.py
 
 Ilova `http://127.0.0.1:5000` manzilida ochiladi. `.env` ichida `SECRET_KEY` va kuchli `ADMIN_PASSWORD` ni belgilang. Standart ustoz paroli yo‘q: `ADMIN_PASSWORD` bo‘sh bo‘lsa, ilova har ishga tushganda konsolga vaqtinchalik parol chiqaradi (Render'da esa ishga tushmaydi). Noto‘g‘ri parol 5 marta kiritilsa, shu IP 15 daqiqaga bloklanadi.
 
-Talaba **HEMIS ID va shaxsiy kirish kodi** bilan kiradi. Ustoz **Talabalar** sahifasida «Kodsizlar uchun kod yaratish (Excel)» tugmasini bosib, kodlar ro‘yxatini yuklab oladi va talabalarga tarqatadi. Bazada faqat kod xeshi saqlanadi, shuning uchun kodni yo‘qotgan talabaga «Yangi kod» tugmasi bilan yangisi beriladi.
+Talaba **HEMIS ID, F.I.Sh. va guruhini** yozib kiradi. HEMIS ID ustoz **Talabalar** sahifasida kiritgan (yoki Excel’dan yuklagan) ro‘yxatda bo‘lsa, kirishga ruxsat beriladi. Bir vaqtda faqat bitta qurilmadan kirish mumkin: yangi qurilmadan kirilsa, eskisi chiqarib yuboriladi va ochiq urinishda bu qoidabuzarlik sifatida qayd etiladi.
 
 Talabalarni ustoz sahifasidan alohida, `.xlsx` yoki `.csv` fayllaridan import qilish mumkin. Jadvalda `HEMIS ID`, `F.I.O`, `Guruh` ustunlari bo‘lishi kerak; Excel faylida sarlavha birinchi qator bo‘lishi shart emas. CSV UTF-8/UTF-8 BOM va Windows-1251 kodlashini, vergul/nuqta-vergul/tab ajratkichlarini qabul qiladi.
 
@@ -120,7 +120,7 @@ Yoqish tartibi:
 
 1. Render Dashboard → **Billing** bo‘limida to‘lov kartasini qo‘shing (buni faqat hisob egasi qila oladi).
 2. `main` branchga push qilingach, Blueprint `render.yaml` ni o‘qib, rejalarni yangilaydi. Agar servis Blueprint’siz yaratilgan bo‘lsa, Dashboard’da servis → **Settings → Instance Type → Starter**, bazada **Upgrade** ni qo‘lda tanlang.
-3. Eski bepul baza muddati o‘tgan bo‘lsa, yangi baza bo‘sh ochiladi: talabalarni Excel’dan qayta import qiling va kirish kodlarini yarating.
+3. Eski bepul baza muddati o‘tgan bo‘lsa, yangi baza bo‘sh ochiladi: talabalarni Excel’dan qayta import qiling.
 4. Environment bo‘limida `ADMIN_PASSWORD` (kuchli parol) va SEB ishlatilsa `SEB_CONFIG_KEYS` ni kiriting.
 5. `https://<sayt>/health` `{"status": "ok"}` qaytarishini tekshiring.
 
