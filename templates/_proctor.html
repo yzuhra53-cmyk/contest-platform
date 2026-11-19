@@ -41,6 +41,8 @@
   let timer = null;
   let screenTimer = null;
   let leaving = false;
+  // Kamera/ekran tanlash oynasi ochiq paytda oynadan chiqish qoidabuzarlik emas.
+  let choosing = false;
   let intervalMs = 10000;
 
   // Sahifadan chiqish (yuborish, yangilash) "boshqa tabga o'tdi" deb hisoblanmasin.
@@ -160,6 +162,7 @@
       return;
     }
     try {
+      choosing = true;
       stream = await navigator.mediaDevices.getUserMedia({
         video: {width: {ideal: 640}, height: {ideal: 480}, facingMode: 'user'},
         audio: false,
@@ -169,8 +172,10 @@
       updateOverlay();
       errorBox.textContent = 'Kameraga ruxsat berilmadi. Brauzer sozlamalarida ruxsat bering va qayta bosing.';
       setStatus('Kamera o‘chiq', 'danger');
-      sendEvent('camera_denied', error.name);
+      sendEvent('camera_denied', `${error.name}: ${error.message}`);
       return;
+    } finally {
+      setTimeout(() => { choosing = false; }, 1500);
     }
     video.srcObject = stream;
     setStatus('Kamera ulandi', 'info');
@@ -218,6 +223,7 @@
     }
     let captured;
     try {
+      choosing = true;
       captured = await navigator.mediaDevices.getDisplayMedia({
         video: {displaySurface: 'monitor', frameRate: {ideal: 1, max: 5}},
         audio: false,
@@ -234,9 +240,11 @@
         SecurityError: 'Ekran ulashish faqat xavfsiz (https://) sahifada ishlaydi.',
         TypeError: 'Bu brauzer ekran ulashishni qo‘llab-quvvatlamaydi. Kompyuterda Chrome, Edge yoki Firefox’dan foydalaning.',
       };
-      errorBox.textContent = `${reasons[error.name] || 'Ekranni ulashib bo‘lmadi. Qayta bosing va «Butun ekran»ni tanlang.'} (${error.name})`;
-      sendEvent('screen_denied', error.name);
+      errorBox.textContent = `${reasons[error.name] || 'Ekranni ulashib bo‘lmadi. Qayta bosing va «Butun ekran»ni tanlang.'} (${error.name}${error.message ? ': ' + error.message : ''})`;
+      sendEvent('screen_denied', `${error.name}: ${error.message}`);
       return;
+    } finally {
+      setTimeout(() => { choosing = false; }, 1500);
     }
     const track = captured.getVideoTracks()[0];
     const surface = track.getSettings().displaySurface;
@@ -268,6 +276,7 @@
   document.getElementById('screenStart')?.addEventListener('click', startScreen);
   // Oynadan chiqilganda ochilgan narsani ko'rsatish uchun ekran rasmi biroz kechikib olinadi.
   const onFocusLost = (kind) => {
+    if (choosing) return;
     sendEvent(kind);
     if (screenStream) setTimeout(() => sendScreen(kind), 1500);
   };
