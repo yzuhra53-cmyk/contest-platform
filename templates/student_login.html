@@ -107,7 +107,7 @@
   nameInput.addEventListener('change', () => { if (!hemisInput.value.trim()) lookupHemis(false); });
   async function load() {
     const query = nameInput.value.trim();
-    if (query.length < 3) { close(); return; }
+    if (!query) { close(); return; }
     const current = ++requestId;
     try {
       const response = await fetch(`${suggestUrl}?q=${encodeURIComponent(query)}`, {cache: 'no-store'});
@@ -119,7 +119,7 @@
   }
   nameInput.addEventListener('input', () => {
     clearTimeout(timer);
-    timer = setTimeout(load, 200);
+    timer = setTimeout(load, 120);
   });
   nameInput.addEventListener('keydown', (event) => {
     if (list.hidden || !items.length) return;

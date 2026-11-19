@@ -399,9 +399,9 @@ def create_app(test_config=None):
         if not name or not group:
             return jsonify({})
         ip_key = ("lookup-ip", client_ip())
-        if throttle.blocked(ip_key, 300):
+        if throttle.blocked(ip_key, 1500):
             return jsonify({}), 429
-        throttle.fail(ip_key)  # oddiy hisoblagich: 15 daqiqada 300 so'rovdan oshmasin
+        throttle.fail(ip_key)  # oddiy hisoblagich: 15 daqiqada 1500 so'rovdan oshmasin
         found = [
             hemis_id
             for hemis_id, full_name, group_name in db.session.execute(
@@ -415,19 +415,21 @@ def create_app(test_config=None):
     def student_login_suggest():
         """Kirish sahifasi uchun: ism bo'yicha F.I.Sh. va guruh takliflari (HEMIS ID berilmaydi)."""
         query = normalize_person_text(request.args.get("q", ""))[:80]
-        if len(query) < 3:
+        if not query:
             return jsonify([])
         ip_key = ("suggest-ip", client_ip())
-        if throttle.blocked(ip_key, 600):
+        # Universitetda ko'p talaba bitta IP ortida bo'ladi: limit keng (15 daqiqada 3000 so'rov).
+        if throttle.blocked(ip_key, 3000):
             return jsonify([]), 429
-        throttle.fail(ip_key)  # oddiy hisoblagich: 15 daqiqada 600 so'rovdan oshmasin
+        throttle.fail(ip_key)
         words = query.split()
         matches = []
         for full_name, group_name in db.session.execute(
             db.select(Student.full_name, Student.group_name).order_by(Student.full_name)
         ):
             name = normalize_person_text(full_name)
-            if all(word in name for word in words):
+            # 1-2 harf: familiyaning bosh harflari bo'yicha; 3+ harf: so'zlar ism ichida istalgan joyda.
+            if name.startswith(query) if len(query) < 3 else all(word in name for word in words):
                 matches.append({"name": full_name, "group": group_name, "starts": name.startswith(query)})
         matches.sort(key=lambda item: (not item["starts"], item["name"]))
         return jsonify([{"name": item["name"], "group": item["group"]} for item in matches[:8]])
