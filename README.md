@@ -58,6 +58,19 @@ Talaba sahifasining yuqorisida bloklar gorizontal qadamlar ko‘rinishida turadi
 
 Yangi savollarni **Savollar → Fayldan yuklash** orqali Word (.docx) yoki Excel (.xlsx) fayldan qo‘shish mumkin. Jadval: `№ | Savol | A (to‘g‘ri javob) | B | C | D`. Variantlar avtomatik aralashtiriladi; jadvalda «To‘g‘ri» ustuni (A–D) bo‘lsa, javob shundan olinadi. Word’dagi «N-blok: Nomi» sarlavhasi (Excel’da «Blok» ustuni yoki varaq nomi) mavzuga aylanadi. Bazada bor savollar takror qo‘shilmaydi. Bankni fayllardan qayta yaratish: `uv run python tools/build_theory_bank.py 1-blok.docx 2-blok.docx ...`.
 
+## Yuklama sinovi
+
+`tools/load_test.py` ko‘p «virtual talaba»ni bir vaqtda ishga tushiradi: har biri kiradi, kontestni ochadi, har 10 soniyada kamera kadri va ekran rasmi yuboradi, kod kontestida ▶ Run bosadi va yechim yuboradi (natijani kutadi), test kontestida javoblarni saqlaydi. Oxirida har bir so‘rov turi bo‘yicha javob vaqti (o‘rtacha, p95, max), xatolar soni va kod tekshiruvi navbati chiqadi. Faqat Python standart kutubxonasi kerak.
+
+```powershell
+$env:LOADTEST_ADMIN_USER = "admin"
+$env:LOADTEST_ADMIN_PASSWORD = "<ustoz paroli>"
+python tools/load_test.py --url https://<sayt>.onrender.com --students 50 --scenario coding --minutes 3
+python tools/load_test.py --url https://<sayt>.onrender.com --students 100 --scenario quiz --minutes 3
+```
+
+Sinov `LT-001…` talabalari va «Yuklama sinovi» kontestini o‘zi yaratadi va oxirida o‘chiradi (`--keep` bilan qoldiriladi). `--no-camera`, `--no-screen` kuzatuvsiz yuklamani o‘lchaydi. Haqiqiy kontest paytida ishga tushirmang.
+
 ## Kontest vaqti va reyting
 
 Kontest yaratishda (yoki keyin «Vaqt va reyting sozlamalari» orqali) ixtiyoriy **boshlanish** va **tugash** vaqtini Toshkent vaqtida belgilash mumkin. Boshlanishgacha talaba kontestni ocha olmaydi; tugash vaqtida barcha urinishlar yakunlanadi, hatto shaxsiy taymer hali tugamagan bo‘lsa ham. Vaqt mintaqasi `APP_UTC_OFFSET_HOURS` (standart 5).
