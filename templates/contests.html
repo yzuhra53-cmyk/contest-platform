@@ -11,6 +11,7 @@
       <select class="form-select mb-3" id="contest_type" name="contest_type">
         <option value="quiz">Outputni tanlash testi</option>
         <option value="coding">Python / C++ kod yozish</option>
+        <option value="mixed">Aralash: avval kod yozish, keyin test</option>
       </select>
       <label class="form-label">Kontest nomi</label><input class="form-control mb-3" name="title" required>
       <label class="form-label">Davomiyligi (daqiqa)</label><input class="form-control mb-3" type="number" name="duration_minutes" min="1" max="600" value="45" required>
@@ -33,12 +34,15 @@
       </div>
       <div class="border rounded-3 p-3 mb-3">
         <div class="form-label fw-semibold">Kontest savollari</div>
-        <div class="question-picker" data-contest-type="quiz">
+        <p class="form-text mt-0 d-none" id="mixedHint">Aralash kontest: talaba avval kod masalalarini yechadi. Hammasi qabul qilinsa yoki «Kod bo‘limini yakunlash»ni bossa, test bloki ochiladi (kodga qaytib bo‘lmaydi). Kamida bitta kod masalasi va bitta test savolini tanlang.</p>
+        <div class="question-picker" data-contest-types="quiz mixed">
+          <div class="small fw-semibold text-secondary mb-1 mixed-only d-none">Test bloki</div>
           {% for question in quiz_questions %}
           <label class="form-check d-flex gap-2 py-2"><input class="form-check-input mt-1" type="checkbox" name="question_ids" value="{{ question.id }}"><span><span class="badge text-bg-light">Output testi</span> {{ question.prompt|truncate(110) }}</span></label>
           {% else %}<p class="small text-secondary mb-0">Output tanlash testlari hali qo‘shilmagan.</p>{% endfor %}
         </div>
-        <div class="question-picker d-none" data-contest-type="coding">
+        <div class="question-picker d-none" data-contest-types="coding mixed">
+          <div class="small fw-semibold text-secondary mb-1 mt-2 mixed-only d-none">Kod yozish bloki (birinchi)</div>
           {% for question in coding_questions %}
           <label class="form-check d-flex gap-2 py-2"><input class="form-check-input mt-1" type="checkbox" name="question_ids" value="{{ question.id }}"><span><span class="badge text-bg-warning">Kod yozish</span> {{ question.prompt|truncate(110) }}</span></label>
           {% else %}<p class="small text-secondary mb-0">Kod yozish masalalari hali qo‘shilmagan.</p>{% endfor %}
@@ -53,7 +57,7 @@
     <div class="p-4 border-bottom"><h2 class="h5 mb-0">Kontestlar <span class="badge rounded-pill text-bg-light">{{ contests|length }}</span></h2></div>
     {% if contests %}<div class="list-group list-group-flush">
       {% for contest in contests %}<div class="list-group-item p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div><h3 class="h6 mb-1">{{ contest.title }}</h3><div class="small text-secondary">{{ 'Kod yozish' if contest.contest_type == 'coding' else 'Output testi' }} · {{ contest.questions|length }} ta masala · {{ contest.duration_minutes }} daqiqa · {{ contest.attempts|length }} ta urinish</div>
+        <div><h3 class="h6 mb-1">{{ contest.title }}</h3><div class="small text-secondary">{{ contest.type_label }} · {{ contest.questions|length }} ta masala · {{ contest.duration_minutes }} daqiqa · {{ contest.attempts|length }} ta urinish</div>
           {% if contest.start_at or contest.end_at %}<div class="small text-secondary">🕑 {{ contest.start_at|local or '…' }} — {{ contest.end_at|local or '…' }}</div>{% endif %}
           <details class="mt-2"><summary class="small text-primary" style="cursor:pointer">Vaqt va reyting sozlamalari</summary>
             <form method="post" action="{{ url_for('update_contest_settings', contest_id=contest.id) }}" class="row g-2 align-items-end mt-1">
@@ -83,10 +87,16 @@
 {% block scripts %}
 <script>
 const contestType = document.getElementById('contest_type');
-const questionGroups = document.querySelectorAll('.question-picker[data-contest-type]');
+const questionGroups = document.querySelectorAll('.question-picker[data-contest-types]');
 function toggleQuestionGroups() {
+  const mixed = contestType.value === 'mixed';
+  document.getElementById('mixedHint').classList.toggle('d-none', !mixed);
+  document.querySelectorAll('.mixed-only').forEach((label) => label.classList.toggle('d-none', !mixed));
+  // Aralashda kod bloki birinchi ko'rinsin.
+  const pickers = [...questionGroups];
+  if (mixed) pickers[1].after(pickers[0]); else pickers[1].before(pickers[0]);
   questionGroups.forEach((group) => {
-    const active = group.dataset.contestType === contestType.value;
+    const active = group.dataset.contestTypes.split(' ').includes(contestType.value);
     group.classList.toggle('d-none', !active);
     group.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
       checkbox.disabled = !active;

@@ -46,6 +46,10 @@ Kod masalalari sahifasida professional muharrir bor (CodeMirror 5, CDN orqali):
 
 Proktoringli kontestda muharrirga kod joylashtirish (paste/drop) ham bloklanadi va qayd etiladi.
 
+## Aralash kontest (kod + test)
+
+Kontest yaratishda «Aralash: avval kod yozish, keyin test» turini tanlang va kamida bitta kod masalasi hamda bitta output testi savolini belgilang. Talaba avval kod masalalarini ketma-ket yechadi (oldingisi qabul qilingach keyingisi ochiladi). Barcha kod masalalari qabul qilinsa, test bloki o‘zi ochiladi; yecha olmasa, «Kod bo‘limini yakunlash» tugmasi bilan testga o‘tadi. Shundan keyin kodga qaytib bo‘lmaydi. Vaqt ikkala blok uchun umumiy. Natija: qabul qilingan kod masalalari + to‘g‘ri test javoblari, jami savollar soniga nisbatan foizda; reyting shu son bo‘yicha, teng bo‘lsa sarflangan vaqt bo‘yicha.
+
 ## Kontest vaqti va reyting
 
 Kontest yaratishda (yoki keyin «Vaqt va reyting sozlamalari» orqali) ixtiyoriy **boshlanish** va **tugash** vaqtini Toshkent vaqtida belgilash mumkin. Boshlanishgacha talaba kontestni ocha olmaydi; tugash vaqtida barcha urinishlar yakunlanadi, hatto shaxsiy taymer hali tugamagan bo‘lsa ham. Vaqt mintaqasi `APP_UTC_OFFSET_HOURS` (standart 5).

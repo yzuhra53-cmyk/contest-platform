@@ -87,6 +87,26 @@ class Contest(db.Model):
     attempts = db.relationship("Attempt", back_populates="contest")
 
     @property
+    def has_coding(self):
+        return self.contest_type in ("coding", "mixed")
+
+    @property
+    def has_quiz(self):
+        return self.contest_type in ("quiz", "mixed")
+
+    @property
+    def coding_questions(self):
+        return [question for question in self.questions if question.question_type == "code_problem"]
+
+    @property
+    def quiz_questions(self):
+        return [question for question in self.questions if question.question_type != "code_problem"]
+
+    @property
+    def type_label(self):
+        return {"coding": "Kod yozish", "mixed": "Kod + test"}.get(self.contest_type, "Output testi")
+
+    @property
     def monitored(self):
         """Kamera yoki ekran kuzatuvi yoqilgan."""
         return bool(self.proctoring or self.screen_capture)
@@ -103,6 +123,8 @@ class Attempt(db.Model):
     answers_json = db.Column(db.Text, nullable=False, default="{}")
     # Talabaga ko'rsatiladigan savollar tartibi (aralashtirilgan id ro'yxati, JSON).
     question_order = db.Column(db.Text)
+    # Aralash kontest: kod bo'limi yakunlangan vaqt (shundan keyin test bloki ochiladi).
+    coding_done_at = db.Column(db.DateTime)
     correct_count = db.Column(db.Integer)
     total_questions = db.Column(db.Integer, nullable=False)
     score = db.Column(db.Float)

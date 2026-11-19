@@ -7,7 +7,7 @@
   {% for contest in contests %}
   {% set attempt = attempts.get(contest.id) %}
   <div class="col-md-6 col-xl-4"><div class="card contest-card border-0 shadow-sm h-100"><div class="card-body p-4 d-flex flex-column">
-    <div class="d-flex justify-content-between mb-3"><span class="badge {{ 'text-bg-warning' if contest.contest_type == 'coding' else 'text-bg-success' }}">{{ 'Kod yozish' if contest.contest_type == 'coding' else 'Output testi' }}</span><span class="small text-secondary">{{ contest.duration_minutes }} daqiqa</span></div>
+    <div class="d-flex justify-content-between mb-3"><span class="badge {{ {'coding': 'text-bg-warning', 'mixed': 'text-bg-info'}.get(contest.contest_type, 'text-bg-success') }}">{{ contest.type_label }}</span><span class="small text-secondary">{{ contest.duration_minutes }} daqiqa</span></div>
     {% set state = contest_state(contest) %}
     <h3 class="h5">{{ contest.title }}</h3><p class="text-secondary small mb-2">{{ contest.questions|length }} ta masala</p>
     {% if contest.monitored or contest.lockdown or contest.require_seb %}<p class="small mb-2">{% if contest.proctoring %}<span class="badge text-bg-dark">📹 Kamera kuzatuvi</span> {% endif %}{% if contest.screen_capture %}<span class="badge text-bg-dark">🖥 Ekran kuzatuvi</span> {% endif %}{% if contest.lockdown %}<span class="badge text-bg-dark">🔒 Qulflangan rejim</span> {% endif %}{% if contest.require_seb %}<span class="badge text-bg-dark">Safe Exam Browser</span>{% endif %}</p>{% endif %}

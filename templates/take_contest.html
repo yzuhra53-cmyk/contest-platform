@@ -3,7 +3,7 @@
 {% block content %}
 <div class="contest-header card border-0 shadow-sm mb-4">
   <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
-    <div><p class="eyebrow mb-2">KONTЕST</p><h1 class="h3 mb-1">{{ contest.title }}</h1><span class="text-secondary">{{ contest.questions|length }} ta savol</span></div>
+    <div><p class="eyebrow mb-2">{% if contest.contest_type == 'mixed' %}2-BLOK · TEST{% else %}KONTЕST{% endif %}</p><h1 class="h3 mb-1">{{ contest.title }}</h1><span class="text-secondary">{{ questions|length }} ta savol{% if contest.contest_type == 'mixed' %} · kod bo‘limi yakunlangan{% endif %}</span></div>
     <div class="timer-wrap"><span class="small text-secondary">Qolgan vaqt</span><div class="timer" id="timer" data-seconds="{{ remaining_seconds }}">--:--</div></div>
   </div>
 </div>

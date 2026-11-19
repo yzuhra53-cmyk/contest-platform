@@ -9,10 +9,24 @@
 {% if score %}
 <div class="alert alert-primary">Natija: {{ score.correct }} / {{ score.total }} · {{ '%.2f'|format(score.percentage) }}%</div>
 {% endif %}
-{% if contest.contest_type == 'quiz' %}
+{% if contest.has_coding %}
+<h2 class="h5 mb-3">{{ '1-blok: ' if contest.has_quiz else '' }}Kod yozish masalalari</h2>
+<div class="d-flex flex-column gap-3">
+  {% for question in contest.coding_questions %}
+  <article class="card border-0 shadow-sm"><div class="card-body p-4">
+    <span class="badge text-bg-warning mb-2">Masala {{ loop.index }}</span>
+    <h2 class="h5 problem-statement">{{ question.prompt }}</h2>
+    <div class="small fw-semibold mb-1">Namuna Input</div><pre class="sample-input">{{ question.input_data or '—' }}</pre>
+    <div class="small fw-semibold mb-1">Namuna Output</div><pre class="sample-input">{{ question.expected_output or '—' }}</pre>
+  </div></article>
+  {% endfor %}
+</div>
+{% endif %}
+{% if contest.has_quiz %}
+{% if contest.has_coding %}<h2 class="h5 my-3">2-blok: test</h2>{% endif %}
 <form method="post">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-  {% for question in contest.questions %}
+  {% for question in contest.quiz_questions %}
   <section class="card border-0 shadow-sm mb-3">
     <div class="card-body p-4">
       <h2 class="h5">{{ loop.index }}. {{ question.prompt }}</h2>
@@ -28,17 +42,6 @@
   {% endfor %}
   <button class="btn btn-primary btn-lg">Sinovni yakunlash</button>
 </form>
-{% else %}
-<div class="d-flex flex-column gap-3">
-  {% for question in contest.questions %}
-  <article class="card border-0 shadow-sm"><div class="card-body p-4">
-    <span class="badge text-bg-warning mb-2">Masala {{ loop.index }}</span>
-    <h2 class="h5 problem-statement">{{ question.prompt }}</h2>
-    <div class="small fw-semibold mb-1">Namuna Input</div><pre class="sample-input">{{ question.input_data or '—' }}</pre>
-    <div class="small fw-semibold mb-1">Namuna Output</div><pre class="sample-input">{{ question.expected_output or '—' }}</pre>
-  </div></article>
-  {% endfor %}
-</div>
 {% endif %}
 <a class="btn btn-outline-secondary mt-4" href="{{ url_for('admin_contests') }}">Kontestlarga qaytish</a>
 {% endblock %}

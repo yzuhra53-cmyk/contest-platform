@@ -8,7 +8,7 @@
 {% block content %}
 <div class="contest-header card border-0 shadow-sm mb-4">
   <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
-    <div><p class="eyebrow mb-2">KOD YOZISH · MASALA {{ question_number }} / {{ total_questions }}</p><h1 class="h3 mb-1">{{ contest.title }}</h1><span class="text-secondary">Avvalgi masalalar to‘liq qabul qilingach keyingisi ochiladi.</span></div>
+    <div><p class="eyebrow mb-2">{% if contest.contest_type == 'mixed' %}1-BLOK · {% endif %}KOD YOZISH · MASALA {{ question_number }} / {{ total_questions }}</p><h1 class="h3 mb-1">{{ contest.title }}</h1><span class="text-secondary">Avvalgi masalalar to‘liq qabul qilingach keyingisi ochiladi.{% if contest.contest_type == 'mixed' %} Kod bo‘limidan keyin test bloki ({{ contest.quiz_questions|length }} ta savol) ochiladi.{% endif %}</span></div>
     <div class="timer-wrap"><span class="small text-secondary">Qolgan vaqt</span><div class="timer" id="timer" data-seconds="{{ remaining_seconds }}">--:--</div></div>
   </div>
 </div>
@@ -65,6 +65,15 @@
     </div>
   </div>
 </form>
+{% if contest.contest_type == 'mixed' %}
+<form method="post" action="{{ url_for('finish_coding', contest_id=contest.id) }}" class="card border-0 shadow-sm mt-3 mixed-next" onsubmit="return confirm('Kod bo‘limi yakunlanadi va unga qaytib bo‘lmaydi. Qabul qilingan masalalaringiz natijaga qo‘shiladi. Test blokiga o‘tasizmi?')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div><div class="fw-semibold">2-blok: test ({{ contest.quiz_questions|length }} ta savol)</div><div class="small text-secondary">Barcha kod masalalari qabul qilinsa, test o‘zi ochiladi. Qolganini yecha olmasangiz, kod bo‘limini yakunlab testga o‘ting.</div></div>
+    <button class="btn btn-outline-primary">Kod bo‘limini yakunlash → testga o‘tish</button>
+  </div>
+</form>
+{% endif %}
 {% if history %}
 <section class="card border-0 shadow-sm mt-3">
   <div class="card-body p-4">

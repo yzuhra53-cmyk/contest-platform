@@ -735,13 +735,15 @@ def create_app(test_config=None):
                 duration = 0
             contest_type = request.form.get("contest_type", "quiz")
             start_as_teacher = request.form.get("start_as_teacher") == "on"
-            allowed_type = "code_output" if contest_type == "quiz" else "code_problem"
+            allowed_types = {
+                "quiz": ("code_output",), "coding": ("code_problem",), "mixed": ("code_problem", "code_output"),
+            }.get(contest_type, ())
             selected_ids = request.form.getlist("question_ids")
             selected = [int(value) for value in selected_ids if value.isdigit()]
             questions = (
                 Question.query.filter(
                     Question.id.in_(selected),
-                    Question.question_type == allowed_type,
+                    Question.question_type.in_(allowed_types),
                 ).order_by(Question.id.asc()).all()
                 if selected
                 else []
@@ -752,8 +754,13 @@ def create_app(test_config=None):
             except ValueError as error:
                 start_at = end_at = None
                 window_error = str(error)
-            if contest_type not in {"quiz", "coding"} or not title or not 1 <= duration <= 600 or not questions:
+            mixed_incomplete = contest_type == "mixed" and {
+                question.question_type for question in questions
+            } != {"code_problem", "code_output"}
+            if contest_type not in {"quiz", "coding", "mixed"} or not title or not 1 <= duration <= 600 or not questions:
                 flash("Kontest turi, nomi, 1–600 daqiqalik vaqt va shu turga mos kamida bitta masala kerak.", "danger")
+            elif mixed_incomplete:
+                flash("Aralash kontestga kamida bitta kod yozish masalasi va bitta test savoli tanlang.", "danger")
             elif window_error:
                 flash(window_error, "danger")
             else:
@@ -833,13 +840,13 @@ def create_app(test_config=None):
             abort(404)
         score = None
         if request.method == "POST":
-            if contest.contest_type != "quiz":
+            if not contest.has_quiz:
                 abort(400)
             correct = sum(
                 request.form.get(str(question.id), "").upper() == question.correct_option
-                for question in contest.questions
+                for question in contest.quiz_questions
             )
-            total = len(contest.questions)
+            total = len(contest.quiz_questions)
             score = {
                 "correct": correct,
                 "total": total,
@@ -1234,7 +1241,7 @@ def create_app(test_config=None):
         return None
 
     def store_live_code(contest, state):
-        if contest.contest_type != "coding":
+        if not contest.has_coding:
             return
         code = request.form.get("code")
         if code is not None:
@@ -1257,9 +1264,9 @@ def create_app(test_config=None):
 
     def shuffled_question_order(contest):
         """Output testida har bir talabaga savollar boshqa tartibda (yonidagidan ko'chirish qiyinlashadi)."""
-        if contest.contest_type != "quiz":
+        if not contest.has_quiz:
             return None
-        ids = [question.id for question in contest.questions]
+        ids = [question.id for question in contest.quiz_questions]
         secrets.SystemRandom().shuffle(ids)
         return json.dumps(ids)
 
@@ -1542,8 +1549,18 @@ def create_app(test_config=None):
         deadline = attempt_deadline(attempt)
         now = utcnow()
         saved_answers = json.loads(attempt.answers_json or "{}")
-        if contest.contest_type == "coding":
-            questions = contest.questions
+        if contest.contest_type == "mixed" and attempt.coding_done_at is None:
+            # Aralash kontest: avval kod bo'limi. Hammasi qabul qilinsa, test bloki o'zi ochiladi.
+            accepted = {
+                submission.question_id
+                for submission in CodeSubmission.query.filter_by(attempt_id=attempt.id, status="accepted")
+            }
+            if all(question.id in accepted for question in contest.coding_questions):
+                attempt.coding_done_at = now
+                db.session.commit()
+                flash("Barcha kod masalalari qabul qilindi. Endi test bloki ochildi.", "success")
+        if contest.contest_type == "coding" or (contest.contest_type == "mixed" and attempt.coding_done_at is None):
+            questions = contest.coding_questions
             submissions = {
                 submission.question_id: submission
                 for submission in CodeSubmission.query.filter_by(attempt_id=attempt.id).all()
@@ -1553,7 +1570,7 @@ def create_app(test_config=None):
                  if question.id not in submissions or submissions[question.id].status != "accepted"),
                 None,
             )
-            if current_question is None:
+            if current_question is None and contest.contest_type == "coding":
                 score_attempt(attempt, saved_answers)
                 return redirect(url_for("student_result", attempt_id=attempt.id))
             remaining_seconds = max(0, int((deadline - now).total_seconds()))
@@ -1575,7 +1592,7 @@ def create_app(test_config=None):
         if request.method == "POST":
             if now < deadline:
                 submitted = {}
-                for question in contest.questions:
+                for question in contest.quiz_questions:
                     key = str(question.id)
                     submitted[key] = request.form.get(key, "").strip()
                 saved_answers.update(submitted)
@@ -1589,10 +1606,27 @@ def create_app(test_config=None):
             "take_contest.html",
             contest=contest,
             attempt=attempt,
-            questions=ordered_questions(contest, attempt),
+            questions=[question for question in ordered_questions(contest, attempt)
+                       if question.question_type != "code_problem"],
             answers=saved_answers,
             remaining_seconds=remaining_seconds,
         )
+
+    @application.route("/contest/<int:contest_id>/finish-coding", methods=["POST"])
+    @student_required
+    def finish_coding(contest_id):
+        """Aralash kontest: talaba kod bo'limini yakunlab, test blokiga o'tadi (qaytib bo'lmaydi)."""
+        contest = db.session.get(Contest, contest_id)
+        if contest is None or contest.contest_type != "mixed":
+            abort(404)
+        attempt = get_attempt(session["student_id"], contest_id)
+        if not attempt or attempt.completed_at:
+            abort(409)
+        if attempt.coding_done_at is None:
+            attempt.coding_done_at = utcnow()
+            db.session.commit()
+            flash("Kod bo‘limi yakunlandi. Qabul qilingan masalalaringiz natijaga qo‘shiladi. Endi test bloki.", "info")
+        return redirect(url_for("take_contest", contest_id=contest_id))
 
     run_times = {}
     run_lock = threading.Lock()
@@ -1603,11 +1637,16 @@ def create_app(test_config=None):
         """Konsol: kodni talaba kiritgan input bilan ishga tushiradi. Baholanmaydi."""
         contest = db.session.get(Contest, contest_id)
         question = db.session.get(Question, question_id)
-        if contest is None or question is None or contest.contest_type != "coding" or question not in contest.questions:
+        if (
+            contest is None or question is None or not contest.has_coding
+            or question.question_type != "code_problem" or question not in contest.questions
+        ):
             abort(404)
         attempt = get_attempt(session["student_id"], contest_id)
         if not attempt or attempt.completed_at or utcnow() >= attempt_deadline(attempt):
             return jsonify(error="Kontest vaqti tugagan.", finished=True), 409
+        if attempt.coding_done_at is not None:
+            return jsonify(error="Kod bo‘limi yakunlangan.", finished=True), 409
         if not seb_ok(contest):
             return jsonify(error="Kontest faqat Safe Exam Browser orqali ishlaydi."), 403
         data = request.get_json(silent=True) or {}
@@ -1640,11 +1679,17 @@ def create_app(test_config=None):
     def submit_code(contest_id, question_id):
         contest = db.session.get(Contest, contest_id)
         question = db.session.get(Question, question_id)
-        if contest is None or question is None or contest.contest_type != "coding" or question not in contest.questions:
+        if (
+            contest is None or question is None or not contest.has_coding
+            or question.question_type != "code_problem" or question not in contest.questions
+        ):
             abort(404)
         attempt = get_attempt(session["student_id"], contest_id)
         if not attempt or attempt.completed_at:
             abort(409)
+        if attempt.coding_done_at is not None:
+            flash("Kod bo‘limi yakunlangan, endi test bloki ochiq.", "warning")
+            return redirect(url_for("take_contest", contest_id=contest_id))
         if utcnow() >= attempt_deadline(attempt):
             flash("Kontest vaqti tugagan.", "warning")
             return redirect(url_for("take_contest", contest_id=contest_id))
@@ -1659,7 +1704,7 @@ def create_app(test_config=None):
             for submission in CodeSubmission.query.filter_by(attempt_id=attempt.id).all()
         }
         current_question = next(
-            (item for item in contest.questions
+            (item for item in contest.coding_questions
              if item.id not in submissions or submissions[item.id].status != "accepted"),
             None,
         )
@@ -1847,6 +1892,9 @@ def create_app(test_config=None):
             db.session.execute(db.text("ALTER TABLE students ADD COLUMN session_token VARCHAR(64)"))
             db.session.commit()
         attempt_columns = {column["name"] for column in db.inspect(db.engine).get_columns("attempts")}
+        if "coding_done_at" not in attempt_columns:
+            db.session.execute(db.text("ALTER TABLE attempts ADD COLUMN coding_done_at TIMESTAMP"))
+            db.session.commit()
         if "question_order" not in attempt_columns:
             db.session.execute(db.text("ALTER TABLE attempts ADD COLUMN question_order TEXT"))
             db.session.commit()
