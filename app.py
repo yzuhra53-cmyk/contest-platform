@@ -50,6 +50,9 @@ from models import (
 from judge import MAX_PARALLEL, JudgeError, judge_solution, run_program
 import proctoring
 from question_import import ImportFormatError, parse_file as parse_question_file
+from difficulty import LEVEL_LABELS, classify as classify_difficulty, normalize as normalize_difficulty
+import i18n
+from i18n import _, N_
 
 # Kirish kodi: chalkash belgilarsiz (0/O, 1/I/L yo'q), 8 belgi = ~40 bit.
 ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -204,6 +207,7 @@ def create_app(test_config=None):
     db.init_app(application)
     application.jinja_env.filters["local"] = format_local
     application.jinja_env.globals["contest_state"] = contest_state
+    i18n.init_app(application)
     throttle = LoginThrottle()
     judge_pool = ThreadPoolExecutor(max_workers=MAX_PARALLEL, thread_name_prefix="judge")
 
@@ -221,7 +225,10 @@ def create_app(test_config=None):
     def inject_csrf_token():
         if "csrf_token" not in session:
             session["csrf_token"] = secrets.token_urlsafe(32)
-        return {"csrf_token": session["csrf_token"]}
+        return {
+            "csrf_token": session["csrf_token"],
+            "level_labels": {level: _(label) for level, label in LEVEL_LABELS.items()},
+        }
 
     def admin_required(view):
         @wraps(view)
@@ -547,6 +554,7 @@ def create_app(test_config=None):
             flash("Fayl 5 MB dan katta.", "danger")
             return redirect(url_for("admin_questions"))
         category = " ".join(request.form.get("category", "").split())[:160] or None
+        default_level = normalize_difficulty(request.form.get("difficulty"))
         try:
             parsed = parse_question_file(uploaded.filename, data, category)
         except ImportFormatError as error:
@@ -581,6 +589,7 @@ def create_app(test_config=None):
                 option_c=option_c,
                 option_d=option_d,
                 correct_option=item["correct"],
+                difficulty=item.get("difficulty") or default_level,
             ))
             added += 1
         db.session.commit()
@@ -763,11 +772,29 @@ def create_app(test_config=None):
                 question.test_cases_json = json.dumps(test_cases, ensure_ascii=False)
             else:
                 abort(400)
+            question.difficulty = normalize_difficulty(request.form.get("difficulty")) or classify_difficulty(question)
             db.session.add(question)
             db.session.commit()
             flash("Savol bazaga qo‘shildi.", "success")
             return redirect(url_for("admin_questions"))
-        return render_template("questions.html", questions=Question.query.order_by(Question.id.desc()).all())
+        questions = Question.query.order_by(Question.id.desc()).all()
+        level_counts = {level: 0 for level in ("easy", "medium", "hard")}
+        for question in questions:
+            level_counts[question.difficulty or "medium"] = level_counts.get(question.difficulty or "medium", 0) + 1
+        return render_template("questions.html", questions=questions, level_counts=level_counts)
+
+    @application.route("/admin/questions/<int:question_id>/difficulty", methods=["POST"])
+    @admin_required
+    def set_question_difficulty(question_id):
+        question = db.session.get(Question, question_id)
+        level = normalize_difficulty(request.form.get("difficulty"))
+        if question is None or level is None:
+            abort(404 if question is None else 400)
+        question.difficulty = level
+        db.session.commit()
+        if request.headers.get("X-Requested-With") == "fetch":
+            return jsonify({"ok": True, "difficulty": level})
+        return redirect(url_for("admin_questions"))
 
     @application.route("/admin/questions/<int:question_id>/delete", methods=["POST"])
     @admin_required
@@ -1976,6 +2003,10 @@ def create_app(test_config=None):
                 if name not in state_columns:
                     db.session.execute(db.text(f"ALTER TABLE proctor_state ADD COLUMN {name} {ddl}"))
                     db.session.commit()
+        question_columns = {column["name"] for column in db.inspect(db.engine).get_columns("questions")}
+        if "difficulty" not in question_columns:
+            db.session.execute(db.text("ALTER TABLE questions ADD COLUMN difficulty VARCHAR(10)"))
+            db.session.commit()
         if "access_code_hash" not in student_columns:
             db.session.execute(db.text("ALTER TABLE students ADD COLUMN access_code_hash VARCHAR(255)"))
             db.session.commit()
@@ -1993,6 +2024,7 @@ def create_app(test_config=None):
 
         import_problem_bank(application)
         import_theory_bank(application)
+        fill_difficulty(application)
 
     return application
 
@@ -2025,6 +2057,16 @@ def import_problem_bank(application):
         except IntegrityError:
             # Bir nechta jarayon bir vaqtda ishga tushsa, boshqasi allaqachon qo'shgan.
             db.session.rollback()
+
+
+def fill_difficulty(application):
+    """Darajasi belgilanmagan savollarni bir marta avtomatik baholaydi."""
+    pending = Question.query.filter(Question.difficulty.is_(None)).all()
+    for question in pending:
+        question.difficulty = classify_difficulty(question)
+    if pending:
+        db.session.commit()
+        application.logger.info("%s ta savolga qiyinlik darajasi berildi.", len(pending))
 
 
 def import_theory_bank(application):

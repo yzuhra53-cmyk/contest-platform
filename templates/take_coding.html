@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block lang_switch %}{% if not contest.lockdown %}{{ super() }}{% endif %}{% endblock %}
 {% block title %}Kod masalasi · {{ contest.title }}{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css">

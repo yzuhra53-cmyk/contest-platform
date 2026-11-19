@@ -9,6 +9,8 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <label class="form-label" for="question_type">Savol turi</label>
       <select class="form-select mb-3" id="question_type" name="question_type"><option value="code_output">Kod natijasini topish (A–D)</option><option value="test">Oddiy test (A–D)</option><option value="code_problem">Kod yozish masalasi (ustoz tekshiradi)</option><option value="code">Output yoziladigan masala</option></select>
+<label class="form-label" for="difficulty">Qiyinlik darajasi</label>
+      <select class="form-select mb-3" id="difficulty" name="difficulty"><option value="">Avtomatik aniqlansin</option>{% for level in ('easy', 'medium', 'hard') %}<option value="{{ level }}">{{ level_labels[level] }}</option>{% endfor %}</select>
       <label class="form-label">Savol yoki masala sharti</label><textarea class="form-control mb-3" name="prompt" rows="4" required></textarea>
       <div id="choiceFields">
         <div id="snippetFields">
@@ -37,20 +39,23 @@
     <form method="post" action="{{ url_for('import_questions') }}" enctype="multipart/form-data">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <input class="form-control mb-2" type="file" name="file" accept=".docx,.xlsx" required>
-      <input class="form-control mb-3" name="category" maxlength="160" placeholder="Blok nomi (ixtiyoriy, faylda bo‘lmasa)">
+      <input class="form-control mb-2" name="category" maxlength="160" placeholder="Blok nomi (ixtiyoriy, faylda bo‘lmasa)">
+      <select class="form-select mb-2" name="difficulty"><option value="">Daraja: avtomatik (yoki fayldagi «Daraja» ustuni)</option>{% for level in ('easy', 'medium', 'hard') %}<option value="{{ level }}">{{ level_labels[level] }}</option>{% endfor %}</select>
+      <p class="form-text mt-0 mb-3">Jadvalda «Daraja» ustuni bo‘lsa (Oson / O‘rta / Qiyin), har bir savolga o‘sha daraja beriladi.</p>
       <button class="btn btn-outline-primary">Savollarni yuklash</button>
     </form>
   </div></div></div>
   <div class="col-lg-7"><div class="card border-0 shadow-sm"><div class="card-body p-0">
-    <div class="p-4 border-bottom"><h2 class="h5 mb-0">Mavjud savollar <span class="badge rounded-pill text-bg-light">{{ questions|length }}</span></h2></div>
+    <div class="p-4 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2"><h2 class="h5 mb-0">Mavjud savollar <span class="badge rounded-pill text-bg-light">{{ questions|length }}</span></h2>
+      <div class="d-flex flex-wrap gap-1" id="bankLevelFilter">{% for level in ('easy', 'medium', 'hard') %}<button type="button" class="btn btn-sm level-chip level-{{ level }} is-on" data-level-chip="{{ level }}">{{ level_labels[level] }} · {{ level_counts[level] }}</button>{% endfor %}</div></div>
     {% if questions %}<div class="list-group list-group-flush">
-      {% for question in questions %}<div class="list-group-item p-4">
-        <div class="d-flex justify-content-between gap-3"><div><span class="badge {{ 'text-bg-info' if question.question_type == 'code_output' else ('text-bg-primary' if question.question_type == 'test' else 'text-bg-secondary') }} mb-2">{{ 'Kod natijasini topish' if question.question_type == 'code_output' else ('Nazariy test' if question.question_type == 'test' else 'Dasturlash') }}</span>{% if question.category %} <span class="badge text-bg-light mb-2">{{ question.category }}</span>{% endif %}<div class="fw-medium">{{ question.prompt }}</div>
+      {% for question in questions %}<div class="list-group-item p-4" data-level="{{ question.difficulty or 'medium' }}">
+        <div class="d-flex justify-content-between gap-3"><div><span class="badge {{ 'text-bg-info' if question.question_type == 'code_output' else ('text-bg-primary' if question.question_type == 'test' else 'text-bg-secondary') }} mb-2">{{ 'Kod natijasini topish' if question.question_type == 'code_output' else ('Nazariy test' if question.question_type == 'test' else 'Dasturlash') }}</span>{% if question.category %} <span class="badge text-bg-light mb-2">{{ question.category }}</span>{% endif %} <span class="level-badge level-{{ question.difficulty or 'medium' }} mb-2">{{ level_labels[question.difficulty or 'medium'] }}</span><div class="fw-medium">{{ question.prompt }}</div>
           {% if question.question_type == 'code_output' %}<pre class="sample-input mt-2 mb-2"><code>{{ question.code_snippet }}</code></pre><div class="small text-secondary">Input: {{ question.input_data or 'bo‘sh' }} · Chiqish variantli test</div>
           {% elif question.question_type == 'code_problem' %}<div class="small text-secondary mt-2">Namuna Input: {{ question.input_data or '—' }} · yashirin testlar: {{ (question.test_cases_json or '[]')|length }} belgili JSON</div>
           {% elif question.question_type == 'test' %}<div class="small text-secondary mt-2">A. {{ question.option_a }} · B. {{ question.option_b }} · C. {{ question.option_c }} · D. {{ question.option_d }}</div>
           {% else %}<div class="small text-secondary mt-2">Input: {{ question.input_data or '—' }} · Output belgilangan</div>{% endif %}
-        </div><form method="post" action="{{ url_for('delete_question', question_id=question.id) }}" onsubmit="return confirm('Savolni o‘chirmoqchimisiz?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger">O‘chirish</button></form></div>
+        </div><div class="d-flex flex-column align-items-end gap-2"><form method="post" class="question-level-form" action="{{ url_for('set_question_difficulty', question_id=question.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><select class="form-select form-select-sm" name="difficulty" aria-label="Qiyinlik darajasi" onchange="this.form.submit()">{% for level in ('easy', 'medium', 'hard') %}<option value="{{ level }}" {% if (question.difficulty or 'medium') == level %}selected{% endif %}>{{ level_labels[level] }}</option>{% endfor %}</select></form><form method="post" action="{{ url_for('delete_question', question_id=question.id) }}" onsubmit="return confirm('Savolni o‘chirmoqchimisiz?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger">O‘chirish</button></form></div></div>
       </div>{% endfor %}
     </div>{% else %}<div class="empty-state">Savollar bazasi hozircha bo‘sh.</div>{% endif %}
   </div></div></div>
@@ -81,6 +86,13 @@ function toggleQuestionFields() {
   codeProblemFields.querySelectorAll('textarea').forEach((field) => field.required = isCodeProblem);
 }
 questionType.addEventListener('change', toggleQuestionFields);
+const shownLevels = new Set(['easy', 'medium', 'hard']);
+document.querySelectorAll('#bankLevelFilter [data-level-chip]').forEach((chip) => chip.addEventListener('click', () => {
+  const level = chip.dataset.levelChip;
+  if (shownLevels.has(level) && shownLevels.size > 1) shownLevels.delete(level); else shownLevels.add(level);
+  document.querySelectorAll('#bankLevelFilter [data-level-chip]').forEach((item) => item.classList.toggle('is-on', shownLevels.has(item.dataset.levelChip)));
+  document.querySelectorAll('.list-group-item[data-level]').forEach((item) => { item.hidden = !shownLevels.has(item.dataset.level); });
+}));
 toggleQuestionFields();
 </script>
 {% endblock %}

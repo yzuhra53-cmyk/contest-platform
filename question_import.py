@@ -14,6 +14,8 @@ Qo'llab-quvvatlanadigan jadval ko'rinishi (Word jadvali yoki Excel varag'i):
 
 import io
 import random
+
+from difficulty import normalize as normalize_level
 import re
 import zipfile
 import xml.etree.ElementTree as ET
@@ -53,7 +55,11 @@ def _header_layout(cells):
         None,
     )
     block_index = next((i for i, cell in enumerate(lowered) if cell in {"blok", "block", "mavzu"}), None)
-    return {"prompt": prompt_index, "answer": answer_index, "block": block_index}
+    level_index = next(
+        (i for i, cell in enumerate(lowered) if cell in {"daraja", "qiyinlik", "difficulty", "level", "сложность"}),
+        None,
+    )
+    return {"prompt": prompt_index, "answer": answer_index, "block": block_index, "level": level_index}
 
 
 def _row_to_question(cells, layout, category):
@@ -72,7 +78,10 @@ def _row_to_question(cells, layout, category):
     block = category
     if layout["block"] is not None and layout["block"] < len(cells) and _clean(cells[layout["block"]]):
         block = _clean(cells[layout["block"]])
-    return {"prompt": prompt, "options": options, "correct": letter, "category": block}
+    level = None
+    if layout.get("level") is not None and layout["level"] < len(cells):
+        level = normalize_level(_clean(cells[layout["level"]]))
+    return {"prompt": prompt, "options": options, "correct": letter, "category": block, "difficulty": level}
 
 
 def _finalize(items):
@@ -86,7 +95,8 @@ def _finalize(items):
             letter = LETTERS[options.index(correct)]
         else:
             letter = item["correct"]
-        result.append({"prompt": item["prompt"], "options": options, "correct": letter, "category": item["category"]})
+        result.append({"prompt": item["prompt"], "options": options, "correct": letter, "category": item["category"],
+                       "difficulty": item.get("difficulty")})
     return result
 
 

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block lang_switch %}{% if not contest.lockdown %}{{ super() }}{% endif %}{% endblock %}
 {% block title %}{{ contest.title }} · Bilim.Arena{% endblock %}
 {% block content %}
 <div class="contest-header card border-0 shadow-sm mb-4">

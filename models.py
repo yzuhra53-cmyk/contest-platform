@@ -49,6 +49,8 @@ class Question(db.Model):
     test_cases_json = db.Column(db.Text)
     # Nazariy savollar bloki (masalan, "1-blok: Kompyuter qurilmasi...").
     category = db.Column(db.String(160))
+    # Qiyinlik darajasi: easy / medium / hard (difficulty.py).
+    difficulty = db.Column(db.String(10))
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
     contests = db.relationship("Contest", secondary=contest_questions, back_populates="questions")

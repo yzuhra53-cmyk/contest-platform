@@ -1,4 +1,11 @@
 {% extends "base.html" %}
+{% macro question_item(question) %}<label class="form-check d-flex gap-2 py-1" data-level="{{ question.difficulty or 'medium' }}"><input class="form-check-input mt-1" type="checkbox" name="question_ids" value="{{ question.id }}"><span class="small"><span class="level-badge level-{{ question.difficulty or 'medium' }}">{{ level_labels[question.difficulty or 'medium'] }}</span> {{ question.prompt|truncate(90) }}</span></label>{% endmacro %}
+{% macro random_picker(per_group=False) %}<div class="random-picker small mb-2" data-random>
+  <span class="text-secondary">Tasodifiy:</span>
+  {% for level in ('easy', 'medium', 'hard') %}<label class="random-level"><span class="level-badge level-{{ level }}">{{ level_labels[level] }}</span><input class="form-control form-control-sm" type="number" min="0" max="200" value="0" data-random-level="{{ level }}"></label>{% endfor %}
+  {% if per_group %}<label class="text-secondary"><input class="form-check-input" type="checkbox" data-random-per-group checked> har bir mavzudan</label>{% endif %}
+  <button type="button" class="btn btn-sm btn-outline-secondary" data-random-pick>tanlash</button>
+</div>{% endmacro %}
 {% block title %}Kontestlar · Bilim.Arena{% endblock %}
 {% block content %}
 <div class="page-heading"><p class="eyebrow mb-2">OLIMPIADALAR</p><h1 class="page-title">Kontestlarni boshqarish</h1><p class="text-secondary">Savollarni tanlang, vaqtni va faol holatini belgilang.</p></div>
@@ -43,39 +50,41 @@
         <div><div class="fw-semibold">Kontest bloklari</div><div class="form-text mt-0">Bir yoki bir nechta blokdan savol tanlang. Talaba avval kod yozish blokini yechadi; u tugagach output va nazariy test bloklari ochiladi.</div></div>
         <div class="small" id="blockSummary"></div>
       </div>
+      <div class="level-filter d-flex flex-wrap align-items-center gap-2 mb-3" id="levelFilter">
+        <span class="small text-secondary">Daraja bo‘yicha ko‘rsatish:</span>
+        {% for level in ('easy', 'medium', 'hard') %}<button type="button" class="btn btn-sm level-chip level-{{ level }} is-on" data-level-chip="{{ level }}">{{ level_labels[level] }}</button>{% endfor %}
+      </div>
       <div class="block-columns">
         <section class="block-column" data-block="code">
           <header><span class="block-step">1</span><div><div class="fw-semibold">Kod yozish</div><div class="small text-secondary"><span class="block-count">0</span> / {{ coding_questions|length }} tanlandi</div></div>
             <label class="block-all small"><input class="form-check-input" type="checkbox" data-select-all> hammasi</label></header>
+          {{ random_picker() }}
           <div class="block-list">
             {% for question in coding_questions %}
-            <label class="form-check d-flex gap-2 py-1"><input class="form-check-input mt-1" type="checkbox" name="question_ids" value="{{ question.id }}"><span class="small">{{ question.prompt|truncate(90) }}</span></label>
+            {{ question_item(question) }}
             {% else %}<p class="small text-secondary mb-0">Kod yozish masalalari hali qo‘shilmagan.</p>{% endfor %}
           </div>
         </section>
         <section class="block-column" data-block="output">
           <header><span class="block-step">2</span><div><div class="fw-semibold">Output testi</div><div class="small text-secondary"><span class="block-count">0</span> / {{ quiz_questions|length }} tanlandi</div></div>
             <label class="block-all small"><input class="form-check-input" type="checkbox" data-select-all> hammasi</label></header>
+          {{ random_picker() }}
           <div class="block-list">
             {% for question in quiz_questions %}
-            <label class="form-check d-flex gap-2 py-1"><input class="form-check-input mt-1" type="checkbox" name="question_ids" value="{{ question.id }}"><span class="small">{{ question.prompt|truncate(90) }}</span></label>
+            {{ question_item(question) }}
             {% else %}<p class="small text-secondary mb-0">Output testlari hali qo‘shilmagan.</p>{% endfor %}
           </div>
         </section>
         <section class="block-column" data-block="theory">
           <header><span class="block-step">3</span><div><div class="fw-semibold">Nazariy bilimlar</div><div class="small text-secondary"><span class="block-count">0</span> / {{ theory_questions|length }} tanlandi</div></div>
             <label class="block-all small"><input class="form-check-input" type="checkbox" data-select-all> hammasi</label></header>
-          <div class="d-flex gap-2 align-items-center small mb-2">
-            <span class="text-secondary">Har bir mavzudan tasodifiy</span>
-            <input class="form-control form-control-sm" type="number" min="1" max="40" value="5" id="randomPerGroup" style="width: 4.5rem">
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="randomPick">tanlash</button>
-          </div>
+          {{ random_picker(per_group=True) }}
           <div class="block-list">
             {% for category, items in theory_groups %}
             <div class="block-group" data-group>
               <label class="block-group-title"><input class="form-check-input" type="checkbox" data-select-group> {{ category }} <span class="text-secondary fw-normal">({{ items|length }})</span></label>
               {% for question in items %}
-              <label class="form-check d-flex gap-2 py-1"><input class="form-check-input mt-1" type="checkbox" name="question_ids" value="{{ question.id }}"><span class="small">{{ question.prompt|truncate(90) }}</span></label>
+              {{ question_item(question) }}
               {% endfor %}
             </div>
             {% else %}<p class="small text-secondary mb-0">Nazariy test savollari hali qo‘shilmagan.</p>{% endfor %}
@@ -119,10 +128,24 @@
 <script>
 (() => {
   const columns = document.querySelectorAll('.block-column');
+  const visible = (box) => !box.closest('[data-level]').hidden;
+  const shownLevels = new Set(['easy', 'medium', 'hard']);
+  function applyLevelFilter() {
+    document.querySelectorAll('.block-column [data-level]').forEach((item) => {
+      item.hidden = !shownLevels.has(item.dataset.level);
+    });
+    document.querySelectorAll('[data-level-chip]').forEach((chip) => chip.classList.toggle('is-on', shownLevels.has(chip.dataset.levelChip)));
+  }
+  document.querySelectorAll('[data-level-chip]').forEach((chip) => chip.addEventListener('click', () => {
+    const level = chip.dataset.levelChip;
+    if (shownLevels.has(level) && shownLevels.size > 1) shownLevels.delete(level); else shownLevels.add(level);
+    applyLevelFilter();
+    refresh();
+  }));
   function refresh() {
     const parts = [];
     columns.forEach((column) => {
-      const boxes = [...column.querySelectorAll('input[name="question_ids"]')];
+      const boxes = [...column.querySelectorAll('input[name="question_ids"]')].filter(visible);
       const checked = boxes.filter((box) => box.checked).length;
       column.querySelector('.block-count').textContent = checked;
       column.classList.toggle('is-used', checked > 0);
@@ -130,42 +153,54 @@
       all.checked = boxes.length > 0 && checked === boxes.length;
       all.indeterminate = checked > 0 && checked < boxes.length;
       column.querySelectorAll('[data-group]').forEach((group) => {
-        const items = [...group.querySelectorAll('input[name="question_ids"]')];
+        const items = [...group.querySelectorAll('input[name="question_ids"]')].filter(visible);
         const on = items.filter((box) => box.checked).length;
         const toggle = group.querySelector('[data-select-group]');
         toggle.checked = items.length > 0 && on === items.length;
         toggle.indeterminate = on > 0 && on < items.length;
       });
-      if (checked) parts.push(`${column.querySelector('.fw-semibold').textContent}: ${checked}`);
+      const total = column.querySelectorAll('input[name="question_ids"]:checked').length;
+      column.querySelector('.block-count').textContent = total;
+      column.classList.toggle('is-used', total > 0);
+      if (total) parts.push(`${column.querySelector('.fw-semibold').textContent}: ${total}`);
     });
     document.getElementById('blockSummary').textContent = parts.length ? parts.join(' · ') : 'Hali savol tanlanmagan';
   }
   columns.forEach((column) => {
     column.querySelector('[data-select-all]').addEventListener('change', (event) => {
-      column.querySelectorAll('input[name="question_ids"]').forEach((box) => { box.checked = event.target.checked; });
+      column.querySelectorAll('input[name="question_ids"]').forEach((box) => { if (visible(box)) box.checked = event.target.checked; });
       refresh();
     });
     column.querySelectorAll('[data-select-group]').forEach((toggle) => toggle.addEventListener('change', (event) => {
-      toggle.closest('[data-group]').querySelectorAll('input[name="question_ids"]').forEach((box) => { box.checked = event.target.checked; });
+      toggle.closest('[data-group]').querySelectorAll('input[name="question_ids"]').forEach((box) => { if (visible(box)) box.checked = event.target.checked; });
       refresh();
     }));
   });
   document.getElementById('contestForm').addEventListener('change', (event) => {
     if (event.target.name === 'question_ids') refresh();
   });
-  document.getElementById('randomPick').addEventListener('click', () => {
-    const count = Math.max(1, Number(document.getElementById('randomPerGroup').value) || 1);
-    document.querySelectorAll('.block-column[data-block="theory"] [data-group]').forEach((group) => {
-      const boxes = [...group.querySelectorAll('input[name="question_ids"]')];
-      boxes.forEach((box) => { box.checked = false; });
-      for (let i = boxes.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [boxes[i], boxes[j]] = [boxes[j], boxes[i]];
-      }
-      boxes.slice(0, count).forEach((box) => { box.checked = true; });
+  function shuffle(items) {
+    for (let i = items.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items;
+  }
+  // Tasodifiy tanlash: har bir darajadan ko'rsatilgan sondagi savollar (nazariyda — har bir mavzudan).
+  document.querySelectorAll('[data-random]').forEach((picker) => picker.querySelector('[data-random-pick]').addEventListener('click', () => {
+    const column = picker.closest('.block-column');
+    const perGroup = picker.querySelector('[data-random-per-group]')?.checked;
+    const scopes = perGroup ? [...column.querySelectorAll('[data-group]')] : [column];
+    column.querySelectorAll('input[name="question_ids"]').forEach((box) => { box.checked = false; });
+    scopes.forEach((scope) => {
+      picker.querySelectorAll('[data-random-level]').forEach((input) => {
+        const count = Math.max(0, Number(input.value) || 0);
+        const boxes = [...scope.querySelectorAll(`[data-level="${input.dataset.randomLevel}"] input[name="question_ids"]`)];
+        shuffle(boxes).slice(0, count).forEach((box) => { box.checked = true; });
+      });
     });
     refresh();
-  });
+  }));
   refresh();
 })();
 </script>
