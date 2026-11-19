@@ -165,14 +165,27 @@
     }
     try {
       choosing = true;
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {width: {ideal: 640}, height: {ideal: 480}, facingMode: 'user'},
-        audio: false,
-      });
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {width: {ideal: 640}, height: {ideal: 480}, facingMode: 'user'},
+          audio: false,
+        });
+      } catch (first) {
+        // Ba'zi kameralar so'ralgan sozlamani bajara olmaydi — oddiy so'rov bilan yana urinib ko'ramiz.
+        if (first.name !== 'OverconstrainedError' && first.name !== 'NotReadableError') throw first;
+        stream = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
+      }
     } catch (error) {
       stream = null;
       updateOverlay();
-      errorBox.textContent = 'Kameraga ruxsat berilmadi. Brauzer sozlamalarida ruxsat bering va qayta bosing.';
+      const cameraErrors = {
+        NotAllowedError: 'Kameraga ruxsat berilmadi. Manzil satri chap tomonidagi 🔒 belgisini bosing → Kamera → «Ruxsat berish» (Allow), so‘ng sahifani yangilang. Windows’da: Sozlamalar → Maxfiylik va xavfsizlik → Kamera → «Kameraga kirish» va «Ish stoli ilovalariga kameraga kirish» yoqilgan bo‘lsin.',
+        NotReadableError: 'Kamera boshqa dastur tomonidan band (Zoom, Teams, Telegram, «Kamera» ilovasi yoki boshqa brauzer oynasi). Ularni yoping va qayta bosing.',
+        NotFoundError: 'Kamera topilmadi. Kamera ulanganini va Windows’da o‘chirib qo‘yilmaganini tekshiring.',
+        OverconstrainedError: 'Kamerani ishga tushirib bo‘lmadi. Boshqa kamerani ulab ko‘ring.',
+        SecurityError: 'Brauzer xavfsizlik sababli kamerani bloklamoqda. Sayt https:// orqali ochilganini tekshiring.',
+      };
+      errorBox.textContent = (cameraErrors[error.name] || 'Kamerani yoqib bo‘lmadi.') + ` (${error.name})`;
       setStatus('Kamera o‘chiq', 'danger');
       sendEvent('camera_denied', `${error.name}: ${error.message}`);
       return;
