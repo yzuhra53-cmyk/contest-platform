@@ -226,7 +226,15 @@
         surfaceSwitching: 'exclude',
       });
     } catch (error) {
-      errorBox.textContent = 'Ekranni ulashishga ruxsat berilmadi. Qayta bosing va «Butun ekran»ni tanlang.';
+      const reasons = {
+        NotAllowedError: 'Ulashish bekor qilindi yoki brauzer ruxsat bermadi. Qayta bosing, ochilgan oynada «Butun ekran / Entire screen»ni tanlab, «Ulashish / Share» tugmasini bosing. macOS’da: Tizim sozlamalari → Maxfiylik → Ekran yozuvi (Screen Recording) bo‘limida brauzerga ruxsat bering.',
+        NotReadableError: 'Operatsion tizim ekranni yozishga ruxsat bermadi yoki ekran boshqa dastur tomonidan band. Boshqa ekran yozuvchi dasturlarni yoping va qayta urinib ko‘ring.',
+        NotFoundError: 'Ulashish uchun ekran topilmadi. Qayta urinib ko‘ring.',
+        InvalidStateError: 'Tugmani to‘g‘ridan-to‘g‘ri bosing va qayta urinib ko‘ring.',
+        SecurityError: 'Ekran ulashish faqat xavfsiz (https://) sahifada ishlaydi.',
+        TypeError: 'Bu brauzer ekran ulashishni qo‘llab-quvvatlamaydi. Kompyuterda Chrome, Edge yoki Firefox’dan foydalaning.',
+      };
+      errorBox.textContent = `${reasons[error.name] || 'Ekranni ulashib bo‘lmadi. Qayta bosing va «Butun ekran»ni tanlang.'} (${error.name})`;
       sendEvent('screen_denied', error.name);
       return;
     }
