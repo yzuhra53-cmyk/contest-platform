@@ -36,6 +36,8 @@
   const statusEl = document.getElementById('proctorStatus');
   const screenStatusEl = document.getElementById('screenStatus');
   let stream = null;
+  // Kompyuterda kamera yo'q: ekran kuzatuvi bo'lsa, faqat u bilan davom etiladi.
+  let cameraMissing = false;
   let screenStream = null;
   let timer = null;
   let screenTimer = null;
@@ -66,7 +68,7 @@
   }
   // Barcha talab qilingan manbalar ulangandagina kontest ko'rinadi.
   function updateOverlay() {
-    const cameraOk = !needCamera || Boolean(stream);
+    const cameraOk = !needCamera || Boolean(stream) || cameraMissing;
     const screenOk = !needScreen || Boolean(screenStream);
     markStep('stepCamera', cameraOk);
     markStep('stepScreen', screenOk);
@@ -177,6 +179,14 @@
       }
     } catch (error) {
       stream = null;
+      if (error.name === 'NotFoundError' && needScreen) {
+        // Kamerasi yo'q kompyuter: ustozga xabar beriladi, kuzatuv ekran orqali davom etadi.
+        cameraMissing = true;
+        sendEvent('camera_missing', `${error.name}: ${error.message}`);
+        setStatus('Kamera yo‘q — ekran orqali kuzatilmoqda', 'warning');
+        updateOverlay();
+        return;
+      }
       updateOverlay();
       const cameraErrors = {
         NotAllowedError: 'Kameraga ruxsat berilmadi. Manzil satri chap tomonidagi 🔒 belgisini bosing → Kamera → «Ruxsat berish» (Allow), so‘ng sahifani yangilang. Windows’da: Sozlamalar → Maxfiylik va xavfsizlik → Kamera → «Kameraga kirish» va «Ish stoli ilovalariga kameraga kirish» yoqilgan bo‘lsin.',
@@ -217,7 +227,7 @@
     const form = new FormData();
     form.append('screen', blob, 'screen.jpg');
     form.append('reason', reason || '');
-    if (!needCamera) appendCode(form);  // kamera bo'lmasa, kod ekran rasmi bilan birga yuboriladi
+    if (!stream) appendCode(form);  // kamera bo'lmasa, kod ekran rasmi bilan birga yuboriladi
     try {
       const response = await fetch(screenUrl, {method: 'POST', headers: {'X-CSRF-Token': csrf}, body: form});
       const data = response.headers.get('Content-Type')?.includes('json') ? await response.json() : null;

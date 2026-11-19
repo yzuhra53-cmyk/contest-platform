@@ -44,6 +44,7 @@ function card(row) {
   if (row.faces === 0) faces = '<span class="badge text-bg-danger">Yuz yo‘q</span>';
   else if (row.faces > 1) faces = `<span class="badge text-bg-danger">${row.faces} ta yuz</span>`;
   else if (row.faces === 1) faces = '<span class="badge text-bg-light">1 yuz</span>';
+  if (row.camera_missing && !row.has_image) faces = '<span class="badge text-bg-warning">Kamerasi yo‘q — faqat ekran</span>';
   const cameraImage = !needCamera ? '' : row.has_image
     ? `<img class="proctor-frame" alt="" src="${frameUrl(row.attempt_id, row.frame_version)}">`
     : '<div class="proctor-frame-empty">Kadr hali kelmagan</div>';

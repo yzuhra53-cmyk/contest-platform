@@ -1265,6 +1265,13 @@ def create_app(test_config=None):
             and (utcnow() - state.last_seen_at).total_seconds() <= proctoring.FRAME_STALE_SECONDS
         )
 
+    def camera_waived(contest, attempt):
+        """Kamera topilmagan kompyuterda ekran kuzatuvi yoqilgan bo'lsa, kamera talab qilinmaydi."""
+        if not contest.screen_capture:
+            return False
+        state = proctor_state(attempt, create=False)
+        return bool(state is not None and state.camera_missing)
+
     def screen_is_live(attempt):
         state = proctor_state(attempt, create=False)
         return (
@@ -1275,7 +1282,7 @@ def create_app(test_config=None):
 
     def monitoring_problem(contest, attempt):
         """Kuzatuv talablari bajarilmasa, talabaga ko'rsatiladigan sabab (aks holda None)."""
-        if contest.proctoring and not camera_is_live(attempt):
+        if contest.proctoring and not camera_is_live(attempt) and not camera_waived(contest, attempt):
             return "Kamera ishlamayapti: kamerani yoqing va sahifani yangilang."
         if contest.screen_capture and not screen_is_live(attempt):
             return "Ekran ulashilmayapti: butun ekraningizni ulashing va sahifani yangilang."
@@ -1388,6 +1395,15 @@ def create_app(test_config=None):
         if kind not in proctoring.CLIENT_EVENT_KINDS:
             abort(400)
         state = proctor_state(attempt)
+        if kind == "camera_missing":
+            if not attempt.contest.screen_capture:
+                abort(400)
+            already = bool(state.camera_missing)
+            state.camera_missing = True
+            if not already:
+                record_proctor_event(attempt, kind, str(payload.get("detail", ""))[:300])
+            db.session.commit()
+            return jsonify({"ok": True, **violation_payload(attempt, False)})
         if kind in {"tab_hidden", "window_blur", "fullscreen_exit"}:
             state.focus_lost_count = (state.focus_lost_count or 0) + 1
         elif kind == "paste":
@@ -1447,7 +1463,8 @@ def create_app(test_config=None):
             camera_live = bool(seen and (now - seen).total_seconds() <= proctoring.FRAME_STALE_SECONDS)
             screen_seen = state.last_screen_at if state else None
             screen_live = bool(screen_seen and (now - screen_seen).total_seconds() <= proctoring.FRAME_STALE_SECONDS)
-            live = (camera_live or not contest.proctoring) and (screen_live or not contest.screen_capture)
+            camera_missing = bool(state and state.camera_missing and contest.screen_capture)
+            live = (camera_live or camera_missing or not contest.proctoring) and (screen_live or not contest.screen_capture)
             rows.append({
                 "attempt_id": attempt.id,
                 "name": attempt.student.full_name,
@@ -1459,6 +1476,7 @@ def create_app(test_config=None):
                 "faces": state.last_faces if state else None,
                 "has_image": bool(has_image),
                 "camera_live": camera_live,
+                "camera_missing": camera_missing,
                 "screen_live": screen_live,
                 "has_screen": bool(has_screen),
                 "screen_version": int(screen_seen.timestamp()) if screen_seen else 0,
@@ -1953,7 +1971,8 @@ def create_app(test_config=None):
         if db.inspect(db.engine).has_table("proctor_state"):
             state_columns = {column["name"] for column in db.inspect(db.engine).get_columns("proctor_state")}
             blob = "BYTEA" if db.engine.dialect.name == "postgresql" else "BLOB"
-            for name, ddl in (("last_screen", blob), ("last_screen_at", "TIMESTAMP")):
+            for name, ddl in (("last_screen", blob), ("last_screen_at", "TIMESTAMP"),
+                              ("camera_missing", "BOOLEAN NOT NULL DEFAULT FALSE")):
                 if name not in state_columns:
                     db.session.execute(db.text(f"ALTER TABLE proctor_state ADD COLUMN {name} {ddl}"))
                     db.session.commit()

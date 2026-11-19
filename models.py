@@ -203,6 +203,8 @@ class ProctorState(db.Model):
     last_faces = db.Column(db.Integer)
     last_screen = db.deferred(db.Column(db.LargeBinary))
     last_screen_at = db.Column(db.DateTime)
+    # Kompyuterda kamera topilmadi: talaba faqat ekran orqali kuzatiladi.
+    camera_missing = db.Column(db.Boolean, nullable=False, default=False)
     last_code = db.Column(db.Text)
     last_language = db.Column(db.String(10))
     last_question_id = db.Column(db.Integer)

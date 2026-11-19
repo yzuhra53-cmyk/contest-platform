@@ -27,6 +27,7 @@ EVENT_LABELS = {
     "paste": "Kod joylashtirishga urindi (paste)",
     "camera_denied": "Kameraga ruxsat bermadi",
     "camera_lost": "Kamera uzildi",
+    "camera_missing": "Kompyuterda kamera yo‘q — faqat ekran orqali kuzatildi",
     "screen_denied": "Ekranni ulashishga ruxsat bermadi",
     "screen_lost": "Ekran ulashish to‘xtatildi",
     "fullscreen_exit": "To‘liq ekran rejimidan chiqdi",
@@ -47,7 +48,8 @@ VIOLATION_KINDS = (
     "new_device_login",
 )
 CLIENT_EVENT_KINDS = {
-    "tab_hidden", "window_blur", "paste", "camera_denied", "camera_lost", "screen_denied", "screen_lost",
+    "tab_hidden", "window_blur", "paste", "camera_denied", "camera_lost", "camera_missing", "screen_denied",
+    "screen_lost",
     "fullscreen_exit",
 }
 
