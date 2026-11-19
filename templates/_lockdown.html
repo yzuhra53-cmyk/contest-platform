@@ -26,7 +26,7 @@
   document.body.classList.add('contest-locked');
 
   window.allowContestLeave = () => { allowed = true; };
-  document.addEventListener('submit', () => { allowed = true; }, true);
+  document.addEventListener('submit', (event) => { if (!event.defaultPrevented) allowed = true; });
 
   function report(kind, detail) {
     if (allowed) return;

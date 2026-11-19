@@ -134,6 +134,8 @@
         hintOptions: {hint: (editor) => hintsFor(editor, language()), completeSingle: false},
       });
       window.codeEditor = cm;
+      // Kuzatuvli kontestda kod joylashtirish bloklanadi (_proctor.html: window.proctorBlockPaste).
+      ['paste', 'drop'].forEach((type) => cm.on(type, (editor, event) => window.proctorBlockPaste?.(type, event)));
       textarea.required = false; // yashirin textarea brauzer tekshiruvini to'sib qo'ymasin
       const wrapper = cm.getWrapperElement();
       const applyFont = () => { wrapper.style.fontSize = `${fontSize}px`; cm.refresh(); };

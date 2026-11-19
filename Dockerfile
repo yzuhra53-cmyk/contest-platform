@@ -5,8 +5,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # g++ — talabalarning C++17 kodini kompilyatsiya qilish uchun.
 # libpq5 — PostgreSQL drayveri (psycopg) uchun.
+# util-linux — prlimit: talaba kodining protsessor vaqti va xotirasini cheklaydi.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends g++ libpq5 \
+    && apt-get install -y --no-install-recommends g++ libpq5 util-linux \
     && rm -rf /var/lib/apt/lists/*
 
 # Talaba kodi shu huquqsiz foydalanuvchi nomidan ishga tushadi (judge.py: JUDGE_RUN_USER).

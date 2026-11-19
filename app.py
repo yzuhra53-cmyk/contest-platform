@@ -1389,10 +1389,20 @@ def create_app(test_config=None):
             .group_by(ProctorEvent.attempt_id)
             .all()
         )
+        # Rasmlarning o'zi emas, faqat bor-yo'qligi o'qiladi (har 5 soniyada 50 ta rasm yuklanmasin).
+        image_flags = {
+            attempt_id: (has_image, has_screen)
+            for attempt_id, has_image, has_screen in db.session.query(
+                ProctorState.attempt_id,
+                ProctorState.last_image.isnot(None),
+                ProctorState.last_screen.isnot(None),
+            ).filter(ProctorState.attempt_id.in_([attempt.id for attempt in attempts] or [0]))
+        }
         now = utcnow()
         rows = []
         for attempt in sorted(attempts, key=lambda item: item.student.full_name):
             state = states.get(attempt.id)
+            has_image, has_screen = image_flags.get(attempt.id, (False, False))
             seen = state.last_seen_at if state else None
             active = attempt.completed_at is None and now < attempt_deadline(attempt)
             camera_live = bool(seen and (now - seen).total_seconds() <= proctoring.FRAME_STALE_SECONDS)
@@ -1408,10 +1418,10 @@ def create_app(test_config=None):
                 "live": live,
                 "seen_ago": int((now - seen).total_seconds()) if seen else None,
                 "faces": state.last_faces if state else None,
-                "has_image": bool(state and state.last_image),
+                "has_image": bool(has_image),
                 "camera_live": camera_live,
                 "screen_live": screen_live,
-                "has_screen": bool(state and state.last_screen),
+                "has_screen": bool(has_screen),
                 "screen_version": int(screen_seen.timestamp()) if screen_seen else 0,
                 "screen_ago": int((now - screen_seen).total_seconds()) if screen_seen else None,
                 "frame_version": int(seen.timestamp()) if seen else 0,
@@ -1488,11 +1498,19 @@ def create_app(test_config=None):
         events = (
             ProctorEvent.query.filter_by(attempt_id=attempt.id).order_by(ProctorEvent.created_at.desc()).limit(300).all()
         )
+        image_ids = set(
+            db.session.execute(
+                db.select(ProctorEvent.id).where(
+                    ProctorEvent.id.in_([event.id for event in events] or [0]), ProctorEvent.image.isnot(None)
+                )
+            ).scalars()
+        )
         return render_template(
             "proctor_attempt.html",
             attempt=attempt,
             state=db.session.get(ProctorState, attempt.id),
             events=events,
+            image_ids=image_ids,
             labels=proctoring.EVENT_LABELS,
         )
 

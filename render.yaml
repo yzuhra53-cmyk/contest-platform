@@ -33,7 +33,7 @@ services:
       # Ichki judge sozlamalari
       - key: JUDGE_TIME_LIMIT # har bir test uchun vaqt cheklovi (soniya)
         value: "2"
-      - key: JUDGE_MAX_PARALLEL # bir vaqtda tekshiriladigan yechimlar soni
+      - key: JUDGE_MAX_PARALLEL # bir vaqtda tekshiriladigan yechimlar soni (= instance protsessorlari soni: Starter/Standard 1-2, Pro 2)
         value: "2"
       # Ekrandagi vaqt mintaqasi (Toshkent = UTC+5)
       - key: APP_UTC_OFFSET_HOURS

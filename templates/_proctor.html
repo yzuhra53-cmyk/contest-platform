@@ -35,7 +35,6 @@
   const screenVideo = document.getElementById('screenVideo');
   const statusEl = document.getElementById('proctorStatus');
   const screenStatusEl = document.getElementById('screenStatus');
-  const source = document.getElementById('source_code');
   let stream = null;
   let screenStream = null;
   let timer = null;
@@ -47,7 +46,8 @@
 
   // Sahifadan chiqish (yuborish, yangilash) "boshqa tabga o'tdi" deb hisoblanmasin.
   window.addEventListener('beforeunload', () => { leaving = true; });
-  document.addEventListener('submit', () => { leaving = true; }, true);
+  // Fetch orqali yuborilgan (preventDefault qilingan) formalar sahifadan chiqish emas.
+  document.addEventListener('submit', (event) => { if (!event.defaultPrevented) leaving = true; });
 
   function setStatus(text, kind) {
     statusEl.textContent = text;
@@ -109,6 +109,7 @@
   }
 
   function appendCode(form) {
+    const source = document.getElementById('source_code');
     if (!source) return;
     form.append('code', source.value);
     form.append('language', document.getElementById('language')?.value || '');
@@ -197,8 +198,8 @@
   // ---------- Ekran ----------
   async function sendScreen(reason) {
     if (!screenStream || screenVideo.readyState < 2 || !screenVideo.videoWidth) return;
-    let blob = await snapshot(screenVideo, 1280, 0.5);
-    if (blob && blob.size > 580 * 1024) blob = await snapshot(screenVideo, 960, 0.35);
+    let blob = await snapshot(screenVideo, 1024, 0.45);
+    if (blob && blob.size > 400 * 1024) blob = await snapshot(screenVideo, 800, 0.35);
     if (!blob) return;
     const form = new FormData();
     form.append('screen', blob, 'screen.jpg');
@@ -289,11 +290,11 @@
     setStatus('Kod joylashtirish taqiqlangan', 'danger');
     sendEvent('paste', type);
   };
-  if (window.codeEditor) {
-    // CodeMirror muharriri: paste/drop hodisalari muharrirning o'zida ushlanadi.
-    ['paste', 'drop'].forEach((type) => window.codeEditor.on(type, (editor, event) => blockPaste(type, event)));
-  } else if (source) {
-    ['paste', 'drop'].forEach((type) => source.addEventListener(type, (event) => blockPaste(type, event)));
+  // Muharrir (ide.js) har bir yangi masalada shu funksiyani chaqiradi.
+  window.proctorBlockPaste = blockPaste;
+  const plainSource = document.getElementById('source_code');
+  if (!window.codeEditor && plainSource) {
+    ['paste', 'drop'].forEach((type) => plainSource.addEventListener(type, (event) => blockPaste(type, event)));
   }
   updateOverlay();
   if (needCamera) startCamera();

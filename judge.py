@@ -40,8 +40,40 @@ LANGUAGES = {"python", "cpp"}
 
 TIME_LIMIT = float(os.environ.get("JUDGE_TIME_LIMIT", "2"))  # har bir test, soniya
 COMPILE_TIMEOUT = float(os.environ.get("JUDGE_COMPILE_TIMEOUT", "30"))
-MEMORY_LIMIT_MB = int(os.environ.get("JUDGE_MEMORY_MB", "256"))
 MAX_PARALLEL = max(1, int(os.environ.get("JUDGE_MAX_PARALLEL", "2")))
+# Vaqt limiti protsessor vaqti bo'yicha (prlimit). Server band bo'lsa, to'g'ri yechim
+# kutib qolgani uchun rad etilmasin: devor soati uchun TIME_LIMIT * WALL_FACTOR beriladi.
+WALL_FACTOR = max(1.0, float(os.environ.get("JUDGE_WALL_FACTOR", "3")))
+
+
+def _container_memory_mb():
+    """Konteyner (cgroup) xotira limiti, MB. Aniqlab bo'lmasa None."""
+    for path in ("/sys/fs/cgroup/memory.max", "/sys/fs/cgroup/memory/memory.limit_in_bytes"):
+        try:
+            with open(path, encoding="ascii") as handle:
+                raw = handle.read().strip()
+        except OSError:
+            continue
+        if raw.isdigit() and int(raw) < 1 << 50:
+            return int(raw) // (1024 * 1024)
+    return None
+
+
+def _default_memory_mb():
+    """Har bir tekshiruvga xotira: konteyner xotirasining ~60% i parallel tekshiruvlarga bo'linadi.
+
+    Masalan, 512 MB serverda 2 ta parallel tekshiruv -> ~153 MB; 2 GB da -> 256 MB.
+    Shunda bir nechta og'ir yechim butun serverni xotirasiz qoldirmaydi.
+    """
+    if os.environ.get("JUDGE_MEMORY_MB"):
+        return int(os.environ["JUDGE_MEMORY_MB"])
+    total = _container_memory_mb()
+    if not total:
+        return 256
+    return max(128, min(256, int(total * 0.6 / MAX_PARALLEL)))
+
+
+MEMORY_LIMIT_MB = _default_memory_mb()
 QUEUE_TIMEOUT = 90  # navbat kutish, soniya
 RUN_USER = os.environ.get("JUDGE_RUN_USER", "runner")
 PYTHON_BIN = os.environ.get("JUDGE_PYTHON") or sys.executable
@@ -97,12 +129,13 @@ def _clean_env(workdir):
     return env
 
 
-def _with_limits(command, cpu_seconds, memory_mb, file_bytes, limit_processes):
+def _with_limits(command, cpu_seconds, memory_mb, file_bytes, limit_processes, cpu_hard=None):
     if not _PRLIMIT:
         return command
     limits = [
         _PRLIMIT,
-        f"--cpu={int(cpu_seconds)}",
+        # soft:hard — soft limitda SIGXCPU (Time Limit), hard'da SIGKILL (zaxira).
+        f"--cpu={int(cpu_seconds)}:{int(cpu_hard or cpu_seconds)}",
         f"--fsize={int(file_bytes)}",
         "--core=0",
     ]
@@ -132,7 +165,7 @@ def _read_limited(handle):
     return data[:MAX_OUTPUT_BYTES].decode("utf-8", errors="replace"), len(data) > MAX_OUTPUT_BYTES
 
 
-def _run(command, workdir, stdin_text, timeout, memory_mb, file_bytes, identity):
+def _run(command, workdir, stdin_text, timeout, memory_mb, file_bytes, identity, cpu_limit=None):
     """Buyruqni cheklovlar bilan ishga tushiradi.
 
     Qaytaradi: (returncode, timed_out, stdout, stderr, output_too_big)
@@ -149,7 +182,8 @@ def _run(command, workdir, stdin_text, timeout, memory_mb, file_bytes, identity)
         extra["start_new_session"] = True
     full_command = _with_limits(
         command,
-        cpu_seconds=math.ceil(timeout) + 1,
+        cpu_seconds=math.ceil(cpu_limit) if cpu_limit else math.ceil(timeout) + 1,
+        cpu_hard=math.ceil(cpu_limit) + 1 if cpu_limit else None,
         memory_mb=memory_mb,
         file_bytes=file_bytes,
         limit_processes=bool(identity),
@@ -183,6 +217,11 @@ def _run(command, workdir, stdin_text, timeout, memory_mb, file_bytes, identity)
         stdout, too_big = _read_limited(stdout_file)
         stderr, _ = _read_limited(stderr_file)
     return process.returncode, timed_out, stdout, stderr, too_big
+
+
+def _wall_limit():
+    """prlimit bo'lsa (Linux/Render), protsessor vaqti cheklanadi va devor soati kengroq bo'ladi."""
+    return TIME_LIMIT * WALL_FACTOR if _PRLIMIT else TIME_LIMIT
 
 
 def _sweep_sandbox_processes(identity):
@@ -278,7 +317,8 @@ def _judge(language, source_code, test_cases, workdir, identity):
             run_command,
             workdir,
             case["input"],
-            timeout=TIME_LIMIT,
+            timeout=_wall_limit(),
+            cpu_limit=TIME_LIMIT if _PRLIMIT else None,
             memory_mb=MEMORY_LIMIT_MB,
             file_bytes=MAX_OUTPUT_BYTES * 2,
             identity=identity,
@@ -346,7 +386,7 @@ def judge_solution(language, source_code, test_cases):
         return _judge(language, source_code, test_cases, box.workdir, box.identity)
 
 
-RUN_QUEUE_TIMEOUT = 15  # "Ishga tushirish" uzoq kutmasin: navbat band bo'lsa darhol aytamiz
+RUN_QUEUE_TIMEOUT = 2  # "Ishga tushirish" kutib qolmasin: navbat band bo'lsa darhol aytamiz
 RUN_DISPLAY_CHARS = 20_000  # konsolga qaytariladigan chiqish hajmi
 
 
@@ -369,7 +409,8 @@ def run_program(language, source_code, stdin_text):
             run_command,
             box.workdir,
             stdin_text,
-            timeout=TIME_LIMIT,
+            timeout=_wall_limit(),
+            cpu_limit=TIME_LIMIT if _PRLIMIT else None,
             memory_mb=MEMORY_LIMIT_MB,
             file_bytes=MAX_OUTPUT_BYTES * 2,
             identity=box.identity,

@@ -175,9 +175,10 @@ class ProctorState(db.Model):
 
     attempt_id = db.Column(db.Integer, db.ForeignKey("attempts.id", ondelete="CASCADE"), primary_key=True)
     last_seen_at = db.Column(db.DateTime)
-    last_image = db.Column(db.LargeBinary)
+    # Rasmlar katta: ro'yxatlarda yuklanmasin, faqat murojaat qilinganda o'qilsin.
+    last_image = db.deferred(db.Column(db.LargeBinary))
     last_faces = db.Column(db.Integer)
-    last_screen = db.Column(db.LargeBinary)
+    last_screen = db.deferred(db.Column(db.LargeBinary))
     last_screen_at = db.Column(db.DateTime)
     last_code = db.Column(db.Text)
     last_language = db.Column(db.String(10))
@@ -198,7 +199,7 @@ class ProctorEvent(db.Model):
     # no_face, multiple_faces, tab_hidden, window_blur, paste, camera_denied, camera_lost, seb_missing
     kind = db.Column(db.String(30), nullable=False)
     detail = db.Column(db.String(300))
-    image = db.Column(db.LargeBinary)
+    image = db.deferred(db.Column(db.LargeBinary))
 
     attempt = db.relationship("Attempt")
 

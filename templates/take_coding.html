@@ -94,6 +94,14 @@
   </div>
 </section>
 {% endif %}
+<script type="application/json" id="codingConfig">{{ {
+  'runUrl': url_for('run_code', contest_id=contest.id, question_id=question.id),
+  'draftKey': 'draft-%d-%d' % (contest.id, question.id),
+  'submittedCode': submission.source_code if submission else '',
+  'sampleInput': question.input_data or '',
+  'sampleOutput': question.expected_output or '',
+  'pending': (submission is not none and submission.status == 'pending'),
+}|tojson }}</script>
 {% endblock %}
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
@@ -107,35 +115,82 @@
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.min.js"></script>
 <script src="{{ url_for('static', filename='js/ide.js') }}"></script>
 <script>
-const ide = initIde({
-  runUrl: "{{ url_for('run_code', contest_id=contest.id, question_id=question.id) }}",
-  draftKey: "draft-{{ contest.id }}-{{ question.id }}",
-  submittedCode: {{ (submission.source_code if submission else '')|tojson }},
-  sampleInput: {{ (question.input_data or '')|tojson }},
-  sampleOutput: {{ (question.expected_output or '')|tojson }},
-});
-{% if submission and submission.status == 'pending' %}
-// Tekshiruv tugashi bilan natijani ko'rsatish uchun sahifa yangilanadi (yozayotgan paytda emas).
-(function waitForVerdict() {
-  setTimeout(() => (ide.idleFor() > 4000 ? (window.allowContestLeave?.(), window.location.reload()) : waitForVerdict()), 3000);
-})();
-{% endif %}
-const timer = document.getElementById('timer');
-let remaining = Number(timer.dataset.seconds);
-function showTime() {
-  const minutes = Math.floor(remaining / 60);
-  const seconds = remaining % 60;
-  timer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  if (remaining <= 60) timer.classList.add('timer-warning');
-  if (remaining <= 0) {
-    timer.textContent = '00:00';
-    ide.lock();
-    return;
+// Kod sahifasi: yechim yuborish va natijani kutish sahifani qayta yuklamasdan bajariladi —
+// to'liq ekran, kamera va ekran ulashish uzilmaydi. Faqat <main> qismi yangilanadi.
+(() => {
+  const deadline = Date.now() + Number(document.getElementById('timer').dataset.seconds) * 1000;
+  let ide = null;
+  let pollTimer = null;
+  let locked = false;
+
+  function readConfig() {
+    return JSON.parse(document.getElementById('codingConfig').textContent);
   }
-  remaining -= 1;
-  setTimeout(showTime, 1000);
-}
-showTime();
+  function setupPage() {
+    const config = readConfig();
+    ide = initIde(config);
+    if (locked) ide.lock();
+    document.getElementById('codeForm').addEventListener('submit', submitCode);
+    clearTimeout(pollTimer);
+    if (config.pending) pollTimer = setTimeout(waitForVerdict, 2500);
+  }
+  // Natija tayyor bo'lganini tekshirish (talaba yozayotgan paytda xalaqit bermaymiz).
+  function waitForVerdict() {
+    if (ide.idleFor() > 3000) softReload();
+    else pollTimer = setTimeout(waitForVerdict, 1500);
+  }
+  async function softReload(response) {
+    let res = response;
+    try {
+      res = res || await fetch(location.href, {cache: 'no-store', credentials: 'same-origin'});
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const newMain = doc.querySelector('main');
+      if (!res.ok || !newMain || !doc.getElementById('codingConfig')) {
+        // Natija sahifasi, test bloki yoki xato — oddiy o'tish.
+        window.allowContestLeave?.();
+        location.assign(res.redirected ? res.url : location.href);
+        return;
+      }
+      window.codeEditor?.closeHint?.();
+      document.querySelector('main').innerHTML = newMain.innerHTML;
+      setupPage();
+    } catch (error) {
+      pollTimer = setTimeout(softReload, 4000);
+    }
+  }
+  async function submitCode(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    window.codeEditor?.save();
+    const button = document.getElementById('ideSubmit');
+    button.disabled = true;
+    button.textContent = 'Yuborilmoqda…';
+    try {
+      const res = await fetch(form.action, {method: 'POST', body: new FormData(form), credentials: 'same-origin'});
+      await softReload(res);
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = 'Tekshiruvga yuborish';
+      alert('Server bilan aloqa uzildi. Qayta yuboring.');
+    }
+  }
+  function tick() {
+    const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+    const timer = document.getElementById('timer');
+    if (timer) {
+      timer.textContent = `${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}`;
+      timer.classList.toggle('timer-warning', remaining <= 60);
+    }
+    if (remaining <= 0 && !locked) {
+      locked = true;
+      ide?.lock();
+    }
+  }
+  setupPage();
+  tick();
+  setInterval(tick, 1000);
+})();
 </script>
 {% include "_proctor.html" %}
 {% include "_lockdown.html" %}
