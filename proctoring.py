@@ -13,6 +13,8 @@ except ImportError:  # OpenCV o'rnatilmagan bo'lsa ham ilova ishlayveradi
     np = None
 
 MAX_FRAME_BYTES = 300 * 1024
+# Ekran rasmi kattaroq (matn o'qilishi uchun).
+MAX_SCREEN_BYTES = 600 * 1024
 FRAME_INTERVAL_SECONDS = 10
 # Shuncha vaqt kadr kelmasa, kamera o'chgan hisoblanadi va kod yuborish to'xtatiladi.
 FRAME_STALE_SECONDS = 60
@@ -27,6 +29,8 @@ EVENT_LABELS = {
     "paste": "Kod joylashtirishga urindi (paste)",
     "camera_denied": "Kameraga ruxsat bermadi",
     "camera_lost": "Kamera uzildi",
+    "screen_denied": "Ekranni ulashishga ruxsat bermadi",
+    "screen_lost": "Ekran ulashish to‘xtatildi",
     "seb_missing": "Safe Exam Browser'siz kirishga urindi",
     "new_device_login": "Boshqa qurilma/brauzerdan kirdi",
     "auto_finished": "Qoidabuzarlik limiti: urinish avtomatik yakunlandi",
@@ -39,10 +43,13 @@ VIOLATION_KINDS = (
     "window_blur",
     "paste",
     "camera_lost",
+    "screen_lost",
     "seb_missing",
     "new_device_login",
 )
-CLIENT_EVENT_KINDS = {"tab_hidden", "window_blur", "paste", "camera_denied", "camera_lost"}
+CLIENT_EVENT_KINDS = {
+    "tab_hidden", "window_blur", "paste", "camera_denied", "camera_lost", "screen_denied", "screen_lost",
+}
 
 _cascade = None
 _cascade_lock = threading.Lock()

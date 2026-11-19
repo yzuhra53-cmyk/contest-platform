@@ -708,6 +708,7 @@ def create_app(test_config=None):
                     end_at=end_at,
                     public_leaderboard=request.form.get("public_leaderboard") == "on",
                     proctoring=request.form.get("proctoring") == "on",
+                    screen_capture=request.form.get("screen_capture") == "on",
                     require_seb=request.form.get("require_seb") == "on",
                     max_violations=read_max_violations(request.form),
                 )
@@ -756,6 +757,7 @@ def create_app(test_config=None):
             return redirect(url_for("admin_contests"))
         contest.public_leaderboard = request.form.get("public_leaderboard") == "on"
         contest.proctoring = request.form.get("proctoring") == "on"
+        contest.screen_capture = request.form.get("screen_capture") == "on"
         contest.require_seb = request.form.get("require_seb") == "on"
         contest.max_violations = read_max_violations(request.form)
         db.session.commit()
@@ -1154,10 +1156,36 @@ def create_app(test_config=None):
             and (utcnow() - state.last_seen_at).total_seconds() <= proctoring.FRAME_STALE_SECONDS
         )
 
+    def screen_is_live(attempt):
+        state = proctor_state(attempt, create=False)
+        return (
+            state is not None
+            and state.last_screen_at is not None
+            and (utcnow() - state.last_screen_at).total_seconds() <= proctoring.FRAME_STALE_SECONDS
+        )
+
+    def monitoring_problem(contest, attempt):
+        """Kuzatuv talablari bajarilmasa, talabaga ko'rsatiladigan sabab (aks holda None)."""
+        if contest.proctoring and not camera_is_live(attempt):
+            return "Kamera ishlamayapti: kamerani yoqing va sahifani yangilang."
+        if contest.screen_capture and not screen_is_live(attempt):
+            return "Ekran ulashilmayapti: butun ekraningizni ulashing va sahifani yangilang."
+        return None
+
+    def store_live_code(contest, state):
+        if contest.contest_type != "coding":
+            return
+        code = request.form.get("code")
+        if code is not None:
+            state.last_code = code[:20000]
+            state.last_language = request.form.get("language", "")[:10] or None
+            question_id = request.form.get("question_id", "")
+            state.last_question_id = int(question_id) if question_id.isdigit() else None
+
     def open_proctored_attempt(contest_id):
         """Proktoring endpointlari uchun: faol, SEB tekshiruvidan o'tgan urinish."""
         contest = db.session.get(Contest, contest_id)
-        if contest is None or not contest.proctoring:
+        if contest is None or not contest.monitored:
             abort(404)
         attempt = get_attempt(session["student_id"], contest_id)
         if attempt is None or attempt.completed_at is not None or utcnow() >= attempt_deadline(attempt):
@@ -1187,6 +1215,8 @@ def create_app(test_config=None):
     @student_required
     def proctor_frame(contest_id):
         contest, attempt = open_proctored_attempt(contest_id)
+        if not contest.proctoring:
+            abort(404)
         uploaded = request.files.get("frame")
         image = uploaded.read(proctoring.MAX_FRAME_BYTES + 1) if uploaded else b""
         if not image or len(image) > proctoring.MAX_FRAME_BYTES or not proctoring.is_jpeg(image):
@@ -1196,13 +1226,7 @@ def create_app(test_config=None):
         state.last_seen_at = utcnow()
         state.last_image = image
         state.last_faces = faces
-        if contest.contest_type == "coding":
-            code = request.form.get("code")
-            if code is not None:
-                state.last_code = code[:20000]
-                state.last_language = request.form.get("language", "")[:10] or None
-                question_id = request.form.get("question_id", "")
-                state.last_question_id = int(question_id) if question_id.isdigit() else None
+        store_live_code(contest, state)
         alert = None
         if faces == 0:
             alert = "no_face"
@@ -1214,6 +1238,39 @@ def create_app(test_config=None):
         payload = violation_payload(attempt, finished)
         db.session.commit()
         return jsonify({"ok": True, "faces": faces, "interval": proctoring.FRAME_INTERVAL_SECONDS, **payload})
+
+    @application.route("/contest/<int:contest_id>/proctor/screen", methods=["POST"])
+    @student_required
+    def proctor_screen(contest_id):
+        contest, attempt = open_proctored_attempt(contest_id)
+        if not contest.screen_capture:
+            abort(404)
+        uploaded = request.files.get("screen")
+        image = uploaded.read(proctoring.MAX_SCREEN_BYTES + 1) if uploaded else b""
+        if not image or len(image) > proctoring.MAX_SCREEN_BYTES or not proctoring.is_jpeg(image):
+            abort(400)
+        state = proctor_state(attempt)
+        state.last_screen = image
+        state.last_screen_at = utcnow()
+        store_live_code(contest, state)
+        if request.form.get("reason") in {"window_blur", "tab_hidden"}:
+            # Talaba oynadan chiqqanda olingan ekran rasmi shu hodisaga dalil sifatida biriktiriladi.
+            event = (
+                ProctorEvent.query.filter(
+                    ProctorEvent.attempt_id == attempt.id,
+                    ProctorEvent.kind.in_(("window_blur", "tab_hidden")),
+                    ProctorEvent.image.is_(None),
+                    ProctorEvent.created_at >= utcnow() - timedelta(seconds=60),
+                )
+                .order_by(ProctorEvent.id.desc())
+                .first()
+            )
+            if event is not None:
+                event.image = image
+        finished = enforce_violation_limit(attempt)
+        payload = violation_payload(attempt, finished)
+        db.session.commit()
+        return jsonify({"ok": True, "interval": proctoring.FRAME_INTERVAL_SECONDS, **payload})
 
     @application.route("/contest/<int:contest_id>/proctor/event", methods=["POST"])
     @student_required
@@ -1270,7 +1327,10 @@ def create_app(test_config=None):
             state = states.get(attempt.id)
             seen = state.last_seen_at if state else None
             active = attempt.completed_at is None and now < attempt_deadline(attempt)
-            live = bool(seen and (now - seen).total_seconds() <= proctoring.FRAME_STALE_SECONDS)
+            camera_live = bool(seen and (now - seen).total_seconds() <= proctoring.FRAME_STALE_SECONDS)
+            screen_seen = state.last_screen_at if state else None
+            screen_live = bool(screen_seen and (now - screen_seen).total_seconds() <= proctoring.FRAME_STALE_SECONDS)
+            live = (camera_live or not contest.proctoring) and (screen_live or not contest.screen_capture)
             rows.append({
                 "attempt_id": attempt.id,
                 "name": attempt.student.full_name,
@@ -1281,6 +1341,11 @@ def create_app(test_config=None):
                 "seen_ago": int((now - seen).total_seconds()) if seen else None,
                 "faces": state.last_faces if state else None,
                 "has_image": bool(state and state.last_image),
+                "camera_live": camera_live,
+                "screen_live": screen_live,
+                "has_screen": bool(state and state.last_screen),
+                "screen_version": int(screen_seen.timestamp()) if screen_seen else 0,
+                "screen_ago": int((now - screen_seen).total_seconds()) if screen_seen else None,
                 "frame_version": int(seen.timestamp()) if seen else 0,
                 "code": (state.last_code or "") if state else "",
                 "language": (state.last_language or "") if state else "",
@@ -1325,6 +1390,16 @@ def create_app(test_config=None):
         if state is None or not state.last_image:
             abort(404)
         response = send_file(io.BytesIO(state.last_image), mimetype="image/jpeg")
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    @application.route("/admin/proctor/<int:attempt_id>/screen.jpg")
+    @admin_required
+    def admin_proctor_screen(attempt_id):
+        state = db.session.get(ProctorState, attempt_id)
+        if state is None or not state.last_screen:
+            abort(404)
+        response = send_file(io.BytesIO(state.last_screen), mimetype="image/jpeg")
         response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -1514,8 +1589,9 @@ def create_app(test_config=None):
             return redirect(url_for("take_contest", contest_id=contest_id))
         if not seb_ok(contest):
             return seb_required_response(contest, attempt)
-        if contest.proctoring and not camera_is_live(attempt):
-            flash("Kamera ishlamayapti: yechim yuborish uchun kamerani yoqing va sahifani yangilang.", "danger")
+        problem = monitoring_problem(contest, attempt)
+        if problem:
+            flash(problem, "danger")
             return redirect(url_for("take_contest", contest_id=contest_id))
         submissions = {
             submission.question_id: submission
@@ -1637,7 +1713,7 @@ def create_app(test_config=None):
             return jsonify({"saved": False, "expired": True}), 409
         if not seb_ok(contest, allow_session=True):
             return jsonify({"saved": False, "seb": False}), 403
-        if contest.proctoring and not camera_is_live(attempt):
+        if monitoring_problem(contest, attempt):
             return jsonify({"saved": False, "camera": False}), 409
         payload = request.get_json(silent=True)
         if not isinstance(payload, dict):
@@ -1699,6 +1775,7 @@ def create_app(test_config=None):
             ("public_leaderboard", "BOOLEAN NOT NULL DEFAULT FALSE"),
             ("proctoring", "BOOLEAN NOT NULL DEFAULT FALSE"),
             ("require_seb", "BOOLEAN NOT NULL DEFAULT FALSE"),
+            ("screen_capture", "BOOLEAN NOT NULL DEFAULT FALSE"),
             ("max_violations", "INTEGER NOT NULL DEFAULT 0"),
         ):
             if name not in contest_columns:
@@ -1711,6 +1788,13 @@ def create_app(test_config=None):
         if "question_order" not in attempt_columns:
             db.session.execute(db.text("ALTER TABLE attempts ADD COLUMN question_order TEXT"))
             db.session.commit()
+        if db.inspect(db.engine).has_table("proctor_state"):
+            state_columns = {column["name"] for column in db.inspect(db.engine).get_columns("proctor_state")}
+            blob = "BYTEA" if db.engine.dialect.name == "postgresql" else "BLOB"
+            for name, ddl in (("last_screen", blob), ("last_screen_at", "TIMESTAMP")):
+                if name not in state_columns:
+                    db.session.execute(db.text(f"ALTER TABLE proctor_state ADD COLUMN {name} {ddl}"))
+                    db.session.commit()
         if "access_code_hash" not in student_columns:
             db.session.execute(db.text("ALTER TABLE students ADD COLUMN access_code_hash VARCHAR(255)"))
             db.session.commit()

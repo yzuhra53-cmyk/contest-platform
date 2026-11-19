@@ -65,6 +65,8 @@ Kontest sozlamalarida ikki bayroq bor:
 
 Ustoz **Kontestlar → 📹 Kuzatuv** sahifasida barcha talabalarning oxirgi kadri va kodini jonli ko‘radi (har 5 soniyada yangilanadi); muammoli talabalar qizil bo‘lib yuqoriga chiqadi. Har bir talabaning hodisalar tarixi kadrlar bilan alohida sahifada. Joy tejash uchun har bir talabadan faqat oxirgi kadr va shubhali kadrlar saqlanadi; ular `PROCTOR_RETENTION_DAYS` (standart 30) kundan keyin o‘chadi yoki «Kadrlarni o‘chirish» tugmasi bilan darhol o‘chiriladi. **Talabalarni kamera kuzatuvi haqida oldindan ogohlantiring.**
 
+**Ekran kuzatuvi.** Talaba kontestni ochganda **butun ekranini** ulashadi (brauzer oynasida «Butun ekran / Entire screen»). Faqat bitta oyna yoki tab tanlansa, qabul qilinmaydi. Har 10 soniyada ekran rasmi (1280 px JPEG) ustozga yuboriladi. Talaba oynadan chiqsa, 1,5 soniyadan keyin olingan ekran rasmi shu hodisaga dalil sifatida biriktiriladi: ustoz boshqa brauzer yoki AI sayti ochilganini ko‘radi. Ulashish to‘xtatilsa, «Ekran ulashish to‘xtatildi» qoidabuzarligi yoziladi va qayta ulashmaguncha kontest yopiq turadi; 60 soniyadan ko‘p ekran rasmi kelmasa, yechim yuborish to‘xtaydi. Ekran kuzatuvi kameradan mustaqil ishlaydi, shuning uchun kamerasiz kompyuterlarda ham qo‘llash mumkin. Bu brauzer ichida ishlaydi va Safe Exam Browser bilan birga ishlatilmaydi: SEB ekran ulashishni o‘zi bloklaydi. Kompyuterda Chrome, Edge yoki Firefox kerak.
+
 Kamera faqat HTTPS (Render) yoki `localhost` orqali ishlaydi.
 
 **Faqat Safe Exam Browser orqali.** Veb-sayt o‘zi talaba kompyuterida boshqa dastur yoki AI’ni bloklay olmaydi — buni [Safe Exam Browser](https://safeexambrowser.org) (bepul, Windows/macOS) qiladi: kiosk rejimi, boshqa dasturlar va saytlar yopiq. Sozlash:

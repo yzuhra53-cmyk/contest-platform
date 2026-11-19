@@ -6,7 +6,7 @@
   <div class="page-heading mb-0">
     <p class="eyebrow mb-2">JONLI KUZATUV</p>
     <h1 class="page-title">{{ contest.title }}</h1>
-    <p class="text-secondary mb-0">Kadrlar har 10 soniyada yangilanadi. {{ stale_seconds }} soniyadan ko‘p kadr kelmasa yoki yuz soni 1 ta bo‘lmasa, kartochka qizil bo‘ladi va yuqoriga chiqadi.</p>
+    <p class="text-secondary mb-0">Kadrlar har 10 soniyada yangilanadi{% if contest.screen_capture %}; ekran rasmini kattalashtirish uchun ustiga bosing{% endif %}. {{ stale_seconds }} soniyadan ko‘p kadr kelmasa yoki yuz soni 1 ta bo‘lmasa, kartochka qizil bo‘ladi va yuqoriga chiqadi.</p>
   </div>
   <div class="d-flex flex-wrap gap-2 align-items-center">
     <span class="small text-secondary" id="proctorUpdated"></span>
@@ -18,7 +18,7 @@
     </form>
   </div>
 </div>
-{% if not contest.proctoring %}<div class="alert alert-warning">Bu kontestda proktoring hozir o‘chirilgan — yangi kadrlar kelmaydi.</div>{% endif %}
+{% if not contest.monitored %}<div class="alert alert-warning">Bu kontestda kamera va ekran kuzatuvi hozir o‘chirilgan — yangi kadrlar kelmaydi.</div>{% endif %}
 <div class="d-flex flex-wrap gap-3 mb-3 small" id="proctorSummary"></div>
 <div class="proctor-grid" id="proctorGrid"></div>
 <div class="empty-state d-none" id="proctorEmpty">Hali hech kim kontestni boshlamagan.</div>
@@ -27,6 +27,9 @@
 <script>
 const dataUrl = "{{ url_for('admin_proctor_json', contest_id=contest.id) }}";
 const frameUrl = (id, version) => `{{ url_for('admin_proctor_frame', attempt_id=0) }}`.replace('/0/', `/${id}/`) + `?v=${version}`;
+const screenUrl = (id, version) => `{{ url_for('admin_proctor_screen', attempt_id=0) }}`.replace('/0/', `/${id}/`) + `?v=${version}`;
+const needCamera = {{ 'true' if contest.proctoring else 'false' }};
+const needScreen = {{ 'true' if contest.screen_capture else 'false' }};
 const detailUrl = (id) => `{{ url_for('admin_proctor_attempt', attempt_id=0) }}`.replace(/\/0$/, `/${id}`);
 const grid = document.getElementById('proctorGrid');
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch]));
@@ -36,15 +39,20 @@ function card(row) {
     ? '<span class="badge text-bg-secondary">Yakunlagan</span>'
     : row.live
       ? '<span class="badge text-bg-success">● Jonli</span>'
-      : '<span class="badge text-bg-danger">Kamera yo‘q</span>';
+      : `<span class="badge text-bg-danger">${needCamera && !row.camera_live ? 'Kamera yo‘q' : 'Ekran yo‘q'}</span>`;
   let faces = '';
   if (row.faces === 0) faces = '<span class="badge text-bg-danger">Yuz yo‘q</span>';
   else if (row.faces > 1) faces = `<span class="badge text-bg-danger">${row.faces} ta yuz</span>`;
   else if (row.faces === 1) faces = '<span class="badge text-bg-light">1 yuz</span>';
-  const image = row.has_image
+  const cameraImage = !needCamera ? '' : row.has_image
     ? `<img class="proctor-frame" alt="" src="${frameUrl(row.attempt_id, row.frame_version)}">`
     : '<div class="proctor-frame-empty">Kadr hali kelmagan</div>';
-  const seen = row.seen_ago === null ? '—' : `${row.seen_ago} s oldin`;
+  const screenImage = !needScreen ? '' : row.has_screen
+    ? `<a href="${screenUrl(row.attempt_id, row.screen_version)}" target="_blank" title="Ekranni to‘liq ochish"><img class="proctor-screen ${row.screen_live ? '' : 'is-stale'}" alt="Ekran" src="${screenUrl(row.attempt_id, row.screen_version)}"></a>`
+    : '<div class="proctor-frame-empty">Ekran hali ulashilmagan</div>';
+  const image = `<div class="proctor-media ${needCamera && needScreen ? 'is-dual' : ''}">${screenImage}${cameraImage}</div>`;
+  const ago = needCamera ? row.seen_ago : row.screen_ago;
+  const seen = ago === null ? '—' : `${ago} s oldin`;
   const code = row.code
     ? `<pre class="sample-input proctor-code"><code>${escapeHtml(row.code.split('\n').slice(-25).join('\n'))}</code></pre>`
     : '';

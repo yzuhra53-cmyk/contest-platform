@@ -70,6 +70,8 @@ class Contest(db.Model):
     proctoring = db.Column(db.Boolean, nullable=False, default=False)
     # Faqat Safe Exam Browser orqali kirishga ruxsat.
     require_seb = db.Column(db.Boolean, nullable=False, default=False)
+    # Ekran kuzatuvi: talaba butun ekranini ulashadi, ustoz ekran rasmlarini ko'radi.
+    screen_capture = db.Column(db.Boolean, nullable=False, default=False)
     # Shuncha qoidabuzarlikdan keyin urinish avtomatik yakunlanadi (0 — o'chiq).
     max_violations = db.Column(db.Integer, nullable=False, default=0)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
@@ -81,6 +83,11 @@ class Contest(db.Model):
         order_by="Question.id",
     )
     attempts = db.relationship("Attempt", back_populates="contest")
+
+    @property
+    def monitored(self):
+        """Kamera yoki ekran kuzatuvi yoqilgan."""
+        return bool(self.proctoring or self.screen_capture)
 
 
 class Attempt(db.Model):
@@ -146,6 +153,8 @@ class ProctorState(db.Model):
     last_seen_at = db.Column(db.DateTime)
     last_image = db.Column(db.LargeBinary)
     last_faces = db.Column(db.Integer)
+    last_screen = db.Column(db.LargeBinary)
+    last_screen_at = db.Column(db.DateTime)
     last_code = db.Column(db.Text)
     last_language = db.Column(db.String(10))
     last_question_id = db.Column(db.Integer)

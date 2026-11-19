@@ -1,29 +1,45 @@
-{% if contest.proctoring %}
+{% if contest.monitored %}
 <div id="proctorOverlay" class="proctor-overlay">
   <div class="proctor-overlay-card">
-    <h2 class="h4 mb-2">Kamera talab qilinadi</h2>
-    <p class="mb-2">Bu kontest kuzatuv ostida o‘tadi: har {{ 10 }} soniyada kameradan bitta kadr va yozayotgan kodingiz ustozga yuboriladi. Boshqa tab yoki dasturga o‘tish, kod joylashtirish (paste) qayd qilinadi.</p>
-    <p class="small text-secondary mb-3" id="proctorError"></p>
-    <button type="button" class="btn btn-primary btn-lg" id="proctorStart">Kamerani yoqish va davom etish</button>
+    <h2 class="h4 mb-2">Kuzatuv talab qilinadi</h2>
+    <p class="mb-3">Bu kontest kuzatuv ostida o‘tadi. Har {{ 10 }} soniyada {% if contest.proctoring %}kameradan kadr{% endif %}{% if contest.proctoring and contest.screen_capture %}, {% endif %}{% if contest.screen_capture %}ekraningiz rasmi{% endif %} va yozayotgan kodingiz ustozga yuboriladi. Boshqa oyna yoki dasturga o‘tish, kod joylashtirish (paste) qayd qilinadi.</p>
+    <ul class="proctor-steps list-unstyled text-start mb-3">
+      {% if contest.proctoring %}<li id="stepCamera"><span class="proctor-step-mark">○</span> Kamera</li>{% endif %}
+      {% if contest.screen_capture %}<li id="stepScreen"><span class="proctor-step-mark">○</span> Butun ekranni ulashish <span class="small text-secondary">— oynada «Butun ekran / Entire screen» ni tanlang</span></li>{% endif %}
+    </ul>
+    <p class="small text-danger mb-3" id="proctorError"></p>
+    <div class="d-flex flex-wrap justify-content-center gap-2">
+      {% if contest.proctoring %}<button type="button" class="btn btn-outline-primary btn-lg" id="proctorStart">Kamerani yoqish</button>{% endif %}
+      {% if contest.screen_capture %}<button type="button" class="btn btn-primary btn-lg" id="screenStart">Ekranni ulashish</button>{% endif %}
+    </div>
   </div>
 </div>
 <div class="proctor-cam" aria-live="polite">
-  <video id="proctorVideo" autoplay muted playsinline></video>
-  <span id="proctorStatus" class="badge text-bg-secondary">Kamera ulanmoqda…</span>
+  {% if contest.proctoring %}<video id="proctorVideo" autoplay muted playsinline></video>{% endif %}
+  <video id="screenVideo" autoplay muted playsinline hidden></video>
+  <span id="proctorStatus" class="badge text-bg-secondary">Kuzatuv ulanmoqda…</span>
+  {% if contest.screen_capture %}<span id="screenStatus" class="badge text-bg-secondary">Ekran ulanmagan</span>{% endif %}
   <span id="proctorViolations" class="badge text-bg-dark" hidden></span>
 </div>
 <script>
 (() => {
+  const needCamera = {{ 'true' if contest.proctoring else 'false' }};
+  const needScreen = {{ 'true' if contest.screen_capture else 'false' }};
   const frameUrl = "{{ url_for('proctor_frame', contest_id=contest.id) }}";
+  const screenUrl = "{{ url_for('proctor_screen', contest_id=contest.id) }}";
   const eventUrl = "{{ url_for('proctor_client_event', contest_id=contest.id) }}";
   const csrf = document.querySelector('meta[name="csrf-token"]').content;
   const overlay = document.getElementById('proctorOverlay');
   const errorBox = document.getElementById('proctorError');
   const video = document.getElementById('proctorVideo');
+  const screenVideo = document.getElementById('screenVideo');
   const statusEl = document.getElementById('proctorStatus');
+  const screenStatusEl = document.getElementById('screenStatus');
   const source = document.getElementById('source_code');
   let stream = null;
+  let screenStream = null;
   let timer = null;
+  let screenTimer = null;
   let leaving = false;
   let intervalMs = 10000;
 
@@ -35,6 +51,29 @@
     statusEl.textContent = text;
     statusEl.className = `badge text-bg-${kind}`;
   }
+  function setScreenStatus(text, kind) {
+    if (!screenStatusEl) return;
+    screenStatusEl.textContent = text;
+    screenStatusEl.className = `badge text-bg-${kind}`;
+  }
+  function markStep(id, ok) {
+    const step = document.getElementById(id);
+    if (!step) return;
+    step.classList.toggle('is-done', ok);
+    step.querySelector('.proctor-step-mark').textContent = ok ? '✓' : '○';
+  }
+  // Barcha talab qilingan manbalar ulangandagina kontest ko'rinadi.
+  function updateOverlay() {
+    const cameraOk = !needCamera || Boolean(stream);
+    const screenOk = !needScreen || Boolean(screenStream);
+    markStep('stepCamera', cameraOk);
+    markStep('stepScreen', screenOk);
+    document.getElementById('proctorStart')?.toggleAttribute('hidden', cameraOk);
+    document.getElementById('screenStart')?.toggleAttribute('hidden', screenOk);
+    overlay.hidden = cameraOk && screenOk;
+    if (overlay.hidden) errorBox.textContent = '';
+  }
+  if (!needCamera) setStatus('● Kuzatuv yoqilgan', 'success');
 
   const violationsEl = document.getElementById('proctorViolations');
   // Urinish yakunlangan (limit) yoki sessiya bekor qilingan bo'lsa, sahifani yangilaymiz:
@@ -66,21 +105,40 @@
     }).catch(() => {});
   }
 
+  function appendCode(form) {
+    if (!source) return;
+    form.append('code', source.value);
+    form.append('language', document.getElementById('language')?.value || '');
+    form.append('question_id', source.dataset.questionId || '');
+  }
+
+  function snapshot(videoEl, width, quality) {
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.min(width, videoEl.videoWidth);
+    canvas.height = Math.round(canvas.width * videoEl.videoHeight / videoEl.videoWidth);
+    canvas.getContext('2d').drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+    return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+  }
+
+  function restartTimers() {
+    if (stream) { clearInterval(timer); timer = setInterval(sendFrame, intervalMs); }
+    if (screenStream) { clearInterval(screenTimer); screenTimer = setInterval(() => sendScreen(''), intervalMs); }
+  }
+  function applyInterval(data) {
+    if (data && data.interval && data.interval * 1000 !== intervalMs) {
+      intervalMs = data.interval * 1000;
+      restartTimers();
+    }
+  }
+
+  // ---------- Kamera ----------
   async function sendFrame() {
     if (!stream || video.readyState < 2 || !video.videoWidth) return;
-    const canvas = document.createElement('canvas');
-    canvas.width = 320;
-    canvas.height = Math.round(320 * video.videoHeight / video.videoWidth);
-    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.6));
+    const blob = await snapshot(video, 320, 0.6);
     if (!blob) return;
     const form = new FormData();
     form.append('frame', blob, 'frame.jpg');
-    if (source) {
-      form.append('code', source.value);
-      form.append('language', document.getElementById('language')?.value || '');
-      form.append('question_id', source.dataset.questionId || '');
-    }
+    appendCode(form);
     try {
       const response = await fetch(frameUrl, {method: 'POST', headers: {'X-CSRF-Token': csrf}, body: form});
       const data = response.headers.get('Content-Type')?.includes('json') ? await response.json() : null;
@@ -89,17 +147,13 @@
       if (data.faces === 0) setStatus('Yuzingiz ko‘rinmayapti!', 'danger');
       else if (data.faces > 1) setStatus('Kadrda bir nechta odam!', 'danger');
       else setStatus('● Kuzatuv yoqilgan', 'success');
-      if (data.interval && data.interval * 1000 !== intervalMs) {
-        intervalMs = data.interval * 1000;
-        clearInterval(timer);
-        timer = setInterval(sendFrame, intervalMs);
-      }
+      applyInterval(data);
     } catch (error) {
       setStatus('Server bilan aloqa uzildi', 'warning');
     }
   }
 
-  async function start() {
+  async function startCamera() {
     if (!navigator.mediaDevices?.getUserMedia) {
       errorBox.textContent = 'Brauzeringiz kamerani qo‘llab-quvvatlamaydi (yoki sayt HTTPS orqali ochilmagan).';
       sendEvent('camera_denied', 'unsupported');
@@ -111,19 +165,20 @@
         audio: false,
       });
     } catch (error) {
-      overlay.hidden = false;
+      stream = null;
+      updateOverlay();
       errorBox.textContent = 'Kameraga ruxsat berilmadi. Brauzer sozlamalarida ruxsat bering va qayta bosing.';
       setStatus('Kamera o‘chiq', 'danger');
       sendEvent('camera_denied', error.name);
       return;
     }
     video.srcObject = stream;
-    overlay.hidden = true;
     setStatus('Kamera ulandi', 'info');
+    updateOverlay();
     stream.getVideoTracks()[0].addEventListener('ended', () => {
       stream = null;
       clearInterval(timer);
-      overlay.hidden = false;
+      updateOverlay();
       errorBox.textContent = 'Kamera uzildi. Qayta yoqing.';
       setStatus('Kamera uzildi', 'danger');
       sendEvent('camera_lost');
@@ -133,9 +188,84 @@
     timer = setInterval(sendFrame, intervalMs);
   }
 
-  document.getElementById('proctorStart').addEventListener('click', start);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) sendEvent('tab_hidden'); });
-  window.addEventListener('blur', () => sendEvent('window_blur'));
+  // ---------- Ekran ----------
+  async function sendScreen(reason) {
+    if (!screenStream || screenVideo.readyState < 2 || !screenVideo.videoWidth) return;
+    let blob = await snapshot(screenVideo, 1280, 0.5);
+    if (blob && blob.size > 580 * 1024) blob = await snapshot(screenVideo, 960, 0.35);
+    if (!blob) return;
+    const form = new FormData();
+    form.append('screen', blob, 'screen.jpg');
+    form.append('reason', reason || '');
+    if (!needCamera) appendCode(form);  // kamera bo'lmasa, kod ekran rasmi bilan birga yuboriladi
+    try {
+      const response = await fetch(screenUrl, {method: 'POST', headers: {'X-CSRF-Token': csrf}, body: form});
+      const data = response.headers.get('Content-Type')?.includes('json') ? await response.json() : null;
+      if (handleResponse(response, data)) return;
+      if (!response.ok || !data) { setScreenStatus('Ekran rasmi qabul qilinmadi', 'danger'); return; }
+      setScreenStatus('🖥 Ekran ulashilmoqda', 'success');
+      applyInterval(data);
+    } catch (error) {
+      setScreenStatus('Server bilan aloqa uzildi', 'warning');
+    }
+  }
+
+  async function startScreen() {
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      errorBox.textContent = 'Bu brauzer ekranni ulashishni qo‘llab-quvvatlamaydi. Kompyuterda Chrome, Edge yoki Firefox’dan foydalaning.';
+      sendEvent('screen_denied', 'unsupported');
+      return;
+    }
+    let captured;
+    try {
+      captured = await navigator.mediaDevices.getDisplayMedia({
+        video: {displaySurface: 'monitor', frameRate: {ideal: 1, max: 5}},
+        audio: false,
+        monitorTypeSurfaces: 'include',
+        selfBrowserSurface: 'exclude',
+        surfaceSwitching: 'exclude',
+      });
+    } catch (error) {
+      errorBox.textContent = 'Ekranni ulashishga ruxsat berilmadi. Qayta bosing va «Butun ekran»ni tanlang.';
+      sendEvent('screen_denied', error.name);
+      return;
+    }
+    const track = captured.getVideoTracks()[0];
+    const surface = track.getSettings().displaySurface;
+    if (surface && surface !== 'monitor') {
+      // Faqat bitta oyna yoki tab ulashilsa, boshqa dasturlar ko'rinmay qoladi.
+      captured.getTracks().forEach((item) => item.stop());
+      errorBox.textContent = 'Siz faqat oyna yoki tabni tanladingiz. Qayta bosing va «Butun ekran / Entire screen» ni tanlang.';
+      sendEvent('screen_denied', `surface=${surface}`);
+      return;
+    }
+    screenStream = captured;
+    screenVideo.srcObject = screenStream;
+    setScreenStatus('Ekran ulandi', 'info');
+    updateOverlay();
+    track.addEventListener('ended', () => {
+      screenStream = null;
+      clearInterval(screenTimer);
+      updateOverlay();
+      errorBox.textContent = 'Ekran ulashish to‘xtatildi. Davom etish uchun qayta ulashing.';
+      setScreenStatus('Ekran ulashilmayapti', 'danger');
+      sendEvent('screen_lost');
+    });
+    screenVideo.addEventListener('loadeddata', () => sendScreen(''), {once: true});
+    clearInterval(screenTimer);
+    screenTimer = setInterval(() => sendScreen(''), intervalMs);
+  }
+
+  document.getElementById('proctorStart')?.addEventListener('click', startCamera);
+  document.getElementById('screenStart')?.addEventListener('click', startScreen);
+  // Oynadan chiqilganda ochilgan narsani ko'rsatish uchun ekran rasmi biroz kechikib olinadi.
+  const onFocusLost = (kind) => {
+    sendEvent(kind);
+    if (screenStream) setTimeout(() => sendScreen(kind), 1500);
+  };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) onFocusLost('tab_hidden'); });
+  window.addEventListener('blur', () => onFocusLost('window_blur'));
+
   const blockPaste = (type, event) => {
     event.preventDefault();
     setStatus('Kod joylashtirish taqiqlangan', 'danger');
@@ -147,7 +277,8 @@
   } else if (source) {
     ['paste', 'drop'].forEach((type) => source.addEventListener(type, (event) => blockPaste(type, event)));
   }
-  start();
+  updateOverlay();
+  if (needCamera) startCamera();
 })();
 </script>
 {% endif %}

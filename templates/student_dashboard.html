@@ -10,7 +10,7 @@
     <div class="d-flex justify-content-between mb-3"><span class="badge {{ 'text-bg-warning' if contest.contest_type == 'coding' else 'text-bg-success' }}">{{ 'Kod yozish' if contest.contest_type == 'coding' else 'Output testi' }}</span><span class="small text-secondary">{{ contest.duration_minutes }} daqiqa</span></div>
     {% set state = contest_state(contest) %}
     <h3 class="h5">{{ contest.title }}</h3><p class="text-secondary small mb-2">{{ contest.questions|length }} ta masala</p>
-    {% if contest.proctoring or contest.require_seb %}<p class="small mb-2">{% if contest.proctoring %}<span class="badge text-bg-dark">📹 Kamera kuzatuvi</span> {% endif %}{% if contest.require_seb %}<span class="badge text-bg-dark">Safe Exam Browser</span>{% endif %}</p>{% endif %}
+    {% if contest.monitored or contest.require_seb %}<p class="small mb-2">{% if contest.proctoring %}<span class="badge text-bg-dark">📹 Kamera kuzatuvi</span> {% endif %}{% if contest.screen_capture %}<span class="badge text-bg-dark">🖥 Ekran kuzatuvi</span> {% endif %}{% if contest.require_seb %}<span class="badge text-bg-dark">Safe Exam Browser</span>{% endif %}</p>{% endif %}
     {% if contest.start_at or contest.end_at %}<p class="small text-secondary">{% if contest.start_at %}Boshlanish: {{ contest.start_at|local }}<br>{% endif %}{% if contest.end_at %}Tugash: {{ contest.end_at|local }}{% endif %}</p>{% endif %}
     <div class="mt-auto d-flex flex-column gap-2">
     {% if attempt and attempt.completed_at %}<a class="btn btn-outline-primary" href="{{ url_for('student_result', attempt_id=attempt.id) }}">Natijani ko‘rish</a>

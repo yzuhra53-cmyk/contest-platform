@@ -17,7 +17,7 @@
     {% if active_contests %}
     <div class="list-group list-group-flush">
       {% for contest in active_contests %}
-      <div class="list-group-item px-0 d-flex justify-content-between align-items-center"><div><strong>{{ contest.title }}</strong><div class="small text-secondary">{{ contest.questions|length }} ta savol · {{ contest.duration_minutes }} daqiqa</div></div><div class="d-flex align-items-center gap-3">{% if contest.proctoring %}<a class="small" href="{{ url_for('admin_proctor', contest_id=contest.id) }}">📹 Kuzatuv →</a>{% endif %}<a class="small" href="{{ url_for('admin_leaderboard', contest_id=contest.id) }}">Reyting →</a><span class="text-success">● Ochiq</span></div></div>
+      <div class="list-group-item px-0 d-flex justify-content-between align-items-center"><div><strong>{{ contest.title }}</strong><div class="small text-secondary">{{ contest.questions|length }} ta savol · {{ contest.duration_minutes }} daqiqa</div></div><div class="d-flex align-items-center gap-3">{% if contest.monitored %}<a class="small" href="{{ url_for('admin_proctor', contest_id=contest.id) }}">📹 Kuzatuv →</a>{% endif %}<a class="small" href="{{ url_for('admin_leaderboard', contest_id=contest.id) }}">Reyting →</a><span class="text-success">● Ochiq</span></div></div>
       {% endfor %}
     </div>
     {% else %}<p class="text-secondary mb-0">Hozircha faol kontest yo‘q.</p>{% endif %}

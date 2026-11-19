@@ -279,3 +279,12 @@ main:not(.auth-main) .card { animation: slide-up .55s both; }
 .CodeMirror-hints .CodeMirror-hint { color: #e6e6ee; }
 .CodeMirror-hints li.CodeMirror-hint-active { background: #bd1f2d; color: #fff; }
 @media (max-width: 768px) { .ide-console { grid-template-columns: 1fr; } .ide-console-col + .ide-console-col { border-left: 0; border-top: 1px solid #2c2e3a; } }
+
+/* Ekran kuzatuvi */
+.proctor-steps li { padding: .35rem 0; }
+.proctor-steps li.is-done { color: #198754; font-weight: 600; }
+.proctor-step-mark { display: inline-block; width: 1.4rem; }
+.proctor-media.is-dual { display: grid; grid-template-columns: 2fr 1fr; background: #0f172a; }
+.proctor-media.is-dual .proctor-frame, .proctor-media.is-dual .proctor-frame-empty { height: 100%; object-fit: cover; }
+.proctor-screen { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #0f172a; }
+.proctor-screen.is-stale { opacity: .45; filter: grayscale(1); }
