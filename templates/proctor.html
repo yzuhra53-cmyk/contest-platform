@@ -18,7 +18,7 @@
     </form>
   </div>
 </div>
-{% if not contest.monitored %}<div class="alert alert-warning">Bu kontestda kamera va ekran kuzatuvi hozir o‘chirilgan — yangi kadrlar kelmaydi.</div>{% endif %}
+{% if not contest.monitored %}<div class="alert alert-warning">Bu kontestda kamera va ekran kuzatuvi o‘chirilgan — kadrlar kelmaydi{% if contest.lockdown %}, lekin qulflangan rejim qoidabuzarliklari (to‘liq ekrandan chiqish, oynadan chiqish) shu yerda ko‘rinadi{% endif %}.</div>{% endif %}
 <div class="d-flex flex-wrap gap-3 mb-3 small" id="proctorSummary"></div>
 <div class="proctor-grid" id="proctorGrid"></div>
 <div class="empty-state d-none" id="proctorEmpty">Hali hech kim kontestni boshlamagan.</div>

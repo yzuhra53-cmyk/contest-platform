@@ -72,6 +72,8 @@ class Contest(db.Model):
     require_seb = db.Column(db.Boolean, nullable=False, default=False)
     # Ekran kuzatuvi: talaba butun ekranini ulashadi, ustoz ekran rasmlarini ko'radi.
     screen_capture = db.Column(db.Boolean, nullable=False, default=False)
+    # Qulflangan rejim: to'liq ekran majburiy, sahifadan chiqish va ko'p tugmalar bloklanadi.
+    lockdown = db.Column(db.Boolean, nullable=False, default=False)
     # Shuncha qoidabuzarlikdan keyin urinish avtomatik yakunlanadi (0 — o'chiq).
     max_violations = db.Column(db.Integer, nullable=False, default=0)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)

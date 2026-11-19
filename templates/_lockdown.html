@@ -1,0 +1,132 @@
+{% if contest.lockdown %}
+<div id="lockOverlay" class="lock-overlay">
+  <div class="lock-overlay-card">
+    <div class="lock-icon" aria-hidden="true">🔒</div>
+    <h2 class="h4 mb-2" id="lockTitle">Kontest qulflangan rejimda o‘tadi</h2>
+    <p class="mb-2" id="lockText">Kontest to‘liq ekranda ochiladi va uni tugatmaguningizcha shu sahifada qolasiz.</p>
+    <ul class="text-start small mb-3">
+      <li>To‘liq ekrandan chiqish, boshqa oyna, tab yoki dasturga o‘tish ustozga qoidabuzarlik sifatida yuboriladi.</li>
+      <li>Sahifani yangilash, orqaga qaytish, qidiruv (Ctrl+F), chop etish va dasturchi vositalari bloklangan.</li>
+      <li>Masala matnini nusxalab bo‘lmaydi.</li>
+    </ul>
+    <button type="button" class="btn btn-primary btn-lg" id="lockStart">To‘liq ekranda boshlash</button>
+  </div>
+</div>
+<div id="lockToast" class="lock-toast" role="alert" hidden></div>
+<script>
+(() => {
+  const monitored = {{ 'true' if contest.monitored else 'false' }};
+  const eventUrl = "{{ url_for('proctor_client_event', contest_id=contest.id) }}";
+  const csrf = document.querySelector('meta[name="csrf-token"]').content;
+  const overlay = document.getElementById('lockOverlay');
+  const toast = document.getElementById('lockToast');
+  let allowed = false;   // kontest yakunlanganda / javob yuborilganda sahifadan chiqishga ruxsat
+  let entered = false;   // talaba bir marta to'liq ekranga kirdimi
+  let toastTimer = null;
+  document.body.classList.add('contest-locked');
+
+  window.allowContestLeave = () => { allowed = true; };
+  document.addEventListener('submit', () => { allowed = true; }, true);
+
+  function report(kind, detail) {
+    if (allowed) return;
+    fetch(eventUrl, {
+      method: 'POST',
+      keepalive: true,
+      headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrf},
+      body: JSON.stringify({kind, detail: detail || ''}),
+    }).then((response) => {
+      if (response.status === 409 || response.redirected) { allowed = true; window.location.reload(); }
+    }).catch(() => {});
+  }
+  function notify(text) {
+    toast.textContent = text;
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.hidden = true; }, 3500);
+  }
+  const isFullscreen = () => Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+
+  async function enterFullscreen() {
+    const root = document.documentElement;
+    try {
+      if (root.requestFullscreen) await root.requestFullscreen({navigationUI: 'hide'});
+      else if (root.webkitRequestFullscreen) root.webkitRequestFullscreen();
+    } catch (error) {
+      notify('To‘liq ekranga o‘tib bo‘lmadi. Qayta bosing.');
+      return;
+    }
+    // Chrome/Edge: to'liq ekranda Esc, Ctrl+T/W/N, Alt+Tab kabi tugmalarni sahifa ushlaydi
+    // (chiqish uchun Esc'ni uzoq bosib turish kerak bo'ladi).
+    try { await navigator.keyboard?.lock?.(); } catch (error) { /* qo'llab-quvvatlanmaydi */ }
+  }
+  function syncOverlay() {
+    const full = isFullscreen();
+    overlay.hidden = full;
+    if (full) entered = true;
+  }
+  document.getElementById('lockStart').addEventListener('click', enterFullscreen);
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach((type) => document.addEventListener(type, () => {
+    syncOverlay();
+    if (!isFullscreen() && entered && !allowed) {
+      document.getElementById('lockTitle').textContent = 'Siz to‘liq ekrandan chiqdingiz';
+      document.getElementById('lockText').textContent = 'Bu ustozga qoidabuzarlik sifatida yuborildi. Davom etish uchun to‘liq ekranga qayting.';
+      document.getElementById('lockStart').textContent = 'To‘liq ekranga qaytish';
+      overlay.classList.add('is-violation');
+      report('fullscreen_exit');
+    }
+  }));
+
+  // Kamera/ekran kuzatuvi bo'lmasa, oynadan chiqishni shu yerning o'zi qayd qiladi.
+  if (!monitored) {
+    document.addEventListener('visibilitychange', () => { if (document.hidden) report('tab_hidden'); });
+    window.addEventListener('blur', () => report('window_blur'));
+  }
+
+  // Sahifani yopish, yangilash yoki boshqa manzilga o'tishdan oldin ogohlantirish.
+  window.addEventListener('beforeunload', (event) => {
+    if (allowed) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
+  // Brauzerning "Orqaga" tugmasi ishlamasin.
+  history.pushState({contestLock: true}, '', location.href);
+  window.addEventListener('popstate', () => {
+    if (allowed) return;
+    history.pushState({contestLock: true}, '', location.href);
+    notify('Kontest tugaguncha sahifadan chiqib bo‘lmaydi.');
+  });
+
+  const blockedCtrl = new Set(['r', 'f', 'g', 'p', 's', 'u', 'o', 'h', 'j', 'l', 'd', 't', 'n', 'w', 'e', 'k']);
+  document.addEventListener('keydown', (event) => {
+    const key = (event.key || '').toLowerCase();
+    const ctrl = event.ctrlKey || event.metaKey;
+    const devtools = ctrl && event.shiftKey && ['i', 'j', 'c', 'k'].includes(key);
+    const inEditor = Boolean(event.target.closest?.('.CodeMirror, textarea, input'));
+    const block =
+      ['f5', 'f11', 'f12', 'browserback', 'browserforward', 'browsersearch'].includes(key) ||
+      (event.altKey && ['arrowleft', 'arrowright', 'home', 'tab', 'f4'].includes(key)) ||
+      devtools ||
+      key === 'meta' || key === 'os' ||
+      (ctrl && key === 'tab') ||
+      (ctrl && blockedCtrl.has(key) && !(inEditor && key === 'e'));
+    if (block) {
+      event.preventDefault();
+      event.stopPropagation();
+      notify('Bu tugma kontest davomida bloklangan.');
+    }
+  }, true);
+  document.addEventListener('contextmenu', (event) => {
+    if (!event.target.closest?.('.CodeMirror, textarea, input')) event.preventDefault();
+  });
+  ['copy', 'cut'].forEach((type) => document.addEventListener(type, (event) => {
+    if (!event.target.closest?.('.CodeMirror, textarea, input')) {
+      event.preventDefault();
+      notify('Masala matnini nusxalab bo‘lmaydi.');
+    }
+  }));
+
+  syncOverlay();
+})();
+</script>
+{% endif %}

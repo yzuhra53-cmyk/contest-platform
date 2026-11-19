@@ -31,6 +31,7 @@ EVENT_LABELS = {
     "camera_lost": "Kamera uzildi",
     "screen_denied": "Ekranni ulashishga ruxsat bermadi",
     "screen_lost": "Ekran ulashish to‘xtatildi",
+    "fullscreen_exit": "To‘liq ekran rejimidan chiqdi",
     "seb_missing": "Safe Exam Browser'siz kirishga urindi",
     "new_device_login": "Boshqa qurilma/brauzerdan kirdi",
     "auto_finished": "Qoidabuzarlik limiti: urinish avtomatik yakunlandi",
@@ -44,11 +45,13 @@ VIOLATION_KINDS = (
     "paste",
     "camera_lost",
     "screen_lost",
+    "fullscreen_exit",
     "seb_missing",
     "new_device_login",
 )
 CLIENT_EVENT_KINDS = {
     "tab_hidden", "window_blur", "paste", "camera_denied", "camera_lost", "screen_denied", "screen_lost",
+    "fullscreen_exit",
 }
 
 _cascade = None

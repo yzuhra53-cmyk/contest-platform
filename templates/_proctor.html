@@ -83,6 +83,7 @@
   function handleResponse(response, data) {
     if (response.redirected || response.status === 409 || response.status === 403 || (data && data.finished)) {
       leaving = true;
+      window.allowContestLeave?.();
       window.location.reload();
       return true;
     }

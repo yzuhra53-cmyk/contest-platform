@@ -768,6 +768,7 @@ def create_app(test_config=None):
                     public_leaderboard=request.form.get("public_leaderboard") == "on",
                     proctoring=request.form.get("proctoring") == "on",
                     screen_capture=request.form.get("screen_capture") == "on",
+                    lockdown=request.form.get("lockdown") == "on",
                     require_seb=request.form.get("require_seb") == "on",
                     max_violations=read_max_violations(request.form),
                 )
@@ -817,6 +818,7 @@ def create_app(test_config=None):
         contest.public_leaderboard = request.form.get("public_leaderboard") == "on"
         contest.proctoring = request.form.get("proctoring") == "on"
         contest.screen_capture = request.form.get("screen_capture") == "on"
+        contest.lockdown = request.form.get("lockdown") == "on"
         contest.require_seb = request.form.get("require_seb") == "on"
         contest.max_violations = read_max_violations(request.form)
         db.session.commit()
@@ -1241,10 +1243,10 @@ def create_app(test_config=None):
             question_id = request.form.get("question_id", "")
             state.last_question_id = int(question_id) if question_id.isdigit() else None
 
-    def open_proctored_attempt(contest_id):
+    def open_proctored_attempt(contest_id, allow_lockdown=False):
         """Proktoring endpointlari uchun: faol, SEB tekshiruvidan o'tgan urinish."""
         contest = db.session.get(Contest, contest_id)
-        if contest is None or not contest.monitored:
+        if contest is None or not (contest.monitored or (allow_lockdown and contest.lockdown)):
             abort(404)
         attempt = get_attempt(session["student_id"], contest_id)
         if attempt is None or attempt.completed_at is not None or utcnow() >= attempt_deadline(attempt):
@@ -1334,13 +1336,13 @@ def create_app(test_config=None):
     @application.route("/contest/<int:contest_id>/proctor/event", methods=["POST"])
     @student_required
     def proctor_client_event(contest_id):
-        _, attempt = open_proctored_attempt(contest_id)
+        _, attempt = open_proctored_attempt(contest_id, allow_lockdown=True)
         payload = request.get_json(silent=True) or {}
         kind = payload.get("kind")
         if kind not in proctoring.CLIENT_EVENT_KINDS:
             abort(400)
         state = proctor_state(attempt)
-        if kind in {"tab_hidden", "window_blur"}:
+        if kind in {"tab_hidden", "window_blur", "fullscreen_exit"}:
             state.focus_lost_count = (state.focus_lost_count or 0) + 1
         elif kind == "paste":
             state.paste_count = (state.paste_count or 0) + 1
@@ -1835,6 +1837,7 @@ def create_app(test_config=None):
             ("proctoring", "BOOLEAN NOT NULL DEFAULT FALSE"),
             ("require_seb", "BOOLEAN NOT NULL DEFAULT FALSE"),
             ("screen_capture", "BOOLEAN NOT NULL DEFAULT FALSE"),
+            ("lockdown", "BOOLEAN NOT NULL DEFAULT FALSE"),
             ("max_violations", "INTEGER NOT NULL DEFAULT 0"),
         ):
             if name not in contest_columns:

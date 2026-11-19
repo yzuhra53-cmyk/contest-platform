@@ -200,7 +200,7 @@
         output.textContent = '';
         if (!response.ok || !data || data.error) {
           show((data && data.error) || `Server xatosi (${response.status}).`, 'ide-err');
-          if (data && data.finished) setTimeout(() => window.location.reload(), 1500);
+          if (data && data.finished) setTimeout(() => { window.allowContestLeave?.(); window.location.reload(); }, 1500);
           return;
         }
         const [label, kind] = STATUS[data.status] || [data.status, 'bad'];

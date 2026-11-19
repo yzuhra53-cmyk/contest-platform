@@ -108,7 +108,7 @@ const ide = initIde({
 {% if submission and submission.status == 'pending' %}
 // Tekshiruv tugashi bilan natijani ko'rsatish uchun sahifa yangilanadi (yozayotgan paytda emas).
 (function waitForVerdict() {
-  setTimeout(() => (ide.idleFor() > 4000 ? window.location.reload() : waitForVerdict()), 3000);
+  setTimeout(() => (ide.idleFor() > 4000 ? (window.allowContestLeave?.(), window.location.reload()) : waitForVerdict()), 3000);
 })();
 {% endif %}
 const timer = document.getElementById('timer');
@@ -129,4 +129,5 @@ function showTime() {
 showTime();
 </script>
 {% include "_proctor.html" %}
+{% include "_lockdown.html" %}
 {% endblock %}
