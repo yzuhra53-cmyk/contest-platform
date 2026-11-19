@@ -16,7 +16,7 @@
         <div class="card-body">
           <div class="auth-card-mark">01 <span>· TALABA KIRISHI</span></div>
           <h2 class="h3 mb-2">Xush kelibsiz!</h2>
-          <p class="text-secondary mb-4">Familiya-ismingizni yozing va ro‘yxatdan o‘zingizni tanlang (Tab yoki Enter) — guruh o‘zi to‘ladi. So‘ng HEMIS ID’ni kiriting.</p>
+          <p class="text-secondary mb-4">Familiya-ismingizni yozing va ro‘yxatdan o‘zingizni tanlang (Tab yoki Enter) — guruh va HEMIS ID o‘zi to‘ladi. Tekshirib, «Davom etish»ni bosing.</p>
           <form method="post" id="studentLoginForm" autocomplete="off">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <label class="form-label" for="full_name">F.I.Sh.</label>
@@ -43,6 +43,7 @@
 <script>
 (() => {
   const suggestUrl = "{{ url_for('student_login_suggest') }}";
+  const lookupUrl = "{{ url_for('student_login_lookup') }}";
   const nameInput = document.getElementById('full_name');
   const groupInput = document.getElementById('group_name');
   const hemisInput = document.getElementById('hemis_id');
@@ -81,8 +82,29 @@
     nameInput.value = item.name;
     groupInput.value = item.group;
     close();
-    hemisInput.focus();
+    hemisInput.value = '';
+    lookupHemis(true);
   }
+  // F.I.Sh. va guruh ro'yxatdagi talabaga mos kelsa, HEMIS ID o'zi yoziladi.
+  async function lookupHemis(focusSubmit) {
+    const name = nameInput.value.trim();
+    const group = groupInput.value.trim();
+    if (!name || !group) return;
+    try {
+      const response = await fetch(`${lookupUrl}?name=${encodeURIComponent(name)}&group=${encodeURIComponent(group)}`, {cache: 'no-store'});
+      const data = response.ok ? await response.json() : {};
+      if (data.hemis_id) {
+        hemisInput.value = data.hemis_id;
+        if (focusSubmit) document.querySelector('#studentLoginForm button').focus();
+      } else if (focusSubmit) {
+        hemisInput.focus();
+      }
+    } catch (error) {
+      if (focusSubmit) hemisInput.focus();
+    }
+  }
+  groupInput.addEventListener('change', () => { if (!hemisInput.value.trim()) lookupHemis(false); });
+  nameInput.addEventListener('change', () => { if (!hemisInput.value.trim()) lookupHemis(false); });
   async function load() {
     const query = nameInput.value.trim();
     if (query.length < 3) { close(); return; }

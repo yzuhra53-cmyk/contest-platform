@@ -390,6 +390,26 @@ def create_app(test_config=None):
             return render_template("student_login.html", form=request.form)
         return render_template("student_login.html", form={})
 
+    @application.route("/login/lookup")
+    def student_login_lookup():
+        """F.I.Sh. va guruh ro'yxatdagi bitta talabaga to'liq mos kelsa, uning HEMIS ID'sini qaytaradi."""
+        name = normalize_person_text(request.args.get("name", ""))
+        group = normalize_person_text(request.args.get("group", ""))
+        if not name or not group:
+            return jsonify({})
+        ip_key = ("lookup-ip", client_ip())
+        if throttle.blocked(ip_key, 300):
+            return jsonify({}), 429
+        throttle.fail(ip_key)  # oddiy hisoblagich: 15 daqiqada 300 so'rovdan oshmasin
+        found = [
+            hemis_id
+            for hemis_id, full_name, group_name in db.session.execute(
+                db.select(Student.hemis_id, Student.full_name, Student.group_name)
+            )
+            if normalize_person_text(full_name) == name and normalize_person_text(group_name) == group
+        ]
+        return jsonify({"hemis_id": found[0]} if len(found) == 1 else {})
+
     @application.route("/login/suggest")
     def student_login_suggest():
         """Kirish sahifasi uchun: ism bo'yicha F.I.Sh. va guruh takliflari (HEMIS ID berilmaydi)."""
