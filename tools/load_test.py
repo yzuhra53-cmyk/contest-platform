@@ -11,8 +11,7 @@ haqiqiyroq JPEG yasaladi). Har bir virtual talaba alohida oqimda:
 
 Ishga tushirish (loyiha papkasida, ustoz login/paroli muhit o'zgaruvchisida):
 
-    set LOADTEST_ADMIN_USER=admin
-    set LOADTEST_ADMIN_PASSWORD=...
+    (login va parol so‘raladi; yoki LOADTEST_ADMIN_USER / LOADTEST_ADMIN_PASSWORD bering)
     python tools/load_test.py --url https://<sayt>.onrender.com --students 50 --scenario coding --minutes 3
 
 Sinov o'zi LT-001... talabalarini va «Yuklama sinovi» kontestini yaratadi, oxirida o'chiradi
@@ -23,6 +22,7 @@ import argparse
 import http.cookiejar
 import io
 import json
+import getpass
 import os
 import random
 import re
@@ -168,10 +168,10 @@ def make_jpegs():
 
 # ---------------------------------------------------------------- tayyorlash
 def admin_client(args):
-    user = os.environ.get("LOADTEST_ADMIN_USER")
-    password = os.environ.get("LOADTEST_ADMIN_PASSWORD")
+    user = os.environ.get("LOADTEST_ADMIN_USER") or input("Ustoz logini: ").strip()
+    password = os.environ.get("LOADTEST_ADMIN_PASSWORD") or getpass.getpass("Ustoz paroli (ko‘rinmaydi): ")
     if not user or not password:
-        raise SystemExit("LOADTEST_ADMIN_USER va LOADTEST_ADMIN_PASSWORD muhit o‘zgaruvchilarini kiriting.")
+        raise SystemExit("Ustoz logini va paroli kerak.")
     admin = Client(args.url)
     admin.get("/admin/login", kind="setup")
     status, body, final = admin.post_form("/admin/login", {"username": user, "password": password}, kind="setup")
