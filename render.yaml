@@ -38,12 +38,6 @@ services:
       # Ekrandagi vaqt mintaqasi (Toshkent = UTC+5)
       - key: APP_UTC_OFFSET_HOURS
         value: "5"
-      # Safe Exam Browser Config Key(lar)i — SEB Config Tool'dan (README'ga qarang)
-      - key: SEB_CONFIG_KEYS
-        sync: false
-      # Ixtiyoriy: talabalarga ko'rsatiladigan sebs://... havola
-      - key: SEB_START_LINK
-        sync: false
       # Kamera kadrlari va hodisalar necha kundan keyin o'chiriladi
       - key: PROCTOR_RETENTION_DAYS
         value: "30"

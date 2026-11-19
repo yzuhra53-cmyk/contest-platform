@@ -3,57 +3,89 @@
 {% block content %}
 <div class="page-heading"><p class="eyebrow mb-2">OLIMPIADALAR</p><h1 class="page-title">Kontestlarni boshqarish</h1><p class="text-secondary">Savollarni tanlang, vaqtni va faol holatini belgilang.</p></div>
 <div class="row g-4">
-  <div class="col-lg-5"><div class="card border-0 shadow-sm"><div class="card-body p-4">
+  <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body p-4">
     <h2 class="h5 mb-3">Yangi kontest</h2>
     <form method="post" id="contestForm">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <label class="form-label">Kontest yo‘nalishi</label>
-      <select class="form-select mb-3" id="contest_type" name="contest_type">
-        <option value="quiz">Outputni tanlash testi</option>
-        <option value="coding">Python / C++ kod yozish</option>
-        <option value="mixed">Aralash: avval kod yozish, keyin test</option>
-      </select>
-      <label class="form-label">Kontest nomi</label><input class="form-control mb-3" name="title" required>
-      <label class="form-label">Davomiyligi (daqiqa)</label><input class="form-control mb-3" type="number" name="duration_minutes" min="1" max="600" value="45" required>
-      <div class="row g-2 mb-1">
-        <div class="col-sm-6"><label class="form-label small">Boshlanish (ixtiyoriy)</label><input class="form-control" type="datetime-local" name="start_at"></div>
-        <div class="col-sm-6"><label class="form-label small">Tugash (ixtiyoriy)</label><input class="form-control" type="datetime-local" name="end_at"></div>
-      </div>
-      <p class="form-text mt-0 mb-3">Toshkent vaqti. Boshlanishgacha talabalar kira olmaydi; tugash vaqtida barcha urinishlar yakunlanadi.</p>
-      <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="public_leaderboard" name="public_leaderboard"><label class="form-check-label" for="public_leaderboard">Reyting talabalarga ham ko‘rinsin</label></div>
-      <div class="border rounded-3 p-3 mb-3">
-        <div class="form-label fw-semibold mb-2">Nazorat</div>
-        <div class="form-check"><input class="form-check-input" type="checkbox" id="proctoring" name="proctoring" checked><label class="form-check-label" for="proctoring">Kamera + kod kuzatuvi (proktoring)</label></div>
-        <div class="form-check"><input class="form-check-input" type="checkbox" id="screen_capture" name="screen_capture" checked><label class="form-check-label" for="screen_capture">Ekran kuzatuvi — talaba butun ekranini ulashadi</label></div>
-        <div class="form-check"><input class="form-check-input" type="checkbox" id="lockdown" name="lockdown" checked><label class="form-check-label" for="lockdown">Qulflangan rejim — to‘liq ekran majburiy, sahifadan chiqish qayd etiladi</label></div>
-        <div class="form-check"><input class="form-check-input" type="checkbox" id="require_seb" name="require_seb" {% if seb_configured %}checked{% endif %}><label class="form-check-label" for="require_seb">Faqat Safe Exam Browser orqali</label></div>
-        <label class="form-label small mt-2 mb-1" for="max_violations">Qoidabuzarlik limiti (0 — o‘chiq)</label>
-        <input class="form-control form-control-sm mb-1" type="number" id="max_violations" name="max_violations" min="0" max="50" value="{{ default_max_violations }}">
-        <div class="form-text">Proktoringda talaba kamerasidan har 10 soniyada kadr va yozayotgan kodi ustozga yuboriladi. SEB boshqa dastur, brauzer va AI xizmatlarini bloklaydi. Limitga yetganda (oynadan chiqish, yuz yo‘q, paste, boshqa qurilmadan kirish…) urinish avtomatik yakunlanadi.</div>
-        {% if not seb_configured %}<div class="alert alert-warning small py-2 mt-2 mb-0">SEB_CONFIG_KEYS sozlanmagan: SEB faqat User-Agent bo‘yicha tekshiriladi (ishonchsiz). README’dagi yo‘riqnoma bo‘yicha Config Key’ni kiriting.</div>{% endif %}
-      </div>
-      <div class="border rounded-3 p-3 mb-3">
-        <div class="form-label fw-semibold">Kontest savollari</div>
-        <p class="form-text mt-0 d-none" id="mixedHint">Aralash kontest: talaba avval kod masalalarini yechadi. Hammasi qabul qilinsa yoki «Kod bo‘limini yakunlash»ni bossa, test bloki ochiladi (kodga qaytib bo‘lmaydi). Kamida bitta kod masalasi va bitta test savolini tanlang.</p>
-        <div class="question-picker" data-contest-types="quiz mixed">
-          <div class="small fw-semibold text-secondary mb-1 mixed-only d-none">Test bloki</div>
-          {% for question in quiz_questions %}
-          <label class="form-check d-flex gap-2 py-2"><input class="form-check-input mt-1" type="checkbox" name="question_ids" value="{{ question.id }}"><span><span class="badge text-bg-light">Output testi</span> {{ question.prompt|truncate(110) }}</span></label>
-          {% else %}<p class="small text-secondary mb-0">Output tanlash testlari hali qo‘shilmagan.</p>{% endfor %}
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <label class="form-label">Kontest nomi</label><input class="form-control mb-3" name="title" required>
+          <label class="form-label">Davomiyligi (daqiqa)</label><input class="form-control mb-3" type="number" name="duration_minutes" min="1" max="600" value="45" required>
+          <div class="row g-2 mb-1">
+            <div class="col-sm-6"><label class="form-label small">Boshlanish (ixtiyoriy)</label><input class="form-control" type="datetime-local" name="start_at"></div>
+            <div class="col-sm-6"><label class="form-label small">Tugash (ixtiyoriy)</label><input class="form-control" type="datetime-local" name="end_at"></div>
+          </div>
+          <p class="form-text mt-0 mb-3">Toshkent vaqti. Boshlanishgacha talabalar kira olmaydi; tugash vaqtida barcha urinishlar yakunlanadi.</p>
+          <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="public_leaderboard" name="public_leaderboard"><label class="form-check-label" for="public_leaderboard">Reyting talabalarga ham ko‘rinsin</label></div>
+          <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="start_as_teacher" name="start_as_teacher"><label class="form-check-label" for="start_as_teacher">Yaratilgach ustoz sifatida testni boshlash</label></div>
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active"><label class="form-check-label" for="is_active">Yaratilgandan so‘ng faol bo‘lsin</label></div>
         </div>
-        <div class="question-picker d-none" data-contest-types="coding mixed">
-          <div class="small fw-semibold text-secondary mb-1 mt-2 mixed-only d-none">Kod yozish bloki (birinchi)</div>
-          {% for question in coding_questions %}
-          <label class="form-check d-flex gap-2 py-2"><input class="form-check-input mt-1" type="checkbox" name="question_ids" value="{{ question.id }}"><span><span class="badge text-bg-warning">Kod yozish</span> {{ question.prompt|truncate(110) }}</span></label>
-          {% else %}<p class="small text-secondary mb-0">Kod yozish masalalari hali qo‘shilmagan.</p>{% endfor %}
+        <div class="col-lg-8">
+          <div class="border rounded-3 p-3 h-100">
+            <div class="form-label fw-semibold mb-2">Nazorat</div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="proctoring" name="proctoring" checked><label class="form-check-label" for="proctoring">Kamera + kod kuzatuvi (proktoring)</label></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="screen_capture" name="screen_capture" checked><label class="form-check-label" for="screen_capture">Ekran kuzatuvi — talaba butun ekranini ulashadi</label></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="lockdown" name="lockdown" checked><label class="form-check-label" for="lockdown">Qulflangan rejim — to‘liq ekran majburiy, sahifadan chiqish qayd etiladi</label></div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1" for="max_violations">Qoidabuzarlik limiti (0 — o‘chiq)</label>
+                <input class="form-control form-control-sm mb-1" type="number" id="max_violations" name="max_violations" min="0" max="50" value="{{ default_max_violations }}">
+                <div class="form-text">Limitga yetganda (oynadan chiqish, yuz yo‘q, paste, boshqa qurilmadan kirish…) urinish avtomatik yakunlanadi.</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="start_as_teacher" name="start_as_teacher"><label class="form-check-label" for="start_as_teacher">Yaratilgach ustoz sifatida testni boshlash</label></div>
-      <div class="form-check form-switch mb-4"><input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active"><label class="form-check-label" for="is_active">Yaratilgandan so‘ng faol bo‘lsin</label></div>
-      <button class="btn btn-primary">Kontest yaratish</button>
+
+      <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mt-4 mb-2">
+        <div><div class="fw-semibold">Kontest bloklari</div><div class="form-text mt-0">Bir yoki bir nechta blokdan savol tanlang. Talaba avval kod yozish blokini yechadi; u tugagach output va nazariy test bloklari ochiladi.</div></div>
+        <div class="small" id="blockSummary"></div>
+      </div>
+      <div class="block-columns">
+        <section class="block-column" data-block="code">
+          <header><span class="block-step">1</span><div><div class="fw-semibold">Kod yozish</div><div class="small text-secondary"><span class="block-count">0</span> / {{ coding_questions|length }} tanlandi</div></div>
+            <label class="block-all small"><input class="form-check-input" type="checkbox" data-select-all> hammasi</label></header>
+          <div class="block-list">
+            {% for question in coding_questions %}
+            <label class="form-check d-flex gap-2 py-1"><input class="form-check-input mt-1" type="checkbox" name="question_ids" value="{{ question.id }}"><span class="small">{{ question.prompt|truncate(90) }}</span></label>
+            {% else %}<p class="small text-secondary mb-0">Kod yozish masalalari hali qo‘shilmagan.</p>{% endfor %}
+          </div>
+        </section>
+        <section class="block-column" data-block="output">
+          <header><span class="block-step">2</span><div><div class="fw-semibold">Output testi</div><div class="small text-secondary"><span class="block-count">0</span> / {{ quiz_questions|length }} tanlandi</div></div>
+            <label class="block-all small"><input class="form-check-input" type="checkbox" data-select-all> hammasi</label></header>
+          <div class="block-list">
+            {% for question in quiz_questions %}
+            <label class="form-check d-flex gap-2 py-1"><input class="form-check-input mt-1" type="checkbox" name="question_ids" value="{{ question.id }}"><span class="small">{{ question.prompt|truncate(90) }}</span></label>
+            {% else %}<p class="small text-secondary mb-0">Output testlari hali qo‘shilmagan.</p>{% endfor %}
+          </div>
+        </section>
+        <section class="block-column" data-block="theory">
+          <header><span class="block-step">3</span><div><div class="fw-semibold">Nazariy bilimlar</div><div class="small text-secondary"><span class="block-count">0</span> / {{ theory_questions|length }} tanlandi</div></div>
+            <label class="block-all small"><input class="form-check-input" type="checkbox" data-select-all> hammasi</label></header>
+          <div class="d-flex gap-2 align-items-center small mb-2">
+            <span class="text-secondary">Har bir mavzudan tasodifiy</span>
+            <input class="form-control form-control-sm" type="number" min="1" max="40" value="5" id="randomPerGroup" style="width: 4.5rem">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="randomPick">tanlash</button>
+          </div>
+          <div class="block-list">
+            {% for category, items in theory_groups %}
+            <div class="block-group" data-group>
+              <label class="block-group-title"><input class="form-check-input" type="checkbox" data-select-group> {{ category }} <span class="text-secondary fw-normal">({{ items|length }})</span></label>
+              {% for question in items %}
+              <label class="form-check d-flex gap-2 py-1"><input class="form-check-input mt-1" type="checkbox" name="question_ids" value="{{ question.id }}"><span class="small">{{ question.prompt|truncate(90) }}</span></label>
+              {% endfor %}
+            </div>
+            {% else %}<p class="small text-secondary mb-0">Nazariy test savollari hali qo‘shilmagan.</p>{% endfor %}
+          </div>
+        </section>
+      </div>
+      <button class="btn btn-primary mt-4">Kontest yaratish</button>
     </form>
   </div></div></div>
-  <div class="col-lg-7"><div class="card border-0 shadow-sm"><div class="card-body p-0">
+  <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body p-0">
     <div class="p-4 border-bottom"><h2 class="h5 mb-0">Kontestlar <span class="badge rounded-pill text-bg-light">{{ contests|length }}</span></h2></div>
     {% if contests %}<div class="list-group list-group-flush">
       {% for contest in contests %}<div class="list-group-item p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -70,7 +102,6 @@
                   <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="pr{{ contest.id }}" name="proctoring" {% if contest.proctoring %}checked{% endif %}><label class="form-check-label small" for="pr{{ contest.id }}">Kamera + kod kuzatuvi</label></div>
                   <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="sc{{ contest.id }}" name="screen_capture" {% if contest.screen_capture %}checked{% endif %}><label class="form-check-label small" for="sc{{ contest.id }}">Ekran kuzatuvi</label></div>
                   <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="ld{{ contest.id }}" name="lockdown" {% if contest.lockdown %}checked{% endif %}><label class="form-check-label small" for="ld{{ contest.id }}">Qulflangan rejim</label></div>
-                  <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="sb{{ contest.id }}" name="require_seb" {% if contest.require_seb %}checked{% endif %}><label class="form-check-label small" for="sb{{ contest.id }}">Faqat Safe Exam Browser</label></div>
                   <label class="small mt-1">Qoidabuzarlik limiti <input class="form-control form-control-sm d-inline-block ms-1" style="width:5rem" type="number" name="max_violations" min="0" max="50" value="{{ contest.max_violations }}"></label>
                 </div>
                 <button class="btn btn-sm btn-primary">Saqlash</button>
@@ -78,7 +109,7 @@
             </form>
           </details>
         </div>
-        <div class="d-flex flex-wrap align-items-center gap-2"><a class="btn btn-sm btn-outline-success" href="{{ url_for('admin_leaderboard', contest_id=contest.id) }}">Reyting</a>{% if contest.monitored or contest.lockdown %}<a class="btn btn-sm btn-outline-dark" href="{{ url_for('admin_proctor', contest_id=contest.id) }}">📹 Kuzatuv</a>{% endif %}{% if contest.require_seb %}<span class="badge text-bg-dark">SEB</span>{% endif %}<a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin_preview_contest', contest_id=contest.id) }}">Ustoz sifatida boshlash</a>{% set state = contest_state(contest) %}<span class="badge {{ {'open': 'text-bg-success', 'upcoming': 'text-bg-info', 'finished': 'text-bg-dark'}.get(state, 'text-bg-secondary') }}">{{ {'open': 'Faol', 'upcoming': 'Kutilmoqda', 'finished': 'Tugagan'}.get(state, 'Yopiq') }}</span><form method="post" action="{{ url_for('toggle_contest', contest_id=contest.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-primary">{{ 'Yopish' if contest.is_active else 'Faollashtirish' }}</button></form><form method="post" action="{{ url_for('delete_contest', contest_id=contest.id) }}" onsubmit="return confirm('“{{ contest.title }}” kontesti, barcha urinishlari va yuborilgan kodlari butunlay o‘chadi. Davom etasizmi?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger">O‘chirish</button></form></div>
+        <div class="d-flex flex-wrap align-items-center gap-2"><a class="btn btn-sm btn-outline-success" href="{{ url_for('admin_leaderboard', contest_id=contest.id) }}">Reyting</a>{% if contest.monitored or contest.lockdown %}<a class="btn btn-sm btn-outline-dark" href="{{ url_for('admin_proctor', contest_id=contest.id) }}">📹 Kuzatuv</a>{% endif %}<a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin_preview_contest', contest_id=contest.id) }}">Ustoz sifatida boshlash</a>{% set state = contest_state(contest) %}<span class="badge {{ {'open': 'text-bg-success', 'upcoming': 'text-bg-info', 'finished': 'text-bg-dark'}.get(state, 'text-bg-secondary') }}">{{ {'open': 'Faol', 'upcoming': 'Kutilmoqda', 'finished': 'Tugagan'}.get(state, 'Yopiq') }}</span><form method="post" action="{{ url_for('toggle_contest', contest_id=contest.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-primary">{{ 'Yopish' if contest.is_active else 'Faollashtirish' }}</button></form><form method="post" action="{{ url_for('delete_contest', contest_id=contest.id) }}" onsubmit="return confirm('“{{ contest.title }}” kontesti, barcha urinishlari va yuborilgan kodlari butunlay o‘chadi. Davom etasizmi?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger">O‘chirish</button></form></div>
       </div>{% endfor %}
     </div>{% else %}<div class="empty-state">Hozircha kontest yaratilmagan.</div>{% endif %}
   </div></div></div>
@@ -86,25 +117,56 @@
 {% endblock %}
 {% block scripts %}
 <script>
-const contestType = document.getElementById('contest_type');
-const questionGroups = document.querySelectorAll('.question-picker[data-contest-types]');
-function toggleQuestionGroups() {
-  const mixed = contestType.value === 'mixed';
-  document.getElementById('mixedHint').classList.toggle('d-none', !mixed);
-  document.querySelectorAll('.mixed-only').forEach((label) => label.classList.toggle('d-none', !mixed));
-  // Aralashda kod bloki birinchi ko'rinsin.
-  const pickers = [...questionGroups];
-  if (mixed) pickers[1].after(pickers[0]); else pickers[1].before(pickers[0]);
-  questionGroups.forEach((group) => {
-    const active = group.dataset.contestTypes.split(' ').includes(contestType.value);
-    group.classList.toggle('d-none', !active);
-    group.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
-      checkbox.disabled = !active;
-      if (!active) checkbox.checked = false;
+(() => {
+  const columns = document.querySelectorAll('.block-column');
+  function refresh() {
+    const parts = [];
+    columns.forEach((column) => {
+      const boxes = [...column.querySelectorAll('input[name="question_ids"]')];
+      const checked = boxes.filter((box) => box.checked).length;
+      column.querySelector('.block-count').textContent = checked;
+      column.classList.toggle('is-used', checked > 0);
+      const all = column.querySelector('[data-select-all]');
+      all.checked = boxes.length > 0 && checked === boxes.length;
+      all.indeterminate = checked > 0 && checked < boxes.length;
+      column.querySelectorAll('[data-group]').forEach((group) => {
+        const items = [...group.querySelectorAll('input[name="question_ids"]')];
+        const on = items.filter((box) => box.checked).length;
+        const toggle = group.querySelector('[data-select-group]');
+        toggle.checked = items.length > 0 && on === items.length;
+        toggle.indeterminate = on > 0 && on < items.length;
+      });
+      if (checked) parts.push(`${column.querySelector('.fw-semibold').textContent}: ${checked}`);
     });
+    document.getElementById('blockSummary').textContent = parts.length ? parts.join(' · ') : 'Hali savol tanlanmagan';
+  }
+  columns.forEach((column) => {
+    column.querySelector('[data-select-all]').addEventListener('change', (event) => {
+      column.querySelectorAll('input[name="question_ids"]').forEach((box) => { box.checked = event.target.checked; });
+      refresh();
+    });
+    column.querySelectorAll('[data-select-group]').forEach((toggle) => toggle.addEventListener('change', (event) => {
+      toggle.closest('[data-group]').querySelectorAll('input[name="question_ids"]').forEach((box) => { box.checked = event.target.checked; });
+      refresh();
+    }));
   });
-}
-contestType.addEventListener('change', toggleQuestionGroups);
-toggleQuestionGroups();
+  document.getElementById('contestForm').addEventListener('change', (event) => {
+    if (event.target.name === 'question_ids') refresh();
+  });
+  document.getElementById('randomPick').addEventListener('click', () => {
+    const count = Math.max(1, Number(document.getElementById('randomPerGroup').value) || 1);
+    document.querySelectorAll('.block-column[data-block="theory"] [data-group]').forEach((group) => {
+      const boxes = [...group.querySelectorAll('input[name="question_ids"]')];
+      boxes.forEach((box) => { box.checked = false; });
+      for (let i = boxes.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [boxes[i], boxes[j]] = [boxes[j], boxes[i]];
+      }
+      boxes.slice(0, count).forEach((box) => { box.checked = true; });
+    });
+    refresh();
+  });
+  refresh();
+})();
 </script>
 {% endblock %}

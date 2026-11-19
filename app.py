@@ -49,6 +49,7 @@ from models import (
 )
 from judge import MAX_PARALLEL, JudgeError, judge_solution, run_program
 import proctoring
+from question_import import ImportFormatError, parse_file as parse_question_file
 
 # Kirish kodi: chalkash belgilarsiz (0/O, 1/I/L yo'q), 8 belgi = ~40 bit.
 ACCESS_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -531,6 +532,62 @@ def create_app(test_config=None):
         )
         return redirect(url_for("admin_students"))
 
+    @application.route("/admin/questions/import", methods=["POST"])
+    @admin_required
+    def import_questions():
+        """Word (.docx) yoki Excel (.xlsx) fayldan nazariy test savollarini qo'shadi."""
+        uploaded = request.files.get("file")
+        if not uploaded or not uploaded.filename:
+            flash("Yuklash uchun .docx yoki .xlsx faylni tanlang.", "danger")
+            return redirect(url_for("admin_questions"))
+        data = uploaded.read(5 * 1024 * 1024 + 1)
+        if len(data) > 5 * 1024 * 1024:
+            flash("Fayl 5 MB dan katta.", "danger")
+            return redirect(url_for("admin_questions"))
+        category = " ".join(request.form.get("category", "").split())[:160] or None
+        try:
+            parsed = parse_question_file(uploaded.filename, data, category)
+        except ImportFormatError as error:
+            flash(str(error), "danger")
+            return redirect(url_for("admin_questions"))
+        if not parsed:
+            flash("Faylda savol topilmadi. Jadval: № | Savol | A (to‘g‘ri javob) | B | C | D.", "warning")
+            return redirect(url_for("admin_questions"))
+
+        def key(text):
+            return " ".join(text.casefold().split())
+
+        existing = {
+            key(prompt.split("] ", 1)[1] if prompt.startswith("[") and "] " in prompt else prompt)
+            for prompt in db.session.execute(
+                db.select(Question.prompt).where(Question.question_type == "test")
+            ).scalars()
+        }
+        added = skipped = 0
+        for item in parsed:
+            if key(item["prompt"]) in existing:
+                skipped += 1
+                continue
+            existing.add(key(item["prompt"]))
+            option_a, option_b, option_c, option_d = item["options"]
+            db.session.add(Question(
+                question_type="test",
+                prompt=item["prompt"],
+                category=(item["category"] or category or os.path.splitext(uploaded.filename)[0])[:160],
+                option_a=option_a,
+                option_b=option_b,
+                option_c=option_c,
+                option_d=option_d,
+                correct_option=item["correct"],
+            ))
+            added += 1
+        db.session.commit()
+        message = f"Fayldan {added} ta nazariy savol qo‘shildi."
+        if skipped:
+            message += f" {skipped} tasi bazada bor edi, takror qo‘shilmadi."
+        flash(message, "success" if added else "info")
+        return redirect(url_for("admin_questions"))
+
     @application.route("/admin/students/import", methods=["POST"])
     @admin_required
     def import_students():
@@ -733,11 +790,9 @@ def create_app(test_config=None):
                 duration = int(request.form.get("duration_minutes", ""))
             except ValueError:
                 duration = 0
-            contest_type = request.form.get("contest_type", "quiz")
             start_as_teacher = request.form.get("start_as_teacher") == "on"
-            allowed_types = {
-                "quiz": ("code_output",), "coding": ("code_problem",), "mixed": ("code_problem", "code_output"),
-            }.get(contest_type, ())
+            # Kontest turi tanlangan bloklardan aniqlanadi: kod yozish, output testi, nazariy test.
+            allowed_types = ("code_problem", "code_output", "test")
             selected_ids = request.form.getlist("question_ids")
             selected = [int(value) for value in selected_ids if value.isdigit()]
             questions = (
@@ -754,13 +809,15 @@ def create_app(test_config=None):
             except ValueError as error:
                 start_at = end_at = None
                 window_error = str(error)
-            mixed_incomplete = contest_type == "mixed" and {
-                question.question_type for question in questions
-            } != {"code_problem", "code_output"}
-            if contest_type not in {"quiz", "coding", "mixed"} or not title or not 1 <= duration <= 600 or not questions:
-                flash("Kontest turi, nomi, 1–600 daqiqalik vaqt va shu turga mos kamida bitta masala kerak.", "danger")
-            elif mixed_incomplete:
-                flash("Aralash kontestga kamida bitta kod yozish masalasi va bitta test savoli tanlang.", "danger")
+            kinds = {question.question_type for question in questions}
+            if kinds == {"code_problem"}:
+                contest_type = "coding"
+            elif "code_problem" in kinds:
+                contest_type = "mixed"
+            else:
+                contest_type = "quiz"
+            if not title or not 1 <= duration <= 600 or not questions:
+                flash("Kontest nomi, 1–600 daqiqalik vaqt va kamida bitta blokdan savol kerak.", "danger")
             elif window_error:
                 flash(window_error, "danger")
             else:
@@ -776,7 +833,6 @@ def create_app(test_config=None):
                     proctoring=request.form.get("proctoring") == "on",
                     screen_capture=request.form.get("screen_capture") == "on",
                     lockdown=request.form.get("lockdown") == "on",
-                    require_seb=request.form.get("require_seb") == "on",
                     max_violations=read_max_violations(request.form),
                 )
                 db.session.add(contest)
@@ -788,12 +844,20 @@ def create_app(test_config=None):
             return redirect(url_for("admin_contests"))
         return render_template(
             "contests.html",
-            seb_configured=bool(proctoring.seb_config_keys()),
             default_max_violations=DEFAULT_MAX_VIOLATIONS,
             contests=Contest.query.order_by(Contest.id.desc()).all(),
             quiz_questions=Question.query.filter_by(question_type="code_output").order_by(Question.id.desc()).all(),
+            theory_questions=Question.query.filter_by(question_type="test").order_by(Question.id).all(),
+            theory_groups=group_theory_questions(),
             coding_questions=Question.query.filter_by(question_type="code_problem").order_by(Question.id.desc()).all(),
         )
+
+    def group_theory_questions():
+        """Nazariy savollar mavzu (blok) bo'yicha: [(nom, [savollar]), ...]."""
+        groups = {}
+        for question in Question.query.filter_by(question_type="test").order_by(Question.id):
+            groups.setdefault(question.category or "Boshqa savollar", []).append(question)
+        return sorted(groups.items(), key=lambda item: (item[0] == "Boshqa savollar", item[0]))
 
     def read_max_violations(form):
         try:
@@ -826,7 +890,7 @@ def create_app(test_config=None):
         contest.proctoring = request.form.get("proctoring") == "on"
         contest.screen_capture = request.form.get("screen_capture") == "on"
         contest.lockdown = request.form.get("lockdown") == "on"
-        contest.require_seb = request.form.get("require_seb") == "on"
+        contest.require_seb = False  # Safe Exam Browser olib tashlangan
         contest.max_violations = read_max_violations(request.form)
         db.session.commit()
         flash(f"“{contest.title}” sozlamalari saqlandi.", "success")
@@ -1143,31 +1207,6 @@ def create_app(test_config=None):
         contests = [contest for contest in all_contests if contest.is_active or contest.id in attempts]
         return render_template("student_dashboard.html", student=db.session.get(Student, student_id), contests=contests, attempts=attempts)
 
-    def seb_ok(contest, allow_session=False):
-        """Kontest SEB talab qilsa, so'rov SEB'dan kelganini tekshiradi.
-
-        Sahifa so'rovlarida SEB sarlavhasi tekshiriladi va sessiyaga belgi qo'yiladi;
-        fon (fetch) so'rovlarida esa shu belgi yetarli (allow_session=True).
-        """
-        if not contest.require_seb:
-            return True
-        flag = f"seb_ok_{contest.id}"
-        if proctoring.verify_seb_request(request.url, request.headers):
-            session[flag] = True
-            return True
-        return allow_session and session.get(flag) is True
-
-    def seb_required_response(contest, attempt=None):
-        if attempt is not None and attempt.completed_at is None:
-            record_proctor_event(attempt, "seb_missing", request.headers.get("User-Agent", "")[:300])
-            enforce_violation_limit(attempt)
-            db.session.commit()
-        return render_template(
-            "seb_required.html",
-            contest=contest,
-            seb_link=os.environ.get("SEB_START_LINK", ""),
-        ), 403
-
     def proctor_state(attempt, create=True):
         state = db.session.get(ProctorState, attempt.id)
         if state is None and create:
@@ -1251,15 +1290,13 @@ def create_app(test_config=None):
             state.last_question_id = int(question_id) if question_id.isdigit() else None
 
     def open_proctored_attempt(contest_id, allow_lockdown=False):
-        """Proktoring endpointlari uchun: faol, SEB tekshiruvidan o'tgan urinish."""
+        """Proktoring endpointlari uchun: talabaning faol urinishi."""
         contest = db.session.get(Contest, contest_id)
         if contest is None or not (contest.monitored or (allow_lockdown and contest.lockdown)):
             abort(404)
         attempt = get_attempt(session["student_id"], contest_id)
         if attempt is None or attempt.completed_at is not None or utcnow() >= attempt_deadline(attempt):
             abort(409)
-        if not seb_ok(contest, allow_session=True):
-            abort(403)
         return contest, attempt
 
     def shuffled_question_order(contest):
@@ -1535,8 +1572,6 @@ def create_app(test_config=None):
             abort(404)
         student_id = session["student_id"]
         attempt = get_attempt(student_id, contest_id)
-        if not (attempt and attempt.completed_at) and not seb_ok(contest):
-            return seb_required_response(contest, attempt)
         if attempt and attempt.completed_at:
             return redirect(url_for("student_result", attempt_id=attempt.id))
         if not attempt:
@@ -1665,8 +1700,6 @@ def create_app(test_config=None):
             return jsonify(error="Kontest vaqti tugagan.", finished=True), 409
         if attempt.coding_done_at is not None:
             return jsonify(error="Kod bo‘limi yakunlangan.", finished=True), 409
-        if not seb_ok(contest):
-            return jsonify(error="Kontest faqat Safe Exam Browser orqali ishlaydi."), 403
         data = request.get_json(silent=True) or {}
         language = data.get("language")
         source_code = data.get("source_code") or ""
@@ -1711,8 +1744,6 @@ def create_app(test_config=None):
         if utcnow() >= attempt_deadline(attempt):
             flash("Kontest vaqti tugagan.", "warning")
             return redirect(url_for("take_contest", contest_id=contest_id))
-        if not seb_ok(contest):
-            return seb_required_response(contest, attempt)
         problem = monitoring_problem(contest, attempt)
         if problem:
             flash(problem, "danger")
@@ -1835,8 +1866,6 @@ def create_app(test_config=None):
             abort(409)
         if utcnow() >= attempt_deadline(attempt):
             return jsonify({"saved": False, "expired": True}), 409
-        if not seb_ok(contest, allow_session=True):
-            return jsonify({"saved": False, "seb": False}), 403
         if monitoring_problem(contest, attempt):
             return jsonify({"saved": False, "camera": False}), 409
         payload = request.get_json(silent=True)
@@ -1874,6 +1903,9 @@ def create_app(test_config=None):
             db.session.commit()
         if "test_cases_json" not in question_columns:
             db.session.execute(db.text("ALTER TABLE questions ADD COLUMN test_cases_json TEXT"))
+            db.session.commit()
+        if "category" not in question_columns:
+            db.session.execute(db.text("ALTER TABLE questions ADD COLUMN category VARCHAR(160)"))
             db.session.commit()
         contest_columns = {column["name"] for column in db.inspect(db.engine).get_columns("contests")}
         if "contest_type" not in contest_columns:
@@ -1939,6 +1971,7 @@ def create_app(test_config=None):
             db.session.commit()
 
         import_problem_bank(application)
+        import_theory_bank(application)
 
     return application
 
@@ -1970,6 +2003,39 @@ def import_problem_bank(application):
             application.logger.info("Olimpiada bankidan %s ta masala qo'shildi.", added)
         except IntegrityError:
             # Bir nechta jarayon bir vaqtda ishga tushsa, boshqasi allaqachon qo'shgan.
+            db.session.rollback()
+
+
+def import_theory_bank(application):
+    """theory_bank.json dagi nazariy test savollarini bazaga bir marta qo'shadi."""
+    bank_file = os.path.join(application.root_path, "theory_bank.json")
+    if not os.path.exists(bank_file):
+        return
+    with open(bank_file, encoding="utf-8") as file:
+        bank = json.load(file)
+    done = set(db.session.execute(db.select(BankImport.key)).scalars())
+    added = 0
+    for item in bank:
+        if item["key"] in done:
+            continue
+        option_a, option_b, option_c, option_d = item["options"]
+        db.session.add(Question(
+            question_type="test",
+            prompt=item["prompt"],
+            category=item["category"],
+            option_a=option_a,
+            option_b=option_b,
+            option_c=option_c,
+            option_d=option_d,
+            correct_option=item["correct"],
+        ))
+        db.session.add(BankImport(key=item["key"]))
+        added += 1
+    if added:
+        try:
+            db.session.commit()
+            application.logger.info("Nazariy test bankidan %s ta savol qo'shildi.", added)
+        except IntegrityError:
             db.session.rollback()
 
 

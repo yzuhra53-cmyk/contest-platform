@@ -36,7 +36,7 @@
         {% for event in events %}
           <tr>
             <td class="text-nowrap small">{{ event.created_at|local('%H:%M:%S') }}</td>
-            <td><span class="badge {{ 'text-bg-danger' if event.kind in ('no_face', 'multiple_faces', 'seb_missing', 'camera_denied', 'camera_lost', 'screen_lost', 'screen_denied') else 'text-bg-warning' }}">{{ labels.get(event.kind, event.kind) }}</span></td>
+            <td><span class="badge {{ 'text-bg-danger' if event.kind in ('no_face', 'multiple_faces', 'camera_denied', 'camera_lost', 'screen_lost', 'screen_denied') else 'text-bg-warning' }}">{{ labels.get(event.kind, event.kind) }}</span></td>
             <td class="small text-secondary">{{ event.detail or '' }}</td>
             <td>{% if event.id in image_ids %}<a href="{{ url_for('admin_proctor_event_image', event_id=event.id) }}" target="_blank"><img src="{{ url_for('admin_proctor_event_image', event_id=event.id) }}" alt="" width="{{ 160 if event.kind in ('window_blur', 'tab_hidden') else 96 }}" class="rounded"{% if event.kind in ('no_face', 'multiple_faces') %} style="transform: scaleX(-1)"{% endif %}></a>{% endif %}</td>
           </tr>

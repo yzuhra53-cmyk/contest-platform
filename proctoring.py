@@ -1,7 +1,5 @@
-"""Proktoring yordamchilari: OpenCV bilan yuz aniqlash va Safe Exam Browser tekshiruvi."""
+"""Proktoring yordamchilari: OpenCV bilan yuz aniqlash."""
 
-import hashlib
-import hmac
 import os
 import threading
 
@@ -46,7 +44,6 @@ VIOLATION_KINDS = (
     "camera_lost",
     "screen_lost",
     "fullscreen_exit",
-    "seb_missing",
     "new_device_login",
 )
 CLIENT_EVENT_KINDS = {
@@ -91,29 +88,3 @@ def detect_faces(image_bytes):
 
 def is_jpeg(data):
     return data[:3] == b"\xff\xd8\xff"
-
-
-def seb_config_keys():
-    raw = os.environ.get("SEB_CONFIG_KEYS", "")
-    return [key.strip().lower() for key in raw.split(",") if key.strip()]
-
-
-def verify_seb_request(url, headers):
-    """So'rov Safe Exam Browser'dan kelganini tekshiradi.
-
-    SEB har bir so'rovga X-SafeExamBrowser-ConfigKeyHash sarlavhasini qo'shadi:
-    SHA256(to'liq URL + Config Key). Config Key SEB Config Tool'da ko'rsatiladi va
-    SEB_CONFIG_KEYS muhit o'zgaruvchisiga yoziladi. Kalit berilmagan bo'lsa, faqat
-    User-Agent tekshiriladi (kuchsiz, soxtalashtirish mumkin).
-    """
-    keys = seb_config_keys()
-    if keys:
-        supplied = (headers.get("X-SafeExamBrowser-ConfigKeyHash") or "").strip().lower()
-        if not supplied:
-            return False
-        url = url.split("#", 1)[0]
-        return any(
-            hmac.compare_digest(supplied, hashlib.sha256((url + key).encode("utf-8")).hexdigest())
-            for key in keys
-        )
-    return "SEB/" in (headers.get("User-Agent") or "")

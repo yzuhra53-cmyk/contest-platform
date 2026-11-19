@@ -30,12 +30,22 @@
       </div>
       <button class="btn btn-primary">Savolni saqlash</button>
     </form>
+  </div></div>
+  <div class="card border-0 shadow-sm mt-4"><div class="card-body p-4">
+    <h2 class="h5 mb-1">Fayldan yuklash (nazariy test)</h2>
+    <p class="text-secondary small">Word (.docx) yoki Excel (.xlsx) jadvali: <strong>№ | Savol | A (to‘g‘ri javob) | B | C | D</strong>. Variantlar avtomatik aralashtiriladi. Jadvalda «To‘g‘ri» ustuni (A–D) bo‘lsa, javob shundan olinadi. Word’dagi «N-blok: Nomi» sarlavhasi blok nomiga aylanadi; bazada bor savollar takror qo‘shilmaydi.</p>
+    <form method="post" action="{{ url_for('import_questions') }}" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input class="form-control mb-2" type="file" name="file" accept=".docx,.xlsx" required>
+      <input class="form-control mb-3" name="category" maxlength="160" placeholder="Blok nomi (ixtiyoriy, faylda bo‘lmasa)">
+      <button class="btn btn-outline-primary">Savollarni yuklash</button>
+    </form>
   </div></div></div>
   <div class="col-lg-7"><div class="card border-0 shadow-sm"><div class="card-body p-0">
     <div class="p-4 border-bottom"><h2 class="h5 mb-0">Mavjud savollar <span class="badge rounded-pill text-bg-light">{{ questions|length }}</span></h2></div>
     {% if questions %}<div class="list-group list-group-flush">
       {% for question in questions %}<div class="list-group-item p-4">
-        <div class="d-flex justify-content-between gap-3"><div><span class="badge {{ 'text-bg-info' if question.question_type == 'code_output' else ('text-bg-primary' if question.question_type == 'test' else 'text-bg-secondary') }} mb-2">{{ 'Kod natijasini topish' if question.question_type == 'code_output' else ('Test' if question.question_type == 'test' else 'Dasturlash') }}</span><div class="fw-medium">{{ question.prompt }}</div>
+        <div class="d-flex justify-content-between gap-3"><div><span class="badge {{ 'text-bg-info' if question.question_type == 'code_output' else ('text-bg-primary' if question.question_type == 'test' else 'text-bg-secondary') }} mb-2">{{ 'Kod natijasini topish' if question.question_type == 'code_output' else ('Nazariy test' if question.question_type == 'test' else 'Dasturlash') }}</span>{% if question.category %} <span class="badge text-bg-light mb-2">{{ question.category }}</span>{% endif %}<div class="fw-medium">{{ question.prompt }}</div>
           {% if question.question_type == 'code_output' %}<pre class="sample-input mt-2 mb-2"><code>{{ question.code_snippet }}</code></pre><div class="small text-secondary">Input: {{ question.input_data or 'bo‘sh' }} · Chiqish variantli test</div>
           {% elif question.question_type == 'code_problem' %}<div class="small text-secondary mt-2">Namuna Input: {{ question.input_data or '—' }} · yashirin testlar: {{ (question.test_cases_json or '[]')|length }} belgili JSON</div>
           {% elif question.question_type == 'test' %}<div class="small text-secondary mt-2">A. {{ question.option_a }} · B. {{ question.option_b }} · C. {{ question.option_c }} · D. {{ question.option_d }}</div>

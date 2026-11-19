@@ -46,9 +46,17 @@ Kod masalalari sahifasida professional muharrir bor (CodeMirror 5, CDN orqali):
 
 Proktoringli kontestda muharrirga kod joylashtirish (paste/drop) ham bloklanadi va qayd etiladi.
 
-## Aralash kontest (kod + test)
+## Kontest bloklari: kod yozish, output testi, nazariy bilimlar
 
-Kontest yaratishda «Aralash: avval kod yozish, keyin test» turini tanlang va kamida bitta kod masalasi hamda bitta output testi savolini belgilang. Talaba avval kod masalalarini ketma-ket yechadi (oldingisi qabul qilingach keyingisi ochiladi). Barcha kod masalalari qabul qilinsa, test bloki o‘zi ochiladi; yecha olmasa, «Kod bo‘limini yakunlash» tugmasi bilan testga o‘tadi. Shundan keyin kodga qaytib bo‘lmaydi. Vaqt ikkala blok uchun umumiy. Natija: qabul qilingan kod masalalari + to‘g‘ri test javoblari, jami savollar soniga nisbatan foizda; reyting shu son bo‘yicha, teng bo‘lsa sarflangan vaqt bo‘yicha.
+Kontest yaratishda savollar uchta gorizontal ustunda tanlanadi: **Kod yozish**, **Output testi** va **Nazariy bilimlar**. Bir yoki bir nechta blokdan savol belgilang — kontest turi shundan aniqlanadi. Nazariy ustunda savollar mavzular (bloklar) bo‘yicha guruhlangan: guruhni bitta belgi bilan tanlash yoki «Har bir mavzudan tasodifiy N ta» tugmasi bor.
+
+Talaba sahifasining yuqorisida bloklar gorizontal qadamlar ko‘rinishida turadi. Kod yozish bloki birinchi: masalalar ketma-ket ochiladi; hammasi qabul qilinsa yoki talaba «Kod bo‘limini yakunlash»ni bossa, test bloklari ochiladi va kodga qaytib bo‘lmaydi. Output va nazariy bloklar bitta sahifada gorizontal tablar bilan almashtiriladi (har bir tabda nechta savolga javob berilgani ko‘rinadi), javoblar avtomatik saqlanadi. Vaqt hamma bloklar uchun umumiy. Natija: qabul qilingan kod masalalari + to‘g‘ri test javoblari, jami savollarga nisbatan foizda.
+
+### Nazariy savollar banki va fayldan yuklash
+
+`theory_bank.json` da 200 ta nazariy savol bor (5 blok: kompyuter qurilmasi va OT, ofis ilovalari, tarmoqlar va internet, ma’lumotlar bazasi va axborot, xavfsizlik va zamonaviy tendensiyalar). Ular birinchi ishga tushishda **Savollar** bazasiga bir marta qo‘shiladi. Manbada to‘g‘ri javob doim A ustunida bo‘lgani uchun variantlar aralashtirilgan.
+
+Yangi savollarni **Savollar → Fayldan yuklash** orqali Word (.docx) yoki Excel (.xlsx) fayldan qo‘shish mumkin. Jadval: `№ | Savol | A (to‘g‘ri javob) | B | C | D`. Variantlar avtomatik aralashtiriladi; jadvalda «To‘g‘ri» ustuni (A–D) bo‘lsa, javob shundan olinadi. Word’dagi «N-blok: Nomi» sarlavhasi (Excel’da «Blok» ustuni yoki varaq nomi) mavzuga aylanadi. Bazada bor savollar takror qo‘shilmaydi. Bankni fayllardan qayta yaratish: `uv run python tools/build_theory_bank.py 1-blok.docx 2-blok.docx ...`.
 
 ## Kontest vaqti va reyting
 
@@ -61,35 +69,29 @@ Har bir kontestning **Reyting** sahifasi bor (har 30 soniyada yangilanadi, Excel
 
 «Reyting talabalarga ko‘rinsin» belgilansa, talabalar ham jonli reytingni ko‘radi.
 
-## Proktoring va Safe Exam Browser
+## Proktoring
 
-Kontest sozlamalarida ikki bayroq bor:
+Kontest sozlamalarida uchta bayroq bor:
 
 **Kamera + kod kuzatuvi (proktoring).** Talaba kontestni ochganda kameraga ruxsat beradi; ruxsatsiz sahifa yopiq turadi. Har 10 soniyada kameradan bitta kadr (320 px JPEG) va yozayotgan kodi serverga yuboriladi. OpenCV (Haar cascade) har bir kadrda yuzlarni sanaydi: yuz yo‘q yoki bir nechta yuz bo‘lsa, ogohlantirish kadri bilan saqlanadi. Boshqa tab/dasturga o‘tish, oynadan chiqish, kod joylashtirish (paste — bloklanadi), kamera uzilishi ham qayd qilinadi. Kamera 60 soniyadan ko‘p ishlamasa, kod yuborish va javoblarni avtomatik saqlash to‘xtaydi.
 
 Ustoz **Kontestlar → 📹 Kuzatuv** sahifasida barcha talabalarning oxirgi kadri va kodini jonli ko‘radi (har 5 soniyada yangilanadi); muammoli talabalar qizil bo‘lib yuqoriga chiqadi. Har bir talabaning hodisalar tarixi kadrlar bilan alohida sahifada. Joy tejash uchun har bir talabadan faqat oxirgi kadr va shubhali kadrlar saqlanadi; ular `PROCTOR_RETENTION_DAYS` (standart 30) kundan keyin o‘chadi yoki «Kadrlarni o‘chirish» tugmasi bilan darhol o‘chiriladi. **Talabalarni kamera kuzatuvi haqida oldindan ogohlantiring.**
 
-**Qulflangan rejim.** Kontest faqat to‘liq ekranda ochiladi va talaba uni tugatmaguncha shu sahifada qoladi: sahifani yopish yoki boshqa manzilga o‘tishdan oldin brauzer ogohlantiradi, «Orqaga» tugmasi ishlamaydi, F5/Ctrl+R, Ctrl+F, Ctrl+P, Ctrl+S, Ctrl+U, F12 va dasturchi vositalari bloklanadi, masala matnini nusxalab bo‘lmaydi. Chrome va Edge’da to‘liq ekranda Keyboard Lock ham yoqiladi: Ctrl+T/W/N, Alt+Tab ushlanadi va chiqish uchun Esc’ni uzoq bosib turish kerak. To‘liq ekrandan chiqish «To‘liq ekran rejimidan chiqdi» qoidabuzarligi sifatida yoziladi va qaytmaguncha kontest yopiq turadi. Brauzer sahifasi kompyuterni to‘liq qulflay olmaydi (masalan, Ctrl+Alt+Del yoki telefon), to‘liq qulf uchun Safe Exam Browser kerak.
+**Qulflangan rejim.** Kontest faqat to‘liq ekranda ochiladi va talaba uni tugatmaguncha shu sahifada qoladi: sahifani yopish yoki boshqa manzilga o‘tishdan oldin brauzer ogohlantiradi, «Orqaga» tugmasi ishlamaydi, F5/Ctrl+R, Ctrl+F, Ctrl+P, Ctrl+S, Ctrl+U, F12 va dasturchi vositalari bloklanadi, masala matnini nusxalab bo‘lmaydi. Chrome va Edge’da to‘liq ekranda Keyboard Lock ham yoqiladi: Ctrl+T/W/N, Alt+Tab ushlanadi va chiqish uchun Esc’ni uzoq bosib turish kerak. To‘liq ekrandan chiqish «To‘liq ekran rejimidan chiqdi» qoidabuzarligi sifatida yoziladi va qaytmaguncha kontest yopiq turadi. Brauzer sahifasi kompyuterni to‘liq qulflay olmaydi (masalan, Ctrl+Alt+Del yoki telefon).
 
-**Ekran kuzatuvi.** Talaba kontestni ochganda **butun ekranini** ulashadi (brauzer oynasida «Butun ekran / Entire screen»). Faqat bitta oyna yoki tab tanlansa, qabul qilinmaydi. Har 10 soniyada ekran rasmi (1024 px JPEG) ustozga yuboriladi. Talaba oynadan chiqsa, 1,5 soniyadan keyin olingan ekran rasmi shu hodisaga dalil sifatida biriktiriladi: ustoz boshqa brauzer yoki AI sayti ochilganini ko‘radi. Ulashish to‘xtatilsa, «Ekran ulashish to‘xtatildi» qoidabuzarligi yoziladi va qayta ulashmaguncha kontest yopiq turadi; 60 soniyadan ko‘p ekran rasmi kelmasa, yechim yuborish to‘xtaydi. Ekran kuzatuvi kameradan mustaqil ishlaydi, shuning uchun kamerasiz kompyuterlarda ham qo‘llash mumkin. Bu brauzer ichida ishlaydi va Safe Exam Browser bilan birga ishlatilmaydi: SEB ekran ulashishni o‘zi bloklaydi. Kompyuterda Chrome, Edge yoki Firefox kerak.
+**Ekran kuzatuvi.** Talaba kontestni ochganda **butun ekranini** ulashadi (brauzer oynasida «Butun ekran / Entire screen»). Faqat bitta oyna yoki tab tanlansa, qabul qilinmaydi. Har 10 soniyada ekran rasmi (1024 px JPEG) ustozga yuboriladi. Talaba oynadan chiqsa, 1,5 soniyadan keyin olingan ekran rasmi shu hodisaga dalil sifatida biriktiriladi: ustoz boshqa brauzer yoki AI sayti ochilganini ko‘radi. Ulashish to‘xtatilsa, «Ekran ulashish to‘xtatildi» qoidabuzarligi yoziladi va qayta ulashmaguncha kontest yopiq turadi; 60 soniyadan ko‘p ekran rasmi kelmasa, yechim yuborish to‘xtaydi. Ekran kuzatuvi kameradan mustaqil ishlaydi, shuning uchun kamerasiz kompyuterlarda ham qo‘llash mumkin. Kompyuterda Chrome, Edge yoki Firefox kerak.
 
 Kamera faqat HTTPS (Render) yoki `localhost` orqali ishlaydi.
-
-**Faqat Safe Exam Browser orqali.** Veb-sayt o‘zi talaba kompyuterida boshqa dastur yoki AI’ni bloklay olmaydi — buni [Safe Exam Browser](https://safeexambrowser.org) (bepul, Windows/macOS) qiladi: kiosk rejimi, boshqa dasturlar va saytlar yopiq. Sozlash:
-
-1. SEB Config Tool’da yangi konfiguratsiya: *Start URL* = sayt manzili (masalan `https://<sayt>/login`), *Use Browser Exam Key and Configuration Key* yoqilgan; proktoring ishlatilsa, kamera ruxsatini yoqing (*Browser → Enable camera*). URL filtrda faqat sayt domenini ruxsat eting.
-2. Konfiguratsiyani `.seb` fayl qilib saqlang va talabalarga tarqating (yoki saytga joylab, `sebs://` havolasini `SEB_START_LINK` ga yozing).
-3. Config Tool ko‘rsatgan **Config Key** ni `SEB_CONFIG_KEYS` muhit o‘zgaruvchisiga yozing. Server har so‘rovdagi `X-SafeExamBrowser-ConfigKeyHash` sarlavhasini SHA256(URL + Config Key) bilan solishtiradi. Kalit berilmasa, faqat User-Agent tekshiriladi — buni soxtalashtirish oson, shuning uchun kalitni albatta kiriting.
 
 Cheklov: hech qanday tizim talabaning telefoni yoki ikkinchi qurilmasini to‘liq to‘sa olmaydi — kamera kuzatuvi shu uchun.
 
 ## Qat’iy rejim
 
 - **Bitta qurilma.** Talaba boshqa qurilma yoki brauzerdan kirsa, oldingi sessiya darhol bekor bo‘ladi; ochiq urinish bo‘lsa, bu qoidabuzarlik sifatida qayd qilinadi.
-- **Qoidabuzarlik limiti** (kontest sozlamasi, yangi kontestlarda standart 5). Oynadan chiqish, kadrda yuz yo‘qligi yoki bir nechta yuz, paste, kamera uzilishi, SEB’siz kirish, boshqa qurilmadan kirish sanaladi (bir xil hodisa 30 soniyada bir marta). Limitga yetganda urinish avtomatik yakunlanadi va shu paytgacha to‘g‘ri bo‘lganlar baholanadi. Talaba ekranida hisoblagich ko‘rinib turadi.
+- **Qoidabuzarlik limiti** (kontest sozlamasi, yangi kontestlarda standart 5). Oynadan chiqish, kadrda yuz yo‘qligi yoki bir nechta yuz, paste, kamera yoki ekran ulashish uzilishi, to‘liq ekrandan chiqish, boshqa qurilmadan kirish sanaladi (bir xil hodisa 30 soniyada bir marta). Limitga yetganda urinish avtomatik yakunlanadi va shu paytgacha to‘g‘ri bo‘lganlar baholanadi. Talaba ekranida hisoblagich ko‘rinib turadi.
 - **Savollar tartibi** Output testida har bir talabaga aralashtirib beriladi.
 - **Yechim yuborish oralig‘i** — kamida 20 soniya (`SUBMIT_COOLDOWN_SECONDS`), tanlab-tekshirib ko‘rishni cheklaydi.
-- Yangi kontestlarda proktoring standart yoqilgan; `SEB_CONFIG_KEYS` sozlangan bo‘lsa, SEB ham standart yoqiladi.
+- Yangi kontestlarda kamera, ekran kuzatuvi va qulflangan rejim standart yoqilgan.
 
 ## GitHub'ga tayyorlash
 
@@ -140,7 +142,7 @@ Yoqish tartibi:
 1. Render Dashboard → **Billing** bo‘limida to‘lov kartasini qo‘shing (buni faqat hisob egasi qila oladi).
 2. `main` branchga push qilingach, Blueprint `render.yaml` ni o‘qib, rejalarni yangilaydi. Agar servis Blueprint’siz yaratilgan bo‘lsa, Dashboard’da servis → **Settings → Instance Type → Starter**, bazada **Upgrade** ni qo‘lda tanlang.
 3. Eski bepul baza muddati o‘tgan bo‘lsa, yangi baza bo‘sh ochiladi: talabalarni Excel’dan qayta import qiling.
-4. Environment bo‘limida `ADMIN_PASSWORD` (kuchli parol) va SEB ishlatilsa `SEB_CONFIG_KEYS` ni kiriting.
+4. Environment bo‘limida `ADMIN_PASSWORD` (kuchli parol) ni kiriting.
 5. `https://<sayt>/health` `{"status": "ok"}` qaytarishini tekshiring.
 
 Kamera faqat HTTPS orqali ishlaydi — Render buni avtomatik beradi.

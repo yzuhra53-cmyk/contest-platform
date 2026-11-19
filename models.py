@@ -47,6 +47,8 @@ class Question(db.Model):
     input_data = db.Column(db.Text)
     expected_output = db.Column(db.Text)
     test_cases_json = db.Column(db.Text)
+    # Nazariy savollar bloki (masalan, "1-blok: Kompyuter qurilmasi...").
+    category = db.Column(db.String(160))
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
     contests = db.relationship("Contest", secondary=contest_questions, back_populates="questions")
@@ -103,8 +105,29 @@ class Contest(db.Model):
         return [question for question in self.questions if question.question_type != "code_problem"]
 
     @property
+    def output_questions(self):
+        return [question for question in self.questions if question.question_type == "code_output"]
+
+    @property
+    def theory_questions(self):
+        return [question for question in self.questions if question.question_type == "test"]
+
+    @property
+    def blocks(self):
+        """Kontest bloklari tartibi bilan: (kalit, nom, savollar soni)."""
+        result = []
+        for key, title, items in (
+            ("code", "Kod yozish", self.coding_questions),
+            ("output", "Output testi", self.output_questions),
+            ("theory", "Nazariy bilimlar", self.theory_questions),
+        ):
+            if items:
+                result.append((key, title, len(items)))
+        return result
+
+    @property
     def type_label(self):
-        return {"coding": "Kod yozish", "mixed": "Kod + test"}.get(self.contest_type, "Output testi")
+        return " + ".join(title for _, title, _ in self.blocks) or "Bo‘sh"
 
     @property
     def monitored(self):

@@ -316,3 +316,28 @@ main:not(.auth-main) .card { animation: slide-up .55s both; }
 .lock-toast { position: fixed; left: 50%; top: 1rem; transform: translateX(-50%); z-index: 2100; background: #111827; color: #fff; padding: .6rem 1rem; border-radius: .6rem; box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.3); font-size: .9rem; }
 .lock-toast[hidden] { display: none; }
 body.contest-locked .problem-statement, body.contest-locked .sample-input { -webkit-user-select: none; user-select: none; }
+
+/* Kontest bloklari: gorizontal ustunlar */
+.block-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.block-column { border: 1px solid #e5e7eb; border-radius: .9rem; padding: .9rem; background: #fff; display: flex; flex-direction: column; min-width: 0; }
+.block-column.is-used { border-color: #e31e24; box-shadow: 0 0 0 3px rgba(227, 30, 36, .08); }
+.block-column header { display: flex; align-items: center; gap: .6rem; margin-bottom: .6rem; }
+.block-column .block-all { margin-left: auto; display: flex; gap: .3rem; align-items: center; white-space: nowrap; }
+.block-step { display: inline-flex; align-items: center; justify-content: center; width: 1.9rem; height: 1.9rem; border-radius: 50%; background: #fdecec; color: #c81e1e; font-weight: 700; flex: none; }
+.block-list { max-height: 26rem; overflow: auto; padding-right: .25rem; }
+.block-group + .block-group { margin-top: .5rem; }
+.block-group-title { display: flex; gap: .4rem; align-items: center; font-weight: 600; font-size: .85rem; padding: .35rem .5rem; background: #f8fafc; border-radius: .5rem; position: sticky; top: 0; z-index: 1; }
+@media (max-width: 992px) { .block-columns { grid-template-columns: 1fr; } }
+
+/* Talaba sahifasidagi bloklar qadami (gorizontal) */
+.block-steps { display: flex; gap: .5rem; margin-bottom: 1rem; overflow-x: auto; }
+.block-steps .step { flex: 1 1 0; min-width: 11rem; display: flex; align-items: center; gap: .6rem; padding: .7rem .9rem; border-radius: .8rem; background: #fff; border: 1px solid #e5e7eb; color: #64748b; }
+.block-steps .step .block-step { background: #f1f5f9; color: #64748b; }
+.block-steps .step.is-active { border-color: #e31e24; color: #111827; box-shadow: 0 0 0 3px rgba(227, 30, 36, .08); }
+.block-steps .step.is-active .block-step { background: #e31e24; color: #fff; }
+.block-steps .step.is-done { color: #198754; }
+.block-steps .step.is-done .block-step { background: #d1fae5; color: #198754; }
+.block-tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.block-tabs button { border: 1px solid #e5e7eb; background: #fff; border-radius: 999px; padding: .45rem 1rem; font-weight: 600; color: #475569; }
+.block-tabs button.is-active { background: #e31e24; border-color: #e31e24; color: #fff; }
+.block-tabs .tab-count { font-weight: 500; opacity: .8; }

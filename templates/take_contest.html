@@ -3,18 +3,27 @@
 {% block content %}
 <div class="contest-header card border-0 shadow-sm mb-4">
   <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
-    <div><p class="eyebrow mb-2">{% if contest.contest_type == 'mixed' %}2-BLOK · TEST{% else %}KONTЕST{% endif %}</p><h1 class="h3 mb-1">{{ contest.title }}</h1><span class="text-secondary">{{ questions|length }} ta savol{% if contest.contest_type == 'mixed' %} · kod bo‘limi yakunlangan{% endif %}</span></div>
+    <div><p class="eyebrow mb-2">{% if contest.contest_type == 'mixed' %}TEST BLOKLARI{% else %}KONTЕST{% endif %}</p><h1 class="h3 mb-1">{{ contest.title }}</h1><span class="text-secondary">{{ questions|length }} ta savol{% if contest.contest_type == 'mixed' %} · kod bo‘limi yakunlangan{% endif %}</span></div>
     <div class="timer-wrap"><span class="small text-secondary">Qolgan vaqt</span><div class="timer" id="timer" data-seconds="{{ remaining_seconds }}">--:--</div></div>
   </div>
 </div>
+{% set stage = 'tests' %}{% include "_block_steps.html" %}
+{% set has_output = questions|selectattr('question_type', 'equalto', 'code_output')|list %}
+{% set has_theory = questions|selectattr('question_type', 'equalto', 'test')|list %}
+{% if has_output and has_theory %}
+<div class="block-tabs" role="tablist">
+  <button type="button" class="is-active" data-tab="output" role="tab">Output testi <span class="tab-count" data-tab-count="output"></span></button>
+  <button type="button" data-tab="theory" role="tab">Nazariy bilimlar <span class="tab-count" data-tab-count="theory"></span></button>
+</div>
+{% endif %}
 <form method="post" id="contestForm" data-save-url="{{ url_for('save_answer', contest_id=contest.id) }}">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   {% for question in questions %}
-  <section class="card border-0 shadow-sm mb-3 question-card">
+  <section class="card border-0 shadow-sm mb-3 question-card" data-block="{{ 'theory' if question.question_type == 'test' else 'output' }}">
     <div class="card-body p-4">
       <div class="d-flex gap-3"><span class="question-number">{{ loop.index }}</span><div class="flex-grow-1">
         <div class="d-flex flex-wrap gap-2 mb-2"><span class="badge text-bg-light">{{ 'Kod natijasini toping' if question.question_type == 'code_output' else ('Test savoli' if question.question_type == 'test' else 'Dasturlash masalasi') }}</span></div>
-        <h2 class="h5 mb-3">{{ question.prompt }}</h2>
+        <h2 class="h5 mb-3">{{ question.prompt.split('] ', 1)[1] if question.prompt.startswith('[NB-') else question.prompt }}</h2>
         {% if question.question_type == 'code_output' %}
         <pre class="sample-input code-sample"><code>{{ question.code_snippet }}</code></pre>
         <div class="small fw-semibold mb-1">Kirish ma’lumoti (Input)</div>
@@ -44,6 +53,29 @@
 {% endblock %}
 {% block scripts %}
 <script>
+// Output va nazariy bloklar orasida gorizontal tablar.
+(() => {
+  const tabs = document.querySelectorAll('.block-tabs [data-tab]');
+  if (!tabs.length) return;
+  const cards = document.querySelectorAll('.question-card[data-block]');
+  function counts() {
+    ['output', 'theory'].forEach((block) => {
+      const group = [...cards].filter((card) => card.dataset.block === block);
+      const answered = group.filter((card) => card.querySelector('input:checked') || [...card.querySelectorAll('textarea')].some((t) => t.value.trim())).length;
+      const label = document.querySelector(`[data-tab-count="${block}"]`);
+      if (label) label.textContent = `${answered}/${group.length}`;
+    });
+  }
+  function show(block) {
+    tabs.forEach((tab) => tab.classList.toggle('is-active', tab.dataset.tab === block));
+    cards.forEach((card) => { card.hidden = card.dataset.block !== block; });
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+  tabs.forEach((tab) => tab.addEventListener('click', () => show(tab.dataset.tab)));
+  document.getElementById('contestForm').addEventListener('change', counts);
+  show('output');
+  counts();
+})();
 const timer = document.getElementById('timer');
 const form = document.getElementById('contestForm');
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;

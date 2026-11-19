@@ -1,0 +1,2602 @@
+[
+ {
+  "key": "NB-001",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": null,
+  "prompt": "[NB-001] Protsessorning tezligi qaysi birlikda o‘lchanadi?",
+  "options": [
+   "Gerts (Gs, GHz)",
+   "Bayt",
+   "Amper",
+   "Metr"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-002",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": null,
+  "prompt": "[NB-002] Ma'lumotlarni uzoq vaqt saqlash uchun qaysi qurilma ishlatiladi?",
+  "options": [
+   "RAM",
+   "Kesh xotira",
+   "Registr",
+   "SSD / HDD"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-003",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": null,
+  "prompt": "[NB-003] RAM xotiraning asosiy xususiyati nima?",
+  "options": [
+   "Mexanik disk",
+   "Ma'lumotni doimiy saqlash",
+   "Energiya bog‘liqligi (o‘chsa o‘chadi)",
+   "Faqat o‘qish uchun"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-004",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": null,
+  "prompt": "[NB-004] Kesh-xotira (Cache) nima uchun xizmat qiladi?",
+  "options": [
+   "Internet tezligini oshirish",
+   "Protsessor va RAM tezligini muvofiqlashtirish",
+   "Tashqi xotira hajmini oshirish",
+   "Monitor sifatini yaxshilash"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-005",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": null,
+  "prompt": "[NB-005] Ma'lumotlar shinasi (Data Bus) vazifasi nima?",
+  "options": [
+   "Faqat elektr energiyasi berish",
+   "Ma'lumotni shifrlash",
+   "Qurilmalararo ma'lumot uzatish",
+   "Sovutish tizimini boshqarish"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-006",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": null,
+  "prompt": "[NB-006] SSD ning HDD dan asosiy afzalligi nimada?",
+  "options": [
+   "Ma'lumot o‘qish tezligi yuqoriligi",
+   "Magnitli ishlash prinsipi",
+   "Hajmi cheksizligi",
+   "Narxi arzonligi"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-007",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": null,
+  "prompt": "[NB-007] BIOS dasturi qayerda saqlanadi?",
+  "options": [
+   "RAM",
+   "ROM (PZU)",
+   "Vinchester",
+   "Protsessor"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-008",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": null,
+  "prompt": "[NB-008] 1024 Gigabayt necha Terabaytga teng?",
+  "options": [
+   "1 TB",
+   "10 TB",
+   "1 PB",
+   "100 GB"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-009",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": null,
+  "prompt": "[NB-009] Protsessorning arifmetik-mantiqiy qurilmasi nima qiladi?",
+  "options": [
+   "Hisoblash va mantiqiy amallar",
+   "Tasvirni shakllantirish",
+   "Ma'lumotni kiritish",
+   "Qog‘ozga chop etish"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-010",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": null,
+  "prompt": "[NB-010] Ko‘p yadroli protsessorning foydasi nimada?",
+  "options": [
+   "Elektr sarfini ko‘paytirish",
+   "Bir vaqtda bir necha jarayonni bajarish",
+   "Kompyuter o‘lchamini kichraytirish",
+   "Faqat bitta amalni tez bajarish"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-011",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Sanoq sistemalari va arifmetika",
+  "prompt": "[NB-011] O‘nlik sanoq sistemasidagi 10 soni ikkilikda qanday yoziladi?",
+  "options": [
+   "1010",
+   "1111",
+   "1100",
+   "1001"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-012",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Sanoq sistemalari va arifmetika",
+  "prompt": "[NB-012] Ikkilik sanoq sistemasida 1 + 1 yig‘indisi nechaga teng?",
+  "options": [
+   "1",
+   "0",
+   "10",
+   "2"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-013",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Sanoq sistemalari va arifmetika",
+  "prompt": "[NB-013] Sakkizlik sanoq sistemasida qaysi raqam mavjud emas?",
+  "options": [
+   "0",
+   "8",
+   "7",
+   "1"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-014",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Sanoq sistemalari va arifmetika",
+  "prompt": "[NB-014] O‘n oltilik sanoq sistemasida \"A\" harfi qaysi songa mos keladi?",
+  "options": [
+   "10",
+   "15",
+   "12",
+   "11"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-015",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Sanoq sistemalari va arifmetika",
+  "prompt": "[NB-015] 1101 (2) sonini o‘nlikka o‘tkazing.",
+  "options": [
+   "9",
+   "11",
+   "15",
+   "13"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-016",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Sanoq sistemalari va arifmetika",
+  "prompt": "[NB-016] 16-lik tizimdagi FF soni 10-likda nechaga teng?",
+  "options": [
+   "160",
+   "255",
+   "100",
+   "256"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-017",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Sanoq sistemalari va arifmetika",
+  "prompt": "[NB-017] Pozitsiyali sanoq sistemasi nima?",
+  "options": [
+   "Faqat 0 va 1 dan iborat",
+   "Harflardan iborat tizim",
+   "Raqam qiymati egallagan o‘rniga bog‘liq",
+   "Rim raqamlari tizimi"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-018",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Sanoq sistemalari va arifmetika",
+  "prompt": "[NB-018] 2-lik sanoq sistemasi qayerda qo‘llaniladi?",
+  "options": [
+   "Faqat maktabda",
+   "Kundalik hayotda",
+   "Kompyuter texnikasida",
+   "Astronomiyada"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-019",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Sanoq sistemalari va arifmetika",
+  "prompt": "[NB-019] 100 (2) + 10 (2) amalining natijasi qancha?",
+  "options": [
+   "101 (2)",
+   "110 (2)",
+   "10010 (2)",
+   "111 (2)"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-020",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Sanoq sistemalari va arifmetika",
+  "prompt": "[NB-020] Qaysi sanoq sistemasi eng kichik asosga ega?",
+  "options": [
+   "O‘nlik",
+   "Ikkilik",
+   "Sakkizlik",
+   "O‘n oltilik"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-021",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Operatsion tizimlar (OS)",
+  "prompt": "[NB-021] NTFS nima?",
+  "options": [
+   "Fayl tizimi",
+   "Monitor brendi",
+   "Protsessor turi",
+   "Brauzer nomi"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-022",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Operatsion tizimlar (OS)",
+  "prompt": "[NB-022] Operatsion tizimning yadrosi (Kernel) nima?",
+  "options": [
+   "Foydalanuvchi interfeysi",
+   "Fayllar ro‘yxati",
+   "Antivirus dasturi",
+   "OS ning asosiy markaziy qismi"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-023",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Operatsion tizimlar (OS)",
+  "prompt": "[NB-023] Linux operatsion tizimi qanday turga kiradi?",
+  "options": [
+   "Faqat Windows uchun",
+   "Ochiq kodli (Open Source)",
+   "Faqat pullik",
+   "Dasturlash tili"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-024",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Operatsion tizimlar (OS)",
+  "prompt": "[NB-024] Jarayon (Process) nima?",
+  "options": [
+   "Bajarilayotgan dastur",
+   "Klaviatura tugmasi",
+   "Monitor pikseli",
+   "Kompyuter xotirasi"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-025",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Operatsion tizimlar (OS)",
+  "prompt": "[NB-025] NTFS fayl tizimining ext4 dan farqi nimada?",
+  "options": [
+   "Faqat fleshkalar uchun",
+   "Linux uchun asosiy tizim",
+   "Windows uchun mo‘ljallangan",
+   "Video format turi"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-026",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Operatsion tizimlar (OS)",
+  "prompt": "[NB-026] Foydalanuvchi huquqlarida \"Read\" (O‘qish) nima beradi?",
+  "options": [
+   "Faylni o‘chirish huquqi",
+   "Dasturni o‘rnatish",
+   "Faylni ko‘rish huquqi",
+   "Faylni o‘zgartirish huquqi"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-027",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Operatsion tizimlar (OS)",
+  "prompt": "[NB-027] Drayver nima?",
+  "options": [
+   "O‘yin turi",
+   "Video tahrirlash dasturi",
+   "Qurilmani OS bilan bog‘lovchi dastur",
+   "Matn muharriri"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-028",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Operatsion tizimlar (OS)",
+  "prompt": "[NB-028] Ko‘p vazifalilik (Multitasking) nima?",
+  "options": [
+   "Monitor yorug‘ligini sozlash",
+   "Kompyuterni o‘chirish",
+   "Bir vaqtda bir necha dastur ishlashi",
+   "Faqat bitta amalni bajarish"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-029",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Operatsion tizimlar (OS)",
+  "prompt": "[NB-029] Administrator (Root) huquqi nima?",
+  "options": [
+   "Faqat o‘yin o‘ynash",
+   "Tizimni to‘liq boshqarish huquqi",
+   "Faqat internetga kirish",
+   "Mehmon sifatida kirish"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-030",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Operatsion tizimlar (OS)",
+  "prompt": "[NB-030] Faylning kengaytmasi (extension) nima uchun kerak?",
+  "options": [
+   "Xotirani tejash uchun",
+   "Faylni yashirish uchun",
+   "Faylni o‘chirish uchun",
+   "Fayl turini aniqlash uchun"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-031",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Windows CMD (Buyruqlar satri)",
+  "prompt": "[NB-031] CMD’da katalog (papka) ichiga kirish buyrug‘i qaysi?",
+  "options": [
+   "md",
+   "cd",
+   "cls",
+   "del"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-032",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Windows CMD (Buyruqlar satri)",
+  "prompt": "[NB-032] Yangi papka yaratish buyrug‘i qaysi?",
+  "options": [
+   "mkdir (yoki md)",
+   "dir",
+   "move",
+   "copy"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-033",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Windows CMD (Buyruqlar satri)",
+  "prompt": "[NB-033] Joriy papkadagi barcha fayllar ro‘yxatini ko‘rish?",
+  "options": [
+   "list",
+   "dir",
+   "show",
+   "scan"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-034",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Windows CMD (Buyruqlar satri)",
+  "prompt": "[NB-034] Ekranni tozalash buyrug‘i qaysi?",
+  "options": [
+   "exit",
+   "clean",
+   "clear",
+   "cls"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-035",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Windows CMD (Buyruqlar satri)",
+  "prompt": "[NB-035] Faylni o‘chirish buyrug‘i?",
+  "options": [
+   "cut",
+   "erase",
+   "del",
+   "remove"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-036",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Windows CMD (Buyruqlar satri)",
+  "prompt": "[NB-036] Tarmoq ulanishini tekshirish (aloqa borligini)?",
+  "options": [
+   "connect",
+   "netstat",
+   "ping",
+   "ipconfig"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-037",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Windows CMD (Buyruqlar satri)",
+  "prompt": "[NB-037] Kompyuterning IP manzilini bilish buyrug‘i?",
+  "options": [
+   "config",
+   "getip",
+   "ipconfig",
+   "status"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-038",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Windows CMD (Buyruqlar satri)",
+  "prompt": "[NB-038] Fayl nomini o‘zgartirish (rename) buyrug‘i?",
+  "options": [
+   "move",
+   "edit",
+   "change",
+   "ren"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-039",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Windows CMD (Buyruqlar satri)",
+  "prompt": "[NB-039] CMD oynasidan chiqish buyrug‘i?",
+  "options": [
+   "end",
+   "stop",
+   "exit",
+   "close"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-040",
+  "category": "1-blok: Kompyuter qurilmasi va operatsion tizimlar",
+  "topic": "Windows CMD (Buyruqlar satri)",
+  "prompt": "[NB-040] \"Help\" buyrug‘i nima qiladi?",
+  "options": [
+   "Kompyuterni o‘chiradi",
+   "Virusni tozalaydi",
+   "Oynani kattalashtiradi",
+   "Buyruqlar haqida ma'lumot beradi"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-041",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-041] MS Word dasturida matnni qalin (bold) qilish tugmalari qaysi?",
+  "options": [
+   "Ctrl + B",
+   "Ctrl + U",
+   "Ctrl + I",
+   "Ctrl + Z"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-042",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-042] Avtomatik mundarija (Table of Contents) yaratish uchun nima qilish kerak?",
+  "options": [
+   "Shriftni o‘zgartirish",
+   "Rasmlarni raqamlash",
+   "Har bir sahifani qo‘lda yozish",
+   "Sarlavhalarga \"Styles\" (Uslub) berish"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-043",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-043] Word da sahifani \"Kitob\" (Portrait) holatidan \"Albom\" (Landscape) holatiga qayerdan o‘tkaziladi?",
+  "options": [
+   "Home -> Paragraph",
+   "Insert -> Pages",
+   "View -> Zoom",
+   "Layout -> Orientation"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-044",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-044] Hujjatdagi so‘zni boshqa so‘z bilan almashtirish (Replace) tezkor tugmasi?",
+  "options": [
+   "Ctrl + N",
+   "Ctrl + H",
+   "Ctrl + P",
+   "Ctrl + F"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-045",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-045] MS Word da matn ostiga chizish (Underline) qaysi buyruq?",
+  "options": [
+   "Ctrl + X",
+   "Ctrl + V",
+   "Ctrl + U",
+   "Ctrl + S"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-046",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-046] Word da jadval (Table) qo‘shish qaysi menyu orqali bajariladi?",
+  "options": [
+   "Design",
+   "Insert",
+   "Mailings",
+   "Review"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-047",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-047] Hujjatni PDF formatida saqlash qanday amalga oshiriladi?",
+  "options": [
+   "File -> Save As -> PDF tanlash",
+   "Matnni nusxalash orqali",
+   "Faqat chop etish orqali",
+   "Ctrl + S tugmasi bilan"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-048",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-048] MS Word’da \"Format Painter\" (Nusxa ko‘chirish formati) vazifasi nima?",
+  "options": [
+   "Imloviy xatoni tuzatish",
+   "Matnni o‘chirish",
+   "Rasmni tahrirlash",
+   "Matn formatini boshqa matnga qo‘llash"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-049",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-049] Hujjatning barcha matnini belgilash (Select All) tugmalari?",
+  "options": [
+   "Ctrl + S",
+   "Ctrl + C",
+   "Ctrl + A",
+   "Ctrl + V"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-050",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-050] Word’da sahifa raqamini qo‘yish qaysi menyuda?",
+  "options": [
+   "Insert",
+   "References",
+   "View",
+   "Layout"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-051",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-051] MS Excel’da har bir formula qaysi belgi bilan boshlanadi?",
+  "options": [
+   "@ (at)",
+   "# (panjara)",
+   "= (tenglik)",
+   "+ (plyus)"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-052",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-052] Excel’da kataklar bloki (diapazon) qanday ko‘rsatiladi?",
+  "options": [
+   "A1..B10",
+   "A1:B10",
+   "A1-B10",
+   "A1;B10"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-053",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-053] Katakdagi qiymatlarni jamlash (yig‘indi) funksiyasi qaysi?",
+  "options": [
+   "COUNT",
+   "SUM",
+   "MAX",
+   "AVERAGE"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-054",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-054] Excel’da mutlaq manzillash (manzilni qotirish) belgisi qaysi?",
+  "options": [
+   "& (ampersand)",
+   "% (foiz)",
+   "! (undov)",
+   "$ (dollar)"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-055",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-055] VLOOKUP funksiyasining vazifasi nima?",
+  "options": [
+   "Kataklarni bo‘yash",
+   "Faylni saqlash",
+   "Ma'lumotlarni vertikal qidirish",
+   "Diagramma yaratish"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-056",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-056] Excel’da kataklarni birlashtirish buyrug‘i qanday ataladi?",
+  "options": [
+   "Wrap Text",
+   "Format Cells",
+   "Split Cells",
+   "Merge & Center"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-057",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-057] \"IF\" funksiyasi Excel’da nima uchun ishlatiladi?",
+  "options": [
+   "Ranglarni tanlash uchun",
+   "Faqat sonlarni qo‘shish uchun",
+   "Shartli hisob-kitoblar uchun",
+   "Matnni o‘chirish uchun"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-058",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-058] Excel’da diagramma yaratishning asosiy maqsadi nima?",
+  "options": [
+   "Xotirani tejash",
+   "Ma'lumotlarni yashirish",
+   "Matn yozish",
+   "Ma'lumotlarni vizuallashtirish"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-059",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-059] Excel jadvalida ma'lumotlarni tartiblash (Sort) nima qiladi?",
+  "options": [
+   "Alifbo yoki son bo‘yicha joylashtiradi",
+   "Hamma katakni o‘chiradi",
+   "Shriftni kattalashtiradi",
+   "Yangi varoq ochadi"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-060",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-060] Excel’da #VALUE! xatosi nimani anglatadi?",
+  "options": [
+   "Formula noto‘g‘ri ma'lumot turidan foydalangan",
+   "Katak bo‘sh",
+   "Ustun kengligi kichik",
+   "Nolga bo‘lish sodir bo‘ldi"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-061",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-061] MS PowerPoint dasturining asosiy elementi nima?",
+  "options": [
+   "Ma'lumotlar bazasi",
+   "Katak",
+   "Sahifa",
+   "Slayd"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-062",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-062] Taqdimotni namoyish qilishni (Start Slideshow) boshlash tugmasi?",
+  "options": [
+   "F5",
+   "Esc",
+   "F1",
+   "Ctrl + P"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-063",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-063] PowerPoint’da obektlarning harakatlanishi (masalan, matn uchib kirishi) nima?",
+  "options": [
+   "Layout",
+   "Animation",
+   "Transition",
+   "Design"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-064",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-064] Slaydlar orasidagi o‘tish effekti (masalan, erish yoki surilish) nima?",
+  "options": [
+   "Transition",
+   "Animation",
+   "Hyperlink",
+   "SmartArt"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-065",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-065] Slayd namoyishini muddatidan oldin to‘xtatish tugmasi?",
+  "options": [
+   "Esc",
+   "Space",
+   "Tab",
+   "Enter"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-066",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-066] \"Slide Master\" (Slaydlar namunasi) rejimi nima uchun kerak?",
+  "options": [
+   "Rasmlarni tahrirlash",
+   "Matnni tarjima qilish",
+   "Barcha slaydlar dizaynini bir xil sozlash",
+   "Video qo‘shish"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-067",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-067] PowerPoint’da yangi slayd qo‘shish tezkor tugmasi?",
+  "options": [
+   "Ctrl + M",
+   "Ctrl + N",
+   "Ctrl + O",
+   "Ctrl + S"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-068",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-068] Taqdimotni video formatida (.mp4) saqlash mumkinmi?",
+  "options": [
+   "Faqat ovozsiz saqlash mumkin",
+   "Yo‘q, faqat rasm bo‘ladi",
+   "Faqat maxsus dastur bilan",
+   "Ha, File -> Export menyusi orqali"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-069",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-069] Slaydga ovoz yoki musiqa qo‘shish qaysi menyuda?",
+  "options": [
+   "Review -> Voice",
+   "Design -> Background",
+   "Insert -> Audio",
+   "Home -> Sound"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-070",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-070] PowerPoint’da SmartArt nima?",
+  "options": [
+   "Aqlli antivirus",
+   "Grafik sxema va strukturalar",
+   "Matn tahrirlagich",
+   "Internet brauzer"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-071",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-071] Elektron pochta manzilida albatta qaysi belgi bo‘lishi shart?",
+  "options": [
+   "@",
+   "#",
+   "&",
+   "$"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-072",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-072] Windows OT da e-mail bilan ishlovchi dastur qaysi?",
+  "options": [
+   "PowerPoint",
+   "Access",
+   "Pagemaker",
+   "Outlook"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-073",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-073] Elektron pochta xizmatlari uchun qaysi protokol ishlatiladi?",
+  "options": [
+   "IMAP",
+   "HTTPS",
+   "FTP",
+   "UTP"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-074",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-074] Brauzerda \"Incognito\" (Inkognito) rejimi nima qiladi?",
+  "options": [
+   "Internet tezligini oshiradi",
+   "Tarix va kuki (cookies) fayllarni saqlamaydi",
+   "Pullik saytlarni tekin qiladi",
+   "Antivirusni yoqadi"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-075",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-075] Brauzerdagi \"Bookmark\" (Xatcho‘p) vazifasi nima?",
+  "options": [
+   "Sayt manzilini saqlab qo‘yish",
+   "Rasmni yuklab olish",
+   "Parolni o‘zgartirish",
+   "Saytni bloklash"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-076",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-076] Elektron pochtadagi \"Spam\" papkasiga qanday xatlar tushadi?",
+  "options": [
+   "Muhim ish xatlari",
+   "O‘chirilgan xatlar",
+   "Keraksiz yoki reklama xatlari",
+   "Yuborilmagan xatlar"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-077",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-077] \"Attachment\" (Biriktirma) nima?",
+  "options": [
+   "Xatning sarlavhasi",
+   "Foydalanuvchi ismi",
+   "Elektron imzo",
+   "Xatga qo‘shilgan fayl (rasm, hujjat)"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-078",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-078] URL nima?",
+  "options": [
+   "Veb-sahifaning manzili",
+   "Internet provayder",
+   "Dasturlash tili",
+   "Kompyuterning nomi"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-079",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-079] HTTP va HTTPS protokoli orasidagi asosiy farq?",
+  "options": [
+   "HTTP tezroq ishlaydi",
+   "HTTPS faqat Google uchun",
+   "HTTPS xavfsiz (shifrlangan)",
+   "Farqi yo‘q"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-080",
+  "category": "2-blok: Ofis ilovalari (Office Applications)",
+  "topic": null,
+  "prompt": "[NB-080] Sayt manzili oxiridagi \".uz\" nimani anglatadi?",
+  "options": [
+   "Parol turi",
+   "Fayl kengaytmasi",
+   "Foydalanuvchi nomi",
+   "O‘zbekiston milliy domeni"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-081",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-081] OSI modelida necha xil daraja (layer) mavjud?",
+  "options": [
+   "5 ta",
+   "8 ta",
+   "4 ta",
+   "7 ta"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-082",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-082] Ma'lumotlarni uzatishda \"Fizik daraja\" (Physical layer) nimaga javob beradi?",
+  "options": [
+   "IP-manzilni aniqlash",
+   "Bitlarni elektr yoki yorug‘lik signallari orqali uzatish",
+   "Ilovalar bilan ishlash",
+   "Xatolarni tuzatish"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-083",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-083] TCP protokoli UDP dan qanday farq qiladi?",
+  "options": [
+   "Protokol emas",
+   "Tezroq ishlaydi",
+   "Faqat videolar uchun",
+   "Ma'lumot yetkazib berilishini kafolatlaydi"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-084",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-084] OSI modelining eng yuqori darajasi qaysi?",
+  "options": [
+   "Network (Tarmoq)",
+   "Application (Ilova)",
+   "Physical",
+   "Transport"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-085",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-085] Ma'lumotlar paketini yo‘naltiruvchi (routing) asosiy qurilma?",
+  "options": [
+   "Switch (Kommutator)",
+   "Modem",
+   "Hub",
+   "Router (Yo‘naltirgich)"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-086",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-086] TCP/IP modelida \"Internet\" darajasi OSI ning qaysi darajasiga mos keladi?",
+  "options": [
+   "Transport",
+   "Network (Tarmoq)",
+   "Session",
+   "Data Link"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-087",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-087] Transport darajasida ma'lumotlar birligi nima deb ataladi?",
+  "options": [
+   "Paket",
+   "Segment",
+   "Freym (Kadr)",
+   "Bit"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-088",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-088] Tarmoq darajasida (Network layer) qaysi turdagi manzillash ishlatiladi?",
+  "options": [
+   "IP-manzillash",
+   "MAC-manzillash",
+   "DNS-manzillash",
+   "Port manzillash"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-089",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-089] Hub va Switch ning asosiy farqi nimada?",
+  "options": [
+   "Switch ma'lumotni faqat kerakli portga yuboradi",
+   "Hub tezroq ishlaydi",
+   "Switch faqat uyda ishlatiladi",
+   "Farqi yo‘q"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-090",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-090] MAC-manzil uzunligi necha bitdan iborat?",
+  "options": [
+   "48 bit",
+   "64 bit",
+   "32 bit",
+   "128 bit"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-091",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-091] Veb-sahifalarni ko‘rish uchun qaysi protokol ishlatiladi?",
+  "options": [
+   "HTTP / HTTPS",
+   "FTP",
+   "SMTP",
+   "SNMP"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-092",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-092] Fayllarni uzatish protokoli qaysi?",
+  "options": [
+   "DHCP",
+   "FTP",
+   "DNS",
+   "ICMP"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-093",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-093] DNS (Domain Name System) vazifasi nima?",
+  "options": [
+   "IP-manzilni yashirish",
+   "Viruslarni bloklash",
+   "Domen nomini IP-manzilga aylantirish",
+   "Internetni tezlashtirish"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-094",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-094] DHCP protokoli nima uchun xizmat qiladi?",
+  "options": [
+   "Pochta yuborish",
+   "Fayllarni siqish",
+   "Saytlarni shifrlash",
+   "Qurilmalarga avtomatik IP-manzil berish"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-095",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-095] Elektron pochta yuborishda (chiqishda) qaysi protokol ishlatiladi?",
+  "options": [
+   "POP3",
+   "SMTP",
+   "HTTP",
+   "IMAP"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-096",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-096] HTTPS protokoli qaysi port orqali ishlaydi?",
+  "options": [
+   "443",
+   "21",
+   "25",
+   "80"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-097",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-097] PING buyrug‘i qaysi protokol asosida ishlaydi?",
+  "options": [
+   "ARP",
+   "UDP",
+   "ICMP",
+   "TCP"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-098",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-098] Masofaviy kompyuterni boshqarish (terminal) protokoli?",
+  "options": [
+   "DHCP",
+   "FTP",
+   "SSH / Telnet",
+   "DNS"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-099",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-099] Veb-serverdan ma'lumot olishda ishlatiladigan asosiy so‘rov turi?",
+  "options": [
+   "GET",
+   "DELETE",
+   "PUSH",
+   "POST"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-100",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-100] Port 80 qaysi xizmat uchun ajratilgan?",
+  "options": [
+   "FTP",
+   "SMTP",
+   "HTTP",
+   "DNS"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-101",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-101] IPv4 manzili necha bitdan iborat?",
+  "options": [
+   "16 bit",
+   "128 bit",
+   "64 bit",
+   "32 bit"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-102",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-102] Standart IPv4 manzili necha qismdan (oktetdan) iborat?",
+  "options": [
+   "2 ta",
+   "4 ta",
+   "8 ta",
+   "6 ta"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-103",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-103] Qaysi IP-manzil noto‘g‘ri yozilgan?",
+  "options": [
+   "192.168.300.1",
+   "8.8.8.8",
+   "10.0.0.1",
+   "172.16.0.255"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-104",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-104] Tarmoq maskasi (Subnet Mask) nima uchun kerak?",
+  "options": [
+   "IP-manzilni almashtirish uchun",
+   "Internet tezligini o‘lchash uchun",
+   "Tarmoq va xost qismini ajratish uchun",
+   "Wi-Fi parolini saqlash uchun"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-105",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-105] IPv6 manzillari qanday sanoq sistemasida yoziladi?",
+  "options": [
+   "O‘n oltilik (Hexadecimal)",
+   "O‘nlik",
+   "Ikkilik",
+   "Sakkizlik"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-106",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-106] 127.0.0.1 manzili nima deb ataladi?",
+  "options": [
+   "DNS server",
+   "Loopback (O‘z-o‘zini tekshirish)",
+   "Global IP",
+   "Provayder manzili"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-107",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-107] Dinamik IP-manzil nima?",
+  "options": [
+   "Vaqtinchalik beriladigan IP",
+   "Hackerlar manzili",
+   "Hech qachon o‘zgarmaydigan IP",
+   "Faqat router manzili"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-108",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-108] NAT (Network Address Translation) texnologiyasi nima uchun kerak?",
+  "options": [
+   "Fayllarni yuklash uchun",
+   "Kompyuterni o‘chirish uchun",
+   "Wi-Fi masofasini oshirish uchun",
+   "Ichki IP-manzillarni tashqi IP-ga o‘tkazish"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-109",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-109] IPv6 manzilining uzunligi necha bit?",
+  "options": [
+   "32 bit",
+   "256 bit",
+   "48 bit",
+   "128 bit"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-110",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-110] Default Gateway (Asosiy shlyuz) nima?",
+  "options": [
+   "Antivirus nomi",
+   "Kompyuterning nomi",
+   "Tashqi tarmoqqa chiqish uchun router manzili",
+   "Saytning sarlavhasi"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-111",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-111] HTML nima?",
+  "options": [
+   "Grafik tahrirlagich",
+   "Antivirus",
+   "Dasturlash tili",
+   "Gipermatnli belgilash tili"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-112",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-112] HTML hujjatining asosiy (ildiz) tegi qaysi?",
+  "options": [
+   "<head>",
+   "<html>",
+   "<p>",
+   "<body>"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-113",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-113] CSS (Cascading Style Sheets) nima uchun ishlatiladi?",
+  "options": [
+   "Video yaratish uchun",
+   "Ma'lumotlarni hisoblash uchun",
+   "Server bilan bog‘lanish uchun",
+   "Sayt dizayni va ko‘rinishini sozlash"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-114",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-114] Giperhavola (link) yaratish uchun qaysi teg ishlatiladi?",
+  "options": [
+   "<href>",
+   "<img>",
+   "<a>",
+   "<link>"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-115",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-115] HTML’da eng katta sarlavha tegi qaysi?",
+  "options": [
+   "<header>",
+   "<h6>",
+   "<h1>",
+   "<title>"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-116",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-116] Client-Server arxitekturasida \"Client\" nima?",
+  "options": [
+   "Ma'lumotni saqlovchi server",
+   "Kabel turi",
+   "Internet provayder",
+   "So‘rov yuboruvchi (masalan, brauzer)"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-117",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-117] Frontend nima?",
+  "options": [
+   "Qurilmalarni yig‘ish",
+   "Ma'lumotlar bazasi bilan ishlash",
+   "Saytning foydalanuvchiga ko‘rinadigan qismi",
+   "Serverning ichki kodi"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-118",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-118] Backend nima?",
+  "options": [
+   "Saytning server qismi va mantiqi",
+   "Saytning dizayni",
+   "Faqat rasmlar bilan ishlash",
+   "HTML teglari ro‘yxati"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-119",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-119] Veb-sahifaga rasm qo‘shish tegi qaysi?",
+  "options": [
+   "<img>",
+   "<art>",
+   "<picture>",
+   "<src>"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-120",
+  "category": "3-blok: Tarmoqlar va Internet",
+  "topic": null,
+  "prompt": "[NB-120] JavaScript nima uchun kerak?",
+  "options": [
+   "Excel jadvalini ochish uchun",
+   "Faqat matn yozish uchun",
+   "Kompyuterni format qilish uchun",
+   "Saytni interaktiv (jonli) qilish uchun"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-121",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-121] Relyatsion ma'lumotlar bazasi nima?",
+  "options": [
+   "Dasturlash tili",
+   "O‘zaro bog‘langan jadvallar to‘plami",
+   "Faqat bitta matnli fayl",
+   "Rasmlar galereyasi"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-122",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-122] Jadvaldagi har bir satr (qator) nima deb ataladi?",
+  "options": [
+   "Indeks",
+   "Yozuv (Record / Tuple)",
+   "Kalit (Key)",
+   "Maydon (Field)"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-123",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-123] Jadvaldagi ustun nima deb ataladi?",
+  "options": [
+   "Sxema",
+   "Maydon (Field / Attribute)",
+   "Ma'lumot",
+   "Yozuv"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-124",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-124] Primary Key (Birlamchi kalit) nima?",
+  "options": [
+   "Jadvalning nomi",
+   "Har bir yozuvni takrorlanmas (unikal) aniqlovchi ustun",
+   "Eng katta sonli ustun",
+   "Parol saqlanadigan joy"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-125",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-125] Foreign Key (Tashqi kalit) nima uchun kerak?",
+  "options": [
+   "SQL kodini yozish uchun",
+   "Ma'lumotni o‘chirish uchun",
+   "Jadvalni shifrlash uchun",
+   "Ikki jadvalni o‘zaro bog‘lash uchun"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-126",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-126] Ma'lumotlar bazasini normallashtirishdan maqsad nima?",
+  "options": [
+   "SQL so‘rovlarini sekinlashtirish",
+   "Ranglarni o‘zgartirish",
+   "Ma'lumotlar takrorlanishini (ortiqchaligini) kamaytirish",
+   "Bazani kattalashtirish"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-127",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-127] Birga-ko‘p (1:M) bog‘lanishga misol?",
+  "options": [
+   "Jadvalsiz MB",
+   "Bir o‘qituvchi va ko‘p talabalar",
+   "Ko‘p kitob va ko‘p mualliflar",
+   "Bir talaba va bir pasport"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-128",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-128] DBMS (MBBT) nima?",
+  "options": [
+   "Ma'lumotlar bazasini boshqarish tizimi",
+   "Dasturlash tili turi",
+   "Internet protokoli",
+   "Kompyuterning qattiq diski"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-129",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-129] Jadvaldagi ustun uchun \"NULL\" qiymati nimani anglatadi?",
+  "options": [
+   "Bo‘sh joy (probel)",
+   "Ma'lumot mavjud emas (bo‘sh)",
+   "0 soniga teng",
+   "Xatolik yuz berdi"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-130",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-130] Qaysi dastur MBBT hisoblanadi?",
+  "options": [
+   "MS Word",
+   "Adobe Photoshop",
+   "Google Chrome",
+   "MySQL"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-131",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-131] SQL (Structured Query Language) nima?",
+  "options": [
+   "Antivirus turi",
+   "Grafik dizayn dasturi",
+   "Ma'lumotlar bazasi bilan ishlash uchun so‘rov tili",
+   "Operatsion tizim"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-132",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-132] Jadvaldan ma'lumotlarni tanlab olish (o‘qish) operatori qaysi?",
+  "options": [
+   "DELETE",
+   "SELECT",
+   "INSERT",
+   "UPDATE"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-133",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-133] Jadvalga yangi ma'lumot (satr) qo‘shish operatori qaysi?",
+  "options": [
+   "INSERT INTO",
+   "CREATE NEW",
+   "ADD DATA",
+   "SELECT ALL"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-134",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-134] SQL'da ma'lumotlarni filtrlash (shart qo‘yish) uchun qaysi so‘z ishlatiladi?",
+  "options": [
+   "WHERE",
+   "FILTER",
+   "IF",
+   "WHEN"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-135",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-135] UPDATE operatorining vazifasi nima?",
+  "options": [
+   "Yangi jadval yaratish",
+   "Ma'lumotni saralash",
+   "Mavjud ma'lumotlarni o‘zgartirish",
+   "Bazani o‘chirib tashlash"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-136",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-136] Ma'lumotlarni o‘sish yoki kamayish tartibida saralash buyrug‘i?",
+  "options": [
+   "GROUP BY",
+   "SORT BY",
+   "ORDER BY",
+   "RANK BY"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-137",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-137] Ikki yoki undan ortiq jadvallarni birlashtirib ma'lumot olish?",
+  "options": [
+   "CONNECT",
+   "JOIN",
+   "UNION",
+   "MERGE"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-138",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-138] SQL'da takrorlanmaydigan (unikal) qiymatlarni olish uchun?",
+  "options": [
+   "DIFFERENT",
+   "UNIQUE",
+   "DISTINCT",
+   "SINGLE"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-139",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-139] SELECT COUNT(*) buyrug‘i nima qiladi?",
+  "options": [
+   "Jadvalni o‘chiradi",
+   "Barcha sonlarni qo‘shadi",
+   "Eng katta qiymatni topadi",
+   "Satrlar sonini hisoblaydi"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-140",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-140] DELETE va TRUNCATE orasidagi farq nima?",
+  "options": [
+   "Farqi yo‘q",
+   "TRUNCATE butun jadvalni tezda tozalaydi",
+   "TRUNCATE faqat bitta satrni o‘chiradi",
+   "DELETE jadvalni o‘chirib yuboradi"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-141",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-141] Axborotning eng kichik o‘lchov birligi nima?",
+  "options": [
+   "Bayt",
+   "Bit",
+   "Kilo",
+   "Megabayt"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-142",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-142] 1 bayt necha bitga teng?",
+  "options": [
+   "10 bit",
+   "8 bit",
+   "2 bit",
+   "1024 bit"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-143",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-143] ASCII kodi nima uchun ishlatiladi?",
+  "options": [
+   "Internet tezligini oshirish",
+   "Video siqish",
+   "Matnli belgilarni raqamli kodga aylantirish",
+   "Ranglarni aniqlash"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-144",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-144] 1 Kilobayt necha Baytga teng?",
+  "options": [
+   "100 bayt",
+   "1024 bayt",
+   "8 bayt",
+   "1000 bayt"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-145",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-145] Axborot hajmini hisoblashda Shennon formulasi nima bilan bog‘liq?",
+  "options": [
+   "Protsessor tezligi bilan",
+   "Monitor o‘lchami bilan",
+   "Voqelikning ehtimolligi bilan",
+   "SQL so‘rovlari bilan"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-146",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-146] Unicode (masalan, UTF-8) kodlash tizimining ASCII dan afzalligi?",
+  "options": [
+   "Faqat lotin harflari uchun",
+   "Dunyodagi deyarli barcha harflarni qamrab oladi",
+   "Kamroq joy egallaydi",
+   "Faqat sonlarni kodlaydi"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-147",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-147] Axborotning qaysi xossasi uning to‘g‘riligini bildiradi?",
+  "options": [
+   "Qisqalik",
+   "Qimmatlilik",
+   "Rangdorlik",
+   "Ishonchlilik (Reliability)"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-148",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-148] Ma'lumotlarni siqish (Archiving) nima uchun kerak?",
+  "options": [
+   "Internetni o‘chirish",
+   "Fayl nomini o‘zgartirish",
+   "Xavfsizlikni oshirish",
+   "Joyni tejash (xotira hajmini kamaytirish)"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-149",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-149] 2 megabayt necha kilobayt?",
+  "options": [
+   "2048 KB",
+   "200 KB",
+   "20 KB",
+   "2000 KB"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-150",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-150] \"Informatika\" so‘zi 8 bitli kodlashda (ASCII) necha bayt joy egallaydi?",
+  "options": [
+   "11 bayt",
+   "88 bayt",
+   "1 bayt",
+   "22 bayt"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-151",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-151] Ma'lumot va axborot (Data vs Information) farqi nimada?",
+  "options": [
+   "Axborot har doim raqamli bo‘ladi",
+   "Axborot – qayta ishlangan foydali ma'lumot",
+   "Ma'lumot har doim to‘g‘ri bo‘ladi",
+   "Farqi yo‘q"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-152",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-152] Fayl o‘lchami 4096 bayt bo‘lsa, u necha KB?",
+  "options": [
+   "1 KB",
+   "4 KB",
+   "400 KB",
+   "40 KB"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-153",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-153] Axborotni uzatish tezligi qanday birlikda o‘lchanadi?",
+  "options": [
+   "bit/sek (bps)",
+   "bayt/metr",
+   "Gerts",
+   "Volt"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-154",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-154] 16 lik sanoq tizimida nechta harf ishlatiladi",
+  "options": [
+   "12 ta",
+   "7 ta",
+   "6 ta",
+   "8 ta"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-155",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-155] Qaysi biri axborot jarayoni emas?",
+  "options": [
+   "Axborotni yo‘q qilish",
+   "Axborotni saqlash",
+   "Axborotni qayta ishlash",
+   "Axborotni uzatish"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-156",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-156] Binary qaysi sanoq tizimining qisqartmasi?",
+  "options": [
+   "16 lik",
+   "10 lik",
+   "8 lik",
+   "2 lik"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-157",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-157] Raqamli axborot nima?",
+  "options": [
+   "Faqat matematik formulalar",
+   "Faqat qog‘ozdagi axborot",
+   "0 va 1 ko‘rinishidagi axborot",
+   "Ovozli xabar"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-158",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-158] 1 Gigabayt necha Megabayt?",
+  "options": [
+   "8 MB",
+   "1024 KB",
+   "1000 MB",
+   "1024 MB"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-159",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-159] Discret (uzlukli) axborot nima?",
+  "options": [
+   "Faqat internetdagi axborot",
+   "Alohida qismlardan iborat axborot",
+   "Eshib bo‘lmaydigan axborot",
+   "To‘xtovsiz signal"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-160",
+  "category": "4-blok: Ma'lumotlar bazasi va axborot",
+  "topic": null,
+  "prompt": "[NB-160] Axborotning \"dolzarbligi\" (Relevance) nimani anglatadi?",
+  "options": [
+   "Hozirgi vaqt uchun kerakliligi",
+   "Faqat matndan iboratligi",
+   "Shifrlanganligi",
+   "Juda qadimiyligi"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-161",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-161] Kriptografiya nima?",
+  "options": [
+   "Ma’lumotlarni shifrlash va himoya qilish fani",
+   "Internet tezligini o‘lchash",
+   "Videolarni tahrirlash",
+   "Kompyuterlarni yig‘ish"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-162",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-162] Simmetrik shifrlash nima?",
+  "options": [
+   "Kalit ishlatilmasligi",
+   "Faqat rasmlarni shifrlash",
+   "Shifrlash va dekodlash uchun bitta kalit ishlatilishi",
+   "Ikki xil kalit ishlatilishi"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-163",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-163] Asimmetrik shifrlashda qanday kalitlar bo‘ladi?",
+  "options": [
+   "Faqat raqamli kalitlar",
+   "Faqat bitta umumiy kalit",
+   "Ochiq (public) va maxfiy (private) kalitlar",
+   "Kalitlar bo‘lmaydi"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-164",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-164] Xeshlash (Hashing) nima?",
+  "options": [
+   "Parolni o‘chirish",
+   "Ma’lumotni arxivlash",
+   "Internetni bloklash",
+   "Ma’lumotni qaytmas (bir tomonlama) kodga aylantirish"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-165",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-165] Raqamli imzo (Digital Signature) nima uchun kerak?",
+  "options": [
+   "Kompyuterga kirish uchun",
+   "Printerdan chiqarish uchun",
+   "Rasmni chiroyli qilish uchun",
+   "Hujjatning haqiqiyligi va butunligini tasdiqlash"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-166",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-166] \"Fishing\" (Phishing) hujumi nima?",
+  "options": [
+   "Kompyuterni jismoniy buzish",
+   "Antivirus o‘rnatish",
+   "Soxta saytlar orqali parollarni o‘g‘irlash",
+   "Internet simini uzish"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-167",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-167] Ikki bosqichli autentifikatsiya (2FA) nima?",
+  "options": [
+   "Faqat barmoq izi",
+   "Ikki marta login qilish",
+   "Ikkita parol ishlatish",
+   "Paroldan tashqari qo‘shimcha kod bilan tasdiqlash"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-168",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-168] Shifrlangan ma’lumotni o‘qish jarayoni nima deyiladi?",
+  "options": [
+   "Arxivlash",
+   "Enkodlash",
+   "O‘chirish",
+   "Dekodlash (Decryption)"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-169",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-169] Brute-force hujumi nima?",
+  "options": [
+   "Kompyuterni o‘chirish",
+   "Parolni barcha variantlarni sinab ko‘rish orqali topish",
+   "Tarmoqni sekinlashtirish",
+   "Virus yuborish"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-170",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-170] SSL/TLS sertifikati nima uchun kerak?",
+  "options": [
+   "Sayt dizaynini saqlash uchun",
+   "Domen sotib olish uchun",
+   "Sayt va foydalanuvchi aloqasini shifrlash uchun",
+   "Tezlikni oshirish uchun"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-171",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-171] \"Troya oti\" (Trojan) virusi nima?",
+  "options": [
+   "Kompyuter sovutgichi",
+   "Faqat Excelni buzadigan virus",
+   "Foydali dastur niqobi ostidagi zararli kod",
+   "O‘z-o‘zidan ko‘payadigan dastur"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-172",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-172] Antivirus dasturining asosiy vazifasi?",
+  "options": [
+   "Zararli dasturlarni topish va yo‘q qilish",
+   "O‘yinlarni tezlashtirish",
+   "Matn yozish",
+   "Internetni tekin qilish"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-173",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-173] Brandmauer (Firewall) nima?",
+  "options": [
+   "Virus turi",
+   "Kompyuterning korpusi",
+   "Monitor ekranining oynasi",
+   "Tarmoq trafigini nazorat qiluvchi himoya to‘sig‘i"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-174",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-174] \"Ransomware\" (Tovlamachi virus) nima qiladi?",
+  "options": [
+   "Internetni o‘chiradi",
+   "Reklama ko‘rsatadi",
+   "Fayllarni shifrlab, ochish uchun pul so‘raydi",
+   "Faqat rasmlarni o‘chiradi"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-175",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-175] Kompyuter qurtlari (Worms) virusining xususiyati?",
+  "options": [
+   "Monitor rangini o‘zgartirish",
+   "Inson yordamida tarqalish",
+   "Faqat bitta faylda qolish",
+   "Tarmoq orqali o‘z-o‘zidan ko‘payib tarqalish"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-176",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-176] ijtimoiy muhandislik (Social Engineering) nima?",
+  "options": [
+   "Kompyuter yig‘ish",
+   "Inson psixologiyasini aldab ma’lumot olish",
+   "Robotlar bilan muloqot",
+   "Instagramda rasm qo‘yish"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-177",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-177] \"Spyware\" qanday dastur?",
+  "options": [
+   "Video pleer",
+   "Foydalanuvchini yashirincha kuzatuvchi dastur",
+   "Windows yangilanishi",
+   "Tezkor xabar almashish dasturi"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-178",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-178] Antivirus bazalarini yangilash nima uchun kerak?",
+  "options": [
+   "Yangi chiqqan viruslarni tani olish uchun",
+   "Kompyuterni chiroyli qilish uchun",
+   "Xotirani bo‘shatish uchun",
+   "MS Word ishlashi uchun"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-179",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-179] SQL Injection hujumi maqsadi nima?",
+  "options": [
+   "Ma’lumotlar bazasiga ruxsatsiz kirish",
+   "IP manzilni o‘zgartirish",
+   "Wi-Fi parolini topish",
+   "Protsessorni qizdirish"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-180",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-180] \"Denial of Service\" (DoS) hujumi nima?",
+  "options": [
+   "Parolni o‘g‘irlash",
+   "Video kamerani yoqish",
+   "Saytni haddan tashqari so‘rovlar bilan ishdan chiqarish",
+   "Fayllarni o‘chirish"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-181",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-181] Bulutli texnologiya (Cloud computing) nima?",
+  "options": [
+   "Ob-havoni aniqlash dasturi",
+   "Faqat internetda o‘yin o‘ynash",
+   "Ma’lumotlarni masofaviy serverlarda saqlash va ishlash",
+   "Shaxsiy kompyuterni o‘chirish"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-182",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-182] SaaS (Software as a Service) nima?",
+  "options": [
+   "Faqat operatsion tizim",
+   "Dasturni internet orqali xizmat sifatida ishlatish",
+   "Yangi brend nomi",
+   "Kompyuter sotib olish"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-183",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-183] IaaS (Infrastructure as a Service) nima?",
+  "options": [
+   "Faqat MS Office ishlatish",
+   "Virtual serverlar va tarmoq resurslarini ijaraga olish",
+   "Antivirus xizmati",
+   "Sayt yaratish xizmati"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-184",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-184] Qaysi servis bulutli saqlashga misol bo‘ladi?",
+  "options": [
+   "Windows Media Player",
+   "Google Drive",
+   "Adobe Photoshop",
+   "VLC Player"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-185",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-185] Bulutli texnologiyaning asosiy afzalligi?",
+  "options": [
+   "Faqat o‘yinlar uchunligi",
+   "Kompyuterning buzilmasligi",
+   "Internet talab qilmasligi",
+   "Istalgan joydan ma’lumotlarga kirish imkoniyati"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-186",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-186] Virtuallash (Virtualization) nima?",
+  "options": [
+   "Monitor sifatini oshirish",
+   "Internet tezligini bo‘lish",
+   "Bitta fizik kompyuterda bir necha OS ishlatish",
+   "O‘yin ichidagi dunyo"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-187",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-187] PaaS (Platform as a Service) nima?",
+  "options": [
+   "Elektron pochta xizmati",
+   "Faqat internet provayder",
+   "Dasturchilar uchun platforma (muhit) ijarasi",
+   "Kompyuter buzilishi"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-188",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-188] Google Docs qaysi bulutli modelga kiradi?",
+  "options": [
+   "IaaS",
+   "PaaS",
+   "DaaS",
+   "SaaS"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-189",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-189] Bulutli saqlashda ma’lumotlar xavfsizligini kim ta'minlaydi?",
+  "options": [
+   "Hech kim",
+   "Faqat davlat",
+   "Provayder va foydalanuvchi birgalikda",
+   "Faqat foydalanuvchi"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-190",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-190] Private Cloud (Xususiy bulut) nima?",
+  "options": [
+   "Faqat bitta tashkilot uchun mo‘ljallangan bulut",
+   "Pullik o‘yinlar sayti",
+   "Hamma uchun ochiq bulut",
+   "Yashirin arxiv"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-191",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-191] Sun’iy intellekt (AI) nima?",
+  "options": [
+   "Faqat kalkulyator",
+   "Temir robotlar yig‘indisi",
+   "Inson kabi fikrlash qobiliyatiga ega tizim",
+   "Oddiy matn muharriri"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-192",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-192] Mashinali o‘qitish (Machine Learning) nima?",
+  "options": [
+   "Maktabda robotlarni o‘qitish",
+   "Kompyuterni qo‘lda dasturlash",
+   "Faqat matematik hisoblar",
+   "Algoritmlarning tajriba asosida o‘z-o‘zini takomillashtirishi"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-193",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-193] Neyron tarmoqlar nima namunasida yaratilgan?",
+  "options": [
+   "Daraxt ildizlari",
+   "Inson miya hujayralari (neyronlar)",
+   "Elektrik simlar",
+   "Matematik jadvallar"
+  ],
+  "correct": "B"
+ },
+ {
+  "key": "NB-194",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-194] Big Data (Katta ma’lumotlar) nima?",
+  "options": [
+   "Juda katta hajmdagi murakkab ma'lumotlar to‘plami",
+   "Internetdagi barcha videolar",
+   "Kompyuterning qattiq diski",
+   "Faqat bitta katta rasm"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-195",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-195] Chatbotlar nima uchun ishlatiladi?",
+  "options": [
+   "Foydalanuvchi bilan muloqot qilish va savollarga javob berish",
+   "Kompyuterni format qilish",
+   "Viruslarni tarqatish",
+   "Faqat rasm chizish"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-196",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-196] Turing testi nima uchun o‘tkaziladi?",
+  "options": [
+   "Mashinaning intellekt darajasini aniqlash uchun",
+   "Parolni topish uchun",
+   "Internet xavfsizligini tekshirish uchun",
+   "Protsessor tezligini o‘lchash uchun"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-197",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-197] Chuqur o‘qitish (Deep Learning) nima?",
+  "options": [
+   "Suv ostida internet o‘tkazish",
+   "Ma'lumotni chuqur arxivlash",
+   "Faqat o‘yinlar yaratish",
+   "Ko‘p qatlamli neyron tarmoqlar yordamida o‘qitish"
+  ],
+  "correct": "D"
+ },
+ {
+  "key": "NB-198",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-198] Kompyuter ko‘rishi (Computer Vision) nima?",
+  "options": [
+   "Ko‘r odamlar uchun monitor",
+   "Faqat kamera sifati",
+   "Tasvir va videolarni tahlil qilish va tanish",
+   "Ko‘z uchun mashqlar"
+  ],
+  "correct": "C"
+ },
+ {
+  "key": "NB-199",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-199] Generativ AI (masalan, ChatGPT) nima qila oladi?",
+  "options": [
+   "Yangi matn, rasm yoki kod yarata oladi",
+   "Kompyuterni jismoniy tuzatadi",
+   "Internetni o‘chiradi",
+   "Faqat tayyor javoblarni nusxalaydi"
+  ],
+  "correct": "A"
+ },
+ {
+  "key": "NB-200",
+  "category": "5-blok: Xavfsizlik va zamonaviy tendensiyalar",
+  "topic": null,
+  "prompt": "[NB-200] Ma’lumotlarni tahlil qilishda (Data Analytics) AI nima beradi?",
+  "options": [
+   "Video sifatini oshirish",
+   "Faqat jadvalni bo‘yash",
+   "Kompyuter xotirasini tozalash",
+   "Bashorat qilish va yashirin qonuniyatlarni topish"
+  ],
+  "correct": "D"
+ }
+]
