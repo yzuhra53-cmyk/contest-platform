@@ -244,3 +244,38 @@ main:not(.auth-main) .card { animation: slide-up .55s both; }
 
 /* Masala sharti: qatorlar va bo'sh qatorlar saqlansin */
 .problem-statement { white-space: pre-line; font-weight: 500; line-height: 1.55; }
+
+/* Kontest kod muharriri (IDE) */
+.ide { overflow: hidden; border-radius: 1rem; background: #1e1f29; }
+.ide-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; padding: .7rem 1rem; background: #14151c; border-bottom: 1px solid #2c2e3a; }
+.ide-dot { width: .7rem; height: .7rem; border-radius: 50%; background: #ff5f57; display: inline-block; }
+.ide-dot + .ide-dot { background: #febc2e; }
+.ide-dot + .ide-dot + .ide-dot { background: #28c840; }
+.ide-file { margin-left: .5rem; color: #c9cbd6; font: 500 .85rem/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.ide-select { width: auto; background-color: #262835; color: #f1f1f5; border-color: #3a3c4c; }
+.ide-btn { background: #262835; color: #e6e6ee; border: 1px solid #3a3c4c; }
+.ide-btn:hover { background: #333647; color: #fff; }
+.ide .CodeMirror { height: 460px; font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Consolas, monospace; font-size: 15px; line-height: 1.6; }
+.ide .CodeMirror-gutters { border-right: 1px solid #2c2e3a; }
+.ide .CodeMirror-placeholder { color: #6c7086 !important; }
+.ide > .code-editor { border-radius: 0; min-height: 460px; }
+.ide-statusbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; padding: .35rem 1rem; background: #bd1f2d; color: #fff; font: .75rem/1.4 ui-monospace, Consolas, monospace; }
+.ide-console { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); border-top: 1px solid #2c2e3a; }
+.ide-console-col { display: flex; flex-direction: column; min-width: 0; }
+.ide-console-col + .ide-console-col { border-left: 1px solid #2c2e3a; }
+.ide-console-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding: .5rem 1rem; background: #181922; color: #9ea1b5; font: 600 .72rem/1.4 ui-monospace, Consolas, monospace; letter-spacing: .06em; }
+.ide-link { background: none; border: 0; padding: 0; color: #8be9fd; font: inherit; letter-spacing: 0; text-transform: none; }
+.ide-link:hover { text-decoration: underline; }
+.ide-stdin, .ide-output { margin: 0; height: 190px; padding: .75rem 1rem; background: #1e1f29; color: #f1f1f5; border: 0; font: .85rem/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; word-break: break-word; overflow: auto; resize: vertical; }
+.ide-stdin:focus { outline: 2px solid #44475a; outline-offset: -2px; }
+.ide-muted { color: #6c7086; }
+.ide-err { color: #ff6e6e; }
+.ide-ok { color: #50fa7b; font-weight: 600; }
+.ide-run-status { text-transform: none; letter-spacing: 0; }
+.ide-run-status.is-ok { color: #50fa7b; }
+.ide-run-status.is-bad { color: #ff6e6e; }
+.ide-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem; background: #fff; }
+.CodeMirror-hints.CodeMirror-hints { z-index: 1080; font: .85rem/1.5 ui-monospace, Consolas, monospace; background: #262835; border-color: #3a3c4c; }
+.CodeMirror-hints .CodeMirror-hint { color: #e6e6ee; }
+.CodeMirror-hints li.CodeMirror-hint-active { background: #bd1f2d; color: #fff; }
+@media (max-width: 768px) { .ide-console { grid-template-columns: 1fr; } .ide-console-col + .ide-console-col { border-left: 0; border-top: 1px solid #2c2e3a; } }

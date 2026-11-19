@@ -136,12 +136,16 @@
   document.getElementById('proctorStart').addEventListener('click', start);
   document.addEventListener('visibilitychange', () => { if (document.hidden) sendEvent('tab_hidden'); });
   window.addEventListener('blur', () => sendEvent('window_blur'));
-  if (source) {
-    ['paste', 'drop'].forEach((type) => source.addEventListener(type, (event) => {
-      event.preventDefault();
-      setStatus('Kod joylashtirish taqiqlangan', 'danger');
-      sendEvent('paste', type);
-    }));
+  const blockPaste = (type, event) => {
+    event.preventDefault();
+    setStatus('Kod joylashtirish taqiqlangan', 'danger');
+    sendEvent('paste', type);
+  };
+  if (window.codeEditor) {
+    // CodeMirror muharriri: paste/drop hodisalari muharrirning o'zida ushlanadi.
+    ['paste', 'drop'].forEach((type) => window.codeEditor.on(type, (editor, event) => blockPaste(type, event)));
+  } else if (source) {
+    ['paste', 'drop'].forEach((type) => source.addEventListener(type, (event) => blockPaste(type, event)));
   }
   start();
 })();

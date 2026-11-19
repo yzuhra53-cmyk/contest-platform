@@ -47,7 +47,7 @@ from models import (
     db,
     utcnow,
 )
-from judge import MAX_PARALLEL, JudgeError, judge_solution
+from judge import MAX_PARALLEL, JudgeError, judge_solution, run_program
 import proctoring
 
 # Kirish kodi: chalkash belgilarsiz (0/O, 1/I/L yo'q), 8 belgi = ~40 bit.
@@ -186,6 +186,7 @@ def create_app(test_config=None):
         JUDGE_SYNC=False,
         # Bitta talabaning ketma-ket yechim yuborishlari orasidagi minimal oraliq.
         SUBMIT_COOLDOWN_SECONDS=int(os.environ.get("SUBMIT_COOLDOWN_SECONDS", "20")),
+        RUN_COOLDOWN_SECONDS=int(os.environ.get("RUN_COOLDOWN_SECONDS", "3")),
     )
     if test_config:
         application.config.update(test_config)
@@ -1456,6 +1457,47 @@ def create_app(test_config=None):
             answers=saved_answers,
             remaining_seconds=remaining_seconds,
         )
+
+    run_times = {}
+    run_lock = threading.Lock()
+
+    @application.route("/contest/<int:contest_id>/run/<int:question_id>", methods=["POST"])
+    @student_required
+    def run_code(contest_id, question_id):
+        """Konsol: kodni talaba kiritgan input bilan ishga tushiradi. Baholanmaydi."""
+        contest = db.session.get(Contest, contest_id)
+        question = db.session.get(Question, question_id)
+        if contest is None or question is None or contest.contest_type != "coding" or question not in contest.questions:
+            abort(404)
+        attempt = get_attempt(session["student_id"], contest_id)
+        if not attempt or attempt.completed_at or utcnow() >= attempt_deadline(attempt):
+            return jsonify(error="Kontest vaqti tugagan.", finished=True), 409
+        if not seb_ok(contest):
+            return jsonify(error="Kontest faqat Safe Exam Browser orqali ishlaydi."), 403
+        data = request.get_json(silent=True) or {}
+        language = data.get("language")
+        source_code = data.get("source_code") or ""
+        stdin_text = data.get("stdin") or ""
+        if language not in {"python", "cpp"} or not isinstance(source_code, str) or not isinstance(stdin_text, str):
+            abort(400)
+        if not source_code.strip():
+            return jsonify(error="Avval kod yozing."), 400
+        cooldown = application.config["RUN_COOLDOWN_SECONDS"]
+        now = time.monotonic()
+        with run_lock:
+            last = run_times.get(attempt.id)
+            if cooldown and last and now - last < cooldown:
+                return jsonify(error=f"Juda tez. {cooldown - (now - last):.0f} soniyadan so‘ng qayta ishga tushiring."), 429
+            run_times[attempt.id] = now
+        attempt_id = attempt.id
+        db.session.remove()  # dastur ishlayotganda baza ulanishini band qilib turmaymiz
+        try:
+            result = run_program(language, source_code, stdin_text.replace("\r\n", "\n"))
+        except JudgeError as error:
+            with run_lock:
+                run_times.pop(attempt_id, None)
+            return jsonify(error=str(error)), 503
+        return jsonify(result)
 
     @application.route("/contest/<int:contest_id>/code/<int:question_id>", methods=["POST"])
     @student_required

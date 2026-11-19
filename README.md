@@ -35,6 +35,17 @@ uv run python tools/validate_problem_bank.py
 
 Birinchisi testlarni etalon yechimni ishga tushirib yaratadi (ko‘p masalada kichik testlar brute-force yechim bilan ham solishtiriladi). Ikkinchisi har bir etalon yechimni haqiqiy judge orqali vaqt limiti bilan o‘tkazadi va faqat namuna javobini chiqaradigan yechim rad etilishini tekshiradi.
 
+## Kod muharriri (IDE)
+
+Kod masalalari sahifasida professional muharrir bor (CodeMirror 5, CDN orqali):
+
+- Python va C++ uchun rangli sintaksis, qator raqamlari, qavslarni avtomatik yopish;
+- yozish paytida maslahatlar: kalit so‘zlar, standart funksiyalar, tayyor qoliplar (`n = int(input())` va h.k.) va o‘zingiz yozgan nomlar. `Ctrl+Space` — ro‘yxatni ochish, `Ctrl+/` — izoh, `Ctrl+Enter` — ishga tushirish. Bu sun’iy intellekt emas: faqat oddiy avto-to‘ldirish;
+- **▶ Ishga tushirish** va konsol: kod talaba kiritgan input bilan (standart — namuna) serverdagi xavfsiz muhitda ishga tushadi, natija, xato va vaqt ko‘rsatiladi; namuna javobi bilan solishtiriladi. Bu baholanmaydi va yuborish hisoblanmaydi. Ishga tushirishlar orasida kamida `RUN_COOLDOWN_SECONDS` (standart 3) soniya bo‘ladi;
+- qoralama brauzerda avtomatik saqlanadi: sahifa yangilansa ham kod yo‘qolmaydi.
+
+Proktoringli kontestda muharrirga kod joylashtirish (paste/drop) ham bloklanadi va qayd etiladi.
+
 ## Kontest vaqti va reyting
 
 Kontest yaratishda (yoki keyin «Vaqt va reyting sozlamalari» orqali) ixtiyoriy **boshlanish** va **tugash** vaqtini Toshkent vaqtida belgilash mumkin. Boshlanishgacha talaba kontestni ocha olmaydi; tugash vaqtida barcha urinishlar yakunlanadi, hatto shaxsiy taymer hali tugamagan bo‘lsa ham. Vaqt mintaqasi `APP_UTC_OFFSET_HOURS` (standart 5).

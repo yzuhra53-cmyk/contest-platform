@@ -24,6 +24,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 
 try:
     import pwd
@@ -231,7 +232,11 @@ def _validate(language, source_code, test_cases):
         raise JudgeError("Kod yoki test ma’lumoti ruxsat etilgan hajmdan katta.")
 
 
-def _judge(language, source_code, test_cases, workdir, identity):
+def _prepare(language, source_code, workdir, identity):
+    """Manba faylini yozadi va kerak bo'lsa kompilyatsiya qiladi.
+
+    Qaytaradi: (run_command, compile_error) — compile_error None bo'lsa, hammasi joyida.
+    """
     if language == "python":
         source_path = os.path.join(workdir, "main.py")
         # -I: izolyatsiya rejimi (muhit o'zgaruvchilari va joriy papka import yo'liga qo'shilmaydi)
@@ -257,9 +262,16 @@ def _judge(language, source_code, test_cases, workdir, identity):
             identity=identity,
         )
         if timed_out:
-            return False, "Compilation Error. Kompilyatsiya vaqti tugadi."
+            return run_command, "Kompilyatsiya vaqti tugadi."
         if returncode != 0:
-            return False, f"Compilation Error. {_tail(stderr, workdir)}"
+            return run_command, _tail(stderr, workdir, limit=2000)
+    return run_command, None
+
+
+def _judge(language, source_code, test_cases, workdir, identity):
+    run_command, compile_error = _prepare(language, source_code, workdir, identity)
+    if compile_error is not None:
+        return False, f"Compilation Error. {compile_error[-300:]}"
 
     for index, case in enumerate(test_cases, start=1):
         returncode, timed_out, stdout, stderr, too_big = _run(
@@ -289,30 +301,95 @@ def _judge(language, source_code, test_cases, workdir, identity):
     return True, f"Barcha {len(test_cases)} ta testdan o‘tdi."
 
 
+class _Sandbox:
+    """Navbatdan bo'sh slot oladi va vaqtinchalik ish papkasini tayyorlaydi."""
+
+    def __init__(self, queue_timeout):
+        self.queue_timeout = queue_timeout
+        self.slot = None
+        self.identity = None
+        self.workdir = None
+
+    def __enter__(self):
+        try:
+            self.slot = _free_slots.get(timeout=self.queue_timeout)
+        except queue.Empty:
+            raise JudgeError("Tekshiruv navbati band. Birozdan so‘ng qayta urinib ko‘ring.") from None
+        self.identity = _sandbox_identity(self.slot)
+        try:
+            self.workdir = tempfile.mkdtemp(prefix="job-", dir=_get_base_dir())
+            if self.identity:
+                os.chown(self.workdir, self.identity[0], self.identity[1])
+        except OSError as error:
+            self.__exit__(None, None, None)
+            raise JudgeError("Tekshiruv serverida ichki xatolik yuz berdi.") from error
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        if self.identity:
+            _sweep_sandbox_processes(self.identity)
+        if self.workdir:
+            shutil.rmtree(self.workdir, ignore_errors=True)
+        _free_slots.put(self.slot)
+        if isinstance(exc, OSError):
+            raise JudgeError("Tekshiruv serverida ichki xatolik yuz berdi.") from exc
+        return False
+
+
 def judge_solution(language, source_code, test_cases):
     """Kodni barcha testlarda tekshiradi. Qaytaradi: (accepted: bool, xabar: str).
 
     Birinchi muvaffaqiyatsiz testda to'xtaydi. Faqat barcha testlar o'tsa True.
     """
     _validate(language, source_code, test_cases)
-    try:
-        slot = _free_slots.get(timeout=QUEUE_TIMEOUT)
-    except queue.Empty:
-        raise JudgeError("Tekshiruv navbati band. Birozdan so‘ng qayta yuboring.") from None
-    identity = _sandbox_identity(slot)
-    workdir = None
-    try:
-        workdir = tempfile.mkdtemp(prefix="job-", dir=_get_base_dir())
-        if identity:
-            os.chown(workdir, identity[0], identity[1])
-        return _judge(language, source_code, test_cases, workdir, identity)
-    except JudgeError:
-        raise
-    except OSError as error:
-        raise JudgeError("Tekshiruv serverida ichki xatolik yuz berdi.") from error
-    finally:
-        if identity:
-            _sweep_sandbox_processes(identity)
-        if workdir:
-            shutil.rmtree(workdir, ignore_errors=True)
-        _free_slots.put(slot)
+    with _Sandbox(QUEUE_TIMEOUT) as box:
+        return _judge(language, source_code, test_cases, box.workdir, box.identity)
+
+
+RUN_QUEUE_TIMEOUT = 15  # "Ishga tushirish" uzoq kutmasin: navbat band bo'lsa darhol aytamiz
+RUN_DISPLAY_CHARS = 20_000  # konsolga qaytariladigan chiqish hajmi
+
+
+def run_program(language, source_code, stdin_text):
+    """Kodni bitta kirish bilan ishga tushiradi (konsol uchun, baholanmaydi).
+
+    Qaytaradi: dict(status, stdout, stderr, time_ms). status: ok, compile_error,
+    runtime_error, time_limit, output_limit.
+    """
+    if language not in LANGUAGES:
+        raise JudgeError("Dasturlash tili qo‘llab-quvvatlanmaydi.")
+    if len(source_code) > MAX_SOURCE_CHARS or len(stdin_text) > MAX_CASE_CHARS:
+        raise JudgeError("Kod yoki kirish ma’lumoti ruxsat etilgan hajmdan katta.")
+    with _Sandbox(RUN_QUEUE_TIMEOUT) as box:
+        run_command, compile_error = _prepare(language, source_code, box.workdir, box.identity)
+        if compile_error is not None:
+            return {"status": "compile_error", "stdout": "", "stderr": compile_error, "time_ms": 0}
+        started = time.perf_counter()
+        returncode, timed_out, stdout, stderr, too_big = _run(
+            run_command,
+            box.workdir,
+            stdin_text,
+            timeout=TIME_LIMIT,
+            memory_mb=MEMORY_LIMIT_MB,
+            file_bytes=MAX_OUTPUT_BYTES * 2,
+            identity=box.identity,
+        )
+        elapsed_ms = int((time.perf_counter() - started) * 1000)
+        stderr = _tail(stderr, box.workdir, limit=2000)
+    if timed_out or returncode == -getattr(signal, "SIGXCPU", 24):
+        status = "time_limit"
+    elif too_big or returncode == -getattr(signal, "SIGXFSZ", 25):
+        status = "output_limit"
+    elif returncode != 0:
+        status = "runtime_error"
+        if not stderr:
+            stderr = f"Dastur {returncode} kodi bilan tugadi."
+    else:
+        status = "ok"
+    return {
+        "status": status,
+        "stdout": stdout[:RUN_DISPLAY_CHARS],
+        "stdout_truncated": len(stdout) > RUN_DISPLAY_CHARS,
+        "stderr": stderr,
+        "time_ms": elapsed_ms,
+    }

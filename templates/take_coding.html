@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Kod masalasi · {{ contest.title }}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/hint/show-hint.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/dracula.min.css">
+{% endblock %}
 {% block content %}
 <div class="contest-header card border-0 shadow-sm mb-4">
   <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -23,19 +28,40 @@
   <span class="small">Yuborilgan: {{ submission.submitted_at|local }}</span>
 </div>
 {% endif %}
-<form method="post" action="{{ url_for('submit_code', contest_id=contest.id, question_id=question.id) }}" class="card border-0 shadow-sm" id="codeForm">
+<form method="post" action="{{ url_for('submit_code', contest_id=contest.id, question_id=question.id) }}" class="card border-0 shadow-sm ide" id="codeForm">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-  <div class="card-body p-4">
-    <label class="form-label fw-semibold" for="language">Dasturlash tili</label>
-    <select class="form-select mb-3" id="language" name="language" required>
-      <option value="python" {% if not submission or submission.language == 'python' %}selected{% endif %}>Python 3</option>
-      <option value="cpp" {% if submission and submission.language == 'cpp' %}selected{% endif %}>C++17</option>
-    </select>
-    <label class="form-label fw-semibold" for="source_code">Yechim kodingiz</label>
-    <textarea class="form-control font-monospace code-editor mb-3" id="source_code" data-question-id="{{ question.id }}" name="source_code" rows="18" maxlength="20000" required spellcheck="false" placeholder="Python: import sys&#10;data = list(map(int, sys.stdin.read().split()))&#10;# yoki C++17 yechimingizni yozing">{{ submission.source_code if submission else '' }}</textarea>
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-      <span class="small text-secondary">Yechimingiz yashirin testlarda avtomatik tekshiriladi (har bir test uchun vaqt va xotira cheklovi bor).</span>
-      <button class="btn btn-primary btn-lg" {% if submission and submission.status == 'pending' %}disabled{% endif %}>Yechimni tekshiruvga yuborish</button>
+  <div class="ide-toolbar">
+    <div class="d-flex align-items-center gap-2">
+      <span class="ide-dot"></span><span class="ide-dot"></span><span class="ide-dot"></span>
+      <span class="ide-file" id="ideFile">main.py</span>
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <select class="form-select form-select-sm ide-select" id="language" name="language" required aria-label="Dasturlash tili">
+        <option value="python" {% if not submission or submission.language == 'python' %}selected{% endif %}>Python 3</option>
+        <option value="cpp" {% if submission and submission.language == 'cpp' %}selected{% endif %}>C++17</option>
+      </select>
+      <button type="button" class="btn btn-sm ide-btn" id="ideTemplate" title="Bo‘sh shablon qo‘yish">Shablon</button>
+      <button type="button" class="btn btn-sm ide-btn" id="ideFontMinus" title="Shriftni kichraytirish">A−</button>
+      <button type="button" class="btn btn-sm ide-btn" id="ideFontPlus" title="Shriftni kattalashtirish">A+</button>
+    </div>
+  </div>
+  <textarea class="form-control font-monospace code-editor" id="source_code" data-question-id="{{ question.id }}" name="source_code" rows="20" maxlength="20000" required spellcheck="false" placeholder="Kodingizni shu yerga yozing…  (Ctrl+Space — maslahatlar, Ctrl+Enter — ishga tushirish)">{{ submission.source_code if submission else '' }}</textarea>
+  <div class="ide-statusbar"><span id="ideCursor">Qator 1, ustun 1</span><span>Ctrl+Space — maslahat · Ctrl+/ — izoh · Ctrl+Enter — ishga tushirish</span></div>
+  <div class="ide-console">
+    <div class="ide-console-col">
+      <div class="ide-console-head"><span>KIRISH (stdin)</span><button type="button" class="ide-link" id="ideSample">Namunani qo‘yish</button></div>
+      <textarea id="ideStdin" class="ide-stdin" spellcheck="false" maxlength="100000" aria-label="Dastur kirishi">{{ question.input_data or '' }}</textarea>
+    </div>
+    <div class="ide-console-col">
+      <div class="ide-console-head"><span>KONSOL</span><span id="ideRunStatus" class="ide-run-status"></span></div>
+      <pre id="ideOutput" class="ide-output" aria-live="polite"><span class="ide-muted">«▶ Ishga tushirish» tugmasini bosing — natija shu yerda chiqadi.</span></pre>
+    </div>
+  </div>
+  <div class="ide-actions">
+    <span class="small text-secondary">«Ishga tushirish» faqat sizning kirishingizda sinaydi va baholanmaydi. Baho yashirin testlardan keyin qo‘yiladi.</span>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-outline-dark btn-lg" id="ideRun">▶ Ishga tushirish</button>
+      <button class="btn btn-primary btn-lg" id="ideSubmit" {% if submission and submission.status == 'pending' %}disabled{% endif %}>Tekshiruvga yuborish</button>
     </div>
   </div>
 </form>
@@ -61,10 +87,29 @@
 {% endif %}
 {% endblock %}
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/clike/clike.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/hint/show-hint.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/selection/active-line.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/display/placeholder.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/comment/comment.min.js"></script>
+<script src="{{ url_for('static', filename='js/ide.js') }}"></script>
 <script>
+const ide = initIde({
+  runUrl: "{{ url_for('run_code', contest_id=contest.id, question_id=question.id) }}",
+  draftKey: "draft-{{ contest.id }}-{{ question.id }}",
+  submittedCode: {{ (submission.source_code if submission else '')|tojson }},
+  sampleInput: {{ (question.input_data or '')|tojson }},
+  sampleOutput: {{ (question.expected_output or '')|tojson }},
+});
 {% if submission and submission.status == 'pending' %}
-// Tekshiruv tugashi bilan natijani ko'rsatish uchun sahifa o'zi yangilanadi.
-setTimeout(() => window.location.reload(), 3000);
+// Tekshiruv tugashi bilan natijani ko'rsatish uchun sahifa yangilanadi (yozayotgan paytda emas).
+(function waitForVerdict() {
+  setTimeout(() => (ide.idleFor() > 4000 ? window.location.reload() : waitForVerdict()), 3000);
+})();
 {% endif %}
 const timer = document.getElementById('timer');
 let remaining = Number(timer.dataset.seconds);
@@ -75,7 +120,7 @@ function showTime() {
   if (remaining <= 60) timer.classList.add('timer-warning');
   if (remaining <= 0) {
     timer.textContent = '00:00';
-    document.getElementById('source_code').disabled = true;
+    ide.lock();
     return;
   }
   remaining -= 1;
