@@ -16,15 +16,18 @@
         <div class="card-body">
           <div class="auth-card-mark">01 <span>· TALABA KIRISHI</span></div>
           <h2 class="h3 mb-2">Xush kelibsiz!</h2>
-          <p class="text-secondary mb-4">Kirish uchun HEMIS ID, familiya-ismingiz va guruhingizni kiriting.</p>
-          <form method="post">
+          <p class="text-secondary mb-4">Familiya-ismingizni yozing va ro‘yxatdan o‘zingizni tanlang (Tab yoki Enter) — guruh o‘zi to‘ladi. So‘ng HEMIS ID’ni kiriting.</p>
+          <form method="post" id="studentLoginForm" autocomplete="off">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <label class="form-label" for="hemis_id">HEMIS ID</label>
-            <input class="form-control mb-3" id="hemis_id" name="hemis_id" value="{{ form.get('hemis_id', '') }}" autocomplete="username" maxlength="40" required autofocus>
             <label class="form-label" for="full_name">F.I.Sh.</label>
-            <input class="form-control mb-3" id="full_name" name="full_name" value="{{ form.get('full_name', '') }}" autocomplete="name" maxlength="180" placeholder="Familiya Ism Sharif" required>
+            <div class="name-suggest mb-3">
+              <input class="form-control" id="full_name" name="full_name" value="{{ form.get('full_name', '') }}" maxlength="180" placeholder="Familiya Ism Sharif" required autofocus role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="nameSuggestions">
+              <ul class="name-suggest-list" id="nameSuggestions" role="listbox" hidden></ul>
+            </div>
             <label class="form-label" for="group_name">Guruh</label>
-            <input class="form-control mb-4" id="group_name" name="group_name" value="{{ form.get('group_name', '') }}" maxlength="100" placeholder="Masalan: 101-guruh" required>
+            <input class="form-control mb-3" id="group_name" name="group_name" value="{{ form.get('group_name', '') }}" maxlength="100" placeholder="Masalan: 101-guruh" required>
+            <label class="form-label" for="hemis_id">HEMIS ID</label>
+            <input class="form-control mb-4" id="hemis_id" name="hemis_id" value="{{ form.get('hemis_id', '') }}" autocomplete="username" maxlength="40" required>
             <button class="btn btn-primary w-100">Davom etish <span aria-hidden="true">→</span></button>
           </form>
           <div class="auth-card-footer"><span>Ustozmisiz?</span><a href="{{ url_for('admin_login') }}">Ustoz sifatida kirish <span aria-hidden="true">→</span></a></div>
@@ -34,4 +37,76 @@
   </div>
   <div class="auth-scroll-cue" aria-hidden="true"><span></span> BILIM — KELAJAKKA YO‘L</div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const suggestUrl = "{{ url_for('student_login_suggest') }}";
+  const nameInput = document.getElementById('full_name');
+  const groupInput = document.getElementById('group_name');
+  const hemisInput = document.getElementById('hemis_id');
+  const list = document.getElementById('nameSuggestions');
+  let items = [];
+  let active = -1;
+  let timer = null;
+  let requestId = 0;
+
+  function close() {
+    list.hidden = true;
+    nameInput.setAttribute('aria-expanded', 'false');
+    items = [];
+    active = -1;
+  }
+  function render() {
+    list.innerHTML = '';
+    items.forEach((item, index) => {
+      const li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.className = index === active ? 'is-active' : '';
+      const name = document.createElement('span');
+      name.textContent = item.name;
+      const group = document.createElement('small');
+      group.textContent = item.group;
+      li.append(name, group);
+      li.addEventListener('mousedown', (event) => { event.preventDefault(); choose(index); });
+      list.appendChild(li);
+    });
+    list.hidden = items.length === 0;
+    nameInput.setAttribute('aria-expanded', String(!list.hidden));
+  }
+  function choose(index) {
+    const item = items[index];
+    if (!item) return;
+    nameInput.value = item.name;
+    groupInput.value = item.group;
+    close();
+    hemisInput.focus();
+  }
+  async function load() {
+    const query = nameInput.value.trim();
+    if (query.length < 3) { close(); return; }
+    const current = ++requestId;
+    try {
+      const response = await fetch(`${suggestUrl}?q=${encodeURIComponent(query)}`, {cache: 'no-store'});
+      if (!response.ok || current !== requestId) return;
+      items = await response.json();
+      active = items.length ? 0 : -1;
+      render();
+    } catch (error) { close(); }
+  }
+  nameInput.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(load, 200);
+  });
+  nameInput.addEventListener('keydown', (event) => {
+    if (list.hidden || !items.length) return;
+    if (event.key === 'ArrowDown') { event.preventDefault(); active = (active + 1) % items.length; render(); }
+    else if (event.key === 'ArrowUp') { event.preventDefault(); active = (active - 1 + items.length) % items.length; render(); }
+    else if (event.key === 'Tab' || event.key === 'Enter') { event.preventDefault(); choose(Math.max(active, 0)); }
+    else if (event.key === 'Escape') { close(); }
+  });
+  nameInput.addEventListener('blur', () => setTimeout(close, 150));
+})();
+</script>
 {% endblock %}

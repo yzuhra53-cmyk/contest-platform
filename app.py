@@ -95,6 +95,16 @@ def contest_state(contest, now=None):
     return "open"
 
 
+APOSTROPHES = str.maketrans({ch: "'" for ch in "\u2018\u2019\u02bb\u02bc\u0060\u00b4"})
+
+
+def normalize_person_text(value):
+    """F.I.Sh. va guruhni solishtirish uchun: katta-kichik harf, bo'shliqlar va
+    apostrof turlari (o‘, oʻ, o') farqi hisobga olinmaydi."""
+    text = unicodedata.normalize("NFKC", str(value or "")).translate(APOSTROPHES)
+    return " ".join(text.casefold().split())
+
+
 def generate_access_code():
     return "".join(secrets.choice(ACCESS_CODE_ALPHABET) for _ in range(ACCESS_CODE_LENGTH))
 
@@ -351,7 +361,11 @@ def create_app(test_config=None):
                 flash("Juda ko‘p noto‘g‘ri urinish. 15 daqiqadan so‘ng qayta urinib ko‘ring.", "danger")
                 return render_template("student_login.html", form=request.form), 429
             student = db.session.get(Student, hemis_id)
-            if student:
+            if (
+                student
+                and normalize_person_text(student.full_name) == normalize_person_text(full_name)
+                and normalize_person_text(student.group_name) == normalize_person_text(group_name)
+            ):
                 had_session = bool(student.session_token)
                 student.session_token = secrets.token_hex(24)
                 if had_session:
@@ -368,9 +382,34 @@ def create_app(test_config=None):
                 session["student_token"] = student.session_token
                 return redirect(url_for("student_dashboard"))
             throttle.fail(ip_key)
-            flash("Bu HEMIS ID ro‘yxatda topilmadi. Ustozingizga murojaat qiling.", "danger")
+            flash(
+                "HEMIS ID, F.I.Sh. yoki guruh ro‘yxatdagi ma’lumotga mos kelmadi. "
+                "Ismingizni ro‘yxatdan tanlang va HEMIS ID’ni tekshiring.",
+                "danger",
+            )
             return render_template("student_login.html", form=request.form)
         return render_template("student_login.html", form={})
+
+    @application.route("/login/suggest")
+    def student_login_suggest():
+        """Kirish sahifasi uchun: ism bo'yicha F.I.Sh. va guruh takliflari (HEMIS ID berilmaydi)."""
+        query = normalize_person_text(request.args.get("q", ""))[:80]
+        if len(query) < 3:
+            return jsonify([])
+        ip_key = ("suggest-ip", client_ip())
+        if throttle.blocked(ip_key, 600):
+            return jsonify([]), 429
+        throttle.fail(ip_key)  # oddiy hisoblagich: 15 daqiqada 600 so'rovdan oshmasin
+        words = query.split()
+        matches = []
+        for full_name, group_name in db.session.execute(
+            db.select(Student.full_name, Student.group_name).order_by(Student.full_name)
+        ):
+            name = normalize_person_text(full_name)
+            if all(word in name for word in words):
+                matches.append({"name": full_name, "group": group_name, "starts": name.startswith(query)})
+        matches.sort(key=lambda item: (not item["starts"], item["name"]))
+        return jsonify([{"name": item["name"], "group": item["group"]} for item in matches[:8]])
 
     @application.route("/logout", methods=["POST"])
     def logout():

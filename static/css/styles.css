@@ -288,3 +288,20 @@ main:not(.auth-main) .card { animation: slide-up .55s both; }
 .proctor-media.is-dual .proctor-frame, .proctor-media.is-dual .proctor-frame-empty { height: 100%; object-fit: cover; }
 .proctor-screen { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #0f172a; }
 .proctor-screen.is-stale { opacity: .45; filter: grayscale(1); }
+
+/* Parolni ko'rsatish tugmasi */
+.password-field { position: relative; }
+.password-field .form-control { padding-right: 3rem; }
+.password-toggle { position: absolute; top: 50%; right: .5rem; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border: 0; border-radius: .5rem; background: transparent; color: #64748b; }
+.password-toggle:hover, .password-toggle:focus-visible { color: #111827; background: #f1f5f9; }
+.password-toggle.is-on { color: #e31e24; }
+.password-toggle.is-on svg { stroke-dasharray: none; }
+.password-toggle.is-on::after { content: ""; position: absolute; width: 22px; height: 2px; background: currentColor; transform: rotate(-45deg); border-radius: 1px; }
+
+/* Talaba ismini ro'yxatdan tanlash */
+.name-suggest { position: relative; }
+.name-suggest-list { position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; right: 0; margin: 0; padding: .3rem; list-style: none; background: #fff; border: 1px solid #e5e7eb; border-radius: .75rem; box-shadow: 0 .75rem 1.5rem rgba(15, 23, 42, .12); max-height: 18rem; overflow: auto; }
+.name-suggest-list li { display: flex; justify-content: space-between; align-items: baseline; gap: .75rem; padding: .55rem .75rem; border-radius: .5rem; cursor: pointer; }
+.name-suggest-list li small { color: #64748b; white-space: nowrap; }
+.name-suggest-list li.is-active, .name-suggest-list li:hover { background: #fdecec; }
+.name-suggest-list li.is-active small { color: #b91c1c; }

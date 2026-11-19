@@ -21,7 +21,10 @@
             <label class="form-label" for="username">Login</label>
             <input class="form-control mb-3" id="username" name="username" autocomplete="username" required autofocus>
             <label class="form-label" for="password">Parol</label>
-            <input class="form-control mb-4" id="password" name="password" type="password" autocomplete="current-password" required>
+            <div class="password-field mb-4">
+              <input class="form-control" id="password" name="password" type="password" autocomplete="current-password" required>
+              <button type="button" class="password-toggle" id="passwordToggle" aria-label="Parolni ko‘rsatish" title="Parolni ko‘rsatish" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            </div>
             <button class="btn btn-primary w-100">Kirish <span aria-hidden="true">→</span></button>
           </form>
           <div class="auth-card-footer"><span>Talabamisiz?</span><a href="{{ url_for('student_login') }}">Talaba sifatida kirish <span aria-hidden="true">→</span></a></div>
@@ -32,4 +35,23 @@
   </div>
   <div class="auth-scroll-cue" aria-hidden="true"><span></span> BILIM — KELAJAKKA YO‘L</div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const input = document.getElementById('password');
+  const toggle = document.getElementById('passwordToggle');
+  toggle.addEventListener('click', () => {
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    toggle.setAttribute('aria-pressed', String(show));
+    toggle.classList.toggle('is-on', show);
+    const label = show ? 'Parolni yashirish' : 'Parolni ko‘rsatish';
+    toggle.setAttribute('aria-label', label);
+    toggle.title = label;
+    input.focus();
+  });
+})();
+</script>
 {% endblock %}
