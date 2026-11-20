@@ -49,6 +49,7 @@ from models import (
 )
 from judge import MAX_PARALLEL, JudgeError, judge_solution, run_program
 import proctoring
+from public import register_public
 from question_import import ImportFormatError, parse_file as parse_question_file
 from difficulty import LEVEL_LABELS, classify as classify_difficulty, normalize as normalize_difficulty
 import i18n
@@ -203,6 +204,8 @@ def create_app(test_config=None):
         # Bitta talabaning ketma-ket yechim yuborishlari orasidagi minimal oraliq.
         SUBMIT_COOLDOWN_SECONDS=int(os.environ.get("SUBMIT_COOLDOWN_SECONDS", "20")),
         RUN_COOLDOWN_SECONDS=int(os.environ.get("RUN_COOLDOWN_SECONDS", "3")),
+        # Ochiq arxivda bitta foydalanuvchining yechimlari orasidagi minimal oraliq.
+        PUBLIC_SUBMIT_COOLDOWN_SECONDS=int(os.environ.get("PUBLIC_SUBMIT_COOLDOWN_SECONDS", "10")),
     )
     if test_config:
         application.config.update(test_config)
@@ -332,7 +335,9 @@ def create_app(test_config=None):
             return redirect(url_for("admin_dashboard"))
         if session.get("student_id"):
             return redirect(url_for("student_dashboard"))
-        return redirect(url_for("student_login"))
+        return redirect(url_for("tasks"))
+
+    register_public(application, judge_pool, throttle, client_ip)
 
     @application.route("/health")
     def health():

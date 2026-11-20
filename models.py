@@ -247,6 +247,44 @@ class BankImport(db.Model):
     imported_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
 
+class User(db.Model):
+    """Ochiq platforma foydalanuvchisi (ro'yxatdan o'tib, masalalar arxivini yechadi)."""
+
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(32), nullable=False, unique=True, index=True)
+    full_name = db.Column(db.String(120), nullable=False)
+    organization = db.Column(db.String(160))
+    password_hash = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+    last_seen_at = db.Column(db.DateTime)
+
+    submissions = db.relationship("Submission", back_populates="user")
+
+
+class Submission(db.Model):
+    """Masalalar arxiviga yuborilgan yechim (kontestdan tashqari)."""
+
+    __tablename__ = "submissions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    question_id = db.Column(db.Integer, db.ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
+    language = db.Column(db.String(10), nullable=False)
+    source_code = db.Column(db.Text, nullable=False)
+    # pending / accepted / rejected / error
+    status = db.Column(db.String(20), nullable=False, default="pending")
+    verdict = db.Column(db.String(500))
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow, index=True)
+    judged_at = db.Column(db.DateTime)
+
+    user = db.relationship("User", back_populates="submissions")
+    question = db.relationship("Question")
+
+    __table_args__ = (db.Index("ix_submissions_question_status", "question_id", "status"),)
+
+
 class SubmissionLog(db.Model):
     """Har bir yuborilgan yechimning o'zgarmas nusxasi (yechimlar tarixi)."""
 

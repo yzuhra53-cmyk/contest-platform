@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block head %}<link href="{{ url_for('static', filename='css/public.css') }}" rel="stylesheet">{% endblock %}
+{% block title %}{{ _('Masalalar') }}{% endblock %}
+{% block content %}
+<div class="pub">
+<div class="pub-page-head">
+  <div>
+    <h1 class="pub-h1">{{ _('Masalalar') }}</h1>
+    <p class="pub-sub">{{ _('Masalani tanlang, yechimingizni yozing va yashirin testlarda tekshiring.') }}</p>
+  </div>
+  {% if current_user %}<div class="pub-chip-stat">{{ _('Yechilgan masalalar: %(n)s', n=solved_count) }}</div>{% endif %}
+</div>
+
+<form class="pub-filters" method="get" action="{{ url_for('tasks') }}">
+  <div class="pub-search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+    <input type="search" name="q" value="{{ args.q }}" placeholder="{{ _('Qidirish: nomi yoki raqami…') }}" aria-label="{{ _('Qidirish') }}">
+  </div>
+  {% if current_user %}
+  <select class="form-select pub-select" name="status" onchange="this.form.submit()" aria-label="{{ _('Holat') }}">
+    <option value="">{{ _('Barcha masalalar') }}</option>
+    <option value="solved" {% if args.status == 'solved' %}selected{% endif %}>{{ _('Yechilganlar') }}</option>
+    <option value="unsolved" {% if args.status == 'unsolved' %}selected{% endif %}>{{ _('Yechilmaganlar') }}</option>
+  </select>
+  {% endif %}
+  <select class="form-select pub-select" name="sort" onchange="this.form.submit()" aria-label="{{ _('Saralash') }}">
+    <option value="">{{ _('Raqam bo‘yicha') }}</option>
+    <option value="solvers" {% if args.sort == 'solvers' %}selected{% endif %}>{{ _('Ko‘p yechilgan') }}</option>
+    <option value="success" {% if args.sort == 'success' %}selected{% endif %}>{{ _('Muvaffaqiyat foizi bo‘yicha') }}</option>
+  </select>
+  <input type="hidden" name="level" value="{{ args.level }}">
+</form>
+<div class="pub-levels">
+  {% for level in ('', 'easy', 'medium', 'hard') %}
+  <a class="pub-level{% if args.level == level %} active{% endif %}{% if level %} lvl-{{ level }}{% endif %}"
+     href="{{ url_for('tasks', q=args.q or None, status=args.status or None, sort=args.sort or None, level=level or None) }}">{{ level_labels[level] if level else _('Hammasi') }}</a>
+  {% endfor %}
+</div>
+
+<div class="pub-card">
+  <div class="table-responsive">
+    <table class="pub-table">
+      <thead><tr>
+        <th class="w-code">№</th><th>{{ _('Nomi') }}</th><th>{{ _('Qiyinchilik') }}</th>
+        <th class="text-end">{{ _('Yechganlar') }}</th><th class="text-end">{{ _('Muvaffaqiyat') }} %</th>
+      </tr></thead>
+      <tbody>
+      {% for row in rows %}
+        <tr class="{% if row.mark %}is-{{ row.mark }}{% endif %}">
+          <td class="w-code"><a class="pub-code" href="{{ url_for('task', code=row.code) }}">{{ row.code }}</a></td>
+          <td><a class="pub-title-link" href="{{ url_for('task', code=row.code) }}">{{ row.title }}</a>
+            {% if row.mark == 'solved' %}<span class="pub-mark ok" title="{{ _('Yechilgan') }}">✓</span>{% elif row.mark == 'tried' %}<span class="pub-mark bad" title="{{ _('Urinilgan') }}">•</span>{% endif %}</td>
+          <td>{% if row.difficulty %}<span class="pub-badge lvl-{{ row.difficulty }}">{{ level_labels[row.difficulty] }}</span>{% endif %}</td>
+          <td class="text-end tabular">{{ '{:,}'.format(row.solvers) }}</td>
+          <td class="text-end tabular">{{ '%.1f%%'|format(row.success) if row.success is not none else '—' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="text-center text-secondary py-5">{{ _('Hech narsa topilmadi.') }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="pub-table-foot">
+    <span class="text-secondary small">{{ _('Jami: %(n)s ta masala', n=total) }}</span>
+    {% if pages > 1 %}
+    <nav class="pub-pager">
+      {% for p in range(1, pages + 1) %}
+      <a class="{% if p == page %}active{% endif %}" href="{{ url_for('tasks', q=args.q or None, status=args.status or None, sort=args.sort or None, level=args.level or None, page=p) }}">{{ p }}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+  </div>
+</div>
+</div>
+{% endblock %}

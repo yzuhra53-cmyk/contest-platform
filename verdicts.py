@@ -67,5 +67,30 @@ def translate_verdict(text):
     return text
 
 
+_SHORT = (
+    (re.compile(r"^(?P<n>\d+)-test: javob noto‘g‘ri\.$"), N_("Noto‘g‘ri javob (test %(n)s)"), "wrong"),
+    (re.compile(r"^(?P<n>\d+)-test: Time Limit Exceeded"), N_("Vaqt chegarasi (test %(n)s)"), "wrong"),
+    (re.compile(r"^(?P<n>\d+)-test: Runtime Error"), N_("Bajarilish xatosi (test %(n)s)"), "wrong"),
+    (re.compile(r"^(?P<n>\d+)-test: Output Limit Exceeded"), N_("Chiqish chegarasi (test %(n)s)"), "wrong"),
+    (re.compile(r"^Compilation Error"), N_("Kompilyatsiya xatosi"), "wrong"),
+)
+
+
+def short_verdict(status, text):
+    """Urinishlar jadvali uchun qisqa natija: (matn, turi). Turi: ok / wrong / pending / error."""
+    if status == "pending":
+        return _("Kutilmoqda"), "pending"
+    if status == "accepted":
+        return _("Qabul qilindi"), "ok"
+    if status == "error":
+        return _("Tizim xatosi"), "error"
+    stripped = (text or "").strip()
+    for pattern, template, kind in _SHORT:
+        match = pattern.match(stripped)
+        if match:
+            return _(template, **match.groupdict()), kind
+    return _("Rad etildi"), "wrong"
+
+
 def status_label(status):
     return _(STATUS_LABELS[status]) if status in STATUS_LABELS else status

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block head %}<link href="{{ url_for('static', filename='css/public.css') }}" rel="stylesheet">{% endblock %}
+{% block title %}{{ _('Ro‘yxatdan o‘tish') }}{% endblock %}
+{% block content %}
+<div class="pub">
+<div class="pub-auth">
+  <div class="pub-card pub-auth-card">
+    <h1 class="pub-h1">{{ _('Ro‘yxatdan o‘tish') }}</h1>
+    <p class="pub-sub">{{ _('Bir necha soniyada hisob oching va masalalarni yechishni boshlang.') }}</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label class="form-label" for="full_name">{{ _('Ism-familiya') }}</label>
+      <input class="form-control mb-3" id="full_name" name="full_name" value="{{ form.get('full_name', '') }}" maxlength="120" autocomplete="name" required autofocus>
+      <label class="form-label" for="username">{{ _('Login') }}</label>
+      <input class="form-control" id="username" name="username" value="{{ form.get('username', '') }}" pattern="[A-Za-z0-9_]{3,32}" maxlength="32" autocomplete="username" required>
+      <div class="form-text mb-3">{{ _('Lotin harflari, raqamlar va _ belgisi, 3–32 belgi.') }}</div>
+      <label class="form-label" for="organization">{{ _('O‘quv yurti yoki tashkilot') }} <span class="text-secondary">({{ _('ixtiyoriy') }})</span></label>
+      <input class="form-control mb-3" id="organization" name="organization" value="{{ form.get('organization', '') }}" maxlength="160" autocomplete="organization">
+      <div class="row g-3 mb-4">
+        <div class="col-sm-6"><label class="form-label" for="password">{{ _('Parol') }}</label>
+          <input class="form-control" id="password" name="password" type="password" minlength="8" autocomplete="new-password" required></div>
+        <div class="col-sm-6"><label class="form-label" for="password2">{{ _('Parolni takrorlang') }}</label>
+          <input class="form-control" id="password2" name="password2" type="password" minlength="8" autocomplete="new-password" required></div>
+      </div>
+      <button class="btn pub-btn w-100">{{ _('Ro‘yxatdan o‘tish') }}</button>
+    </form>
+    <p class="text-center small mt-4 mb-0">{{ _('Hisobingiz bormi?') }} <a href="{{ url_for('signin', next=request.args.get('next')) }}">{{ _('Kirish') }}</a></p>
+  </div>
+</div>
+</div>
+{% endblock %}

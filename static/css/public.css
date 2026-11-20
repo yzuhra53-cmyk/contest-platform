@@ -1,0 +1,145 @@
+/* Ochiq platforma (masalalar arxivi va masala sahifasi). Ranglar styles.css dagi qizil-oq palitradan. */
+:root {
+  --pub-accent: var(--ranch-red, #e31e24);
+  --pub-accent-dark: var(--ranch-red-dark, #bb171c);
+  --pub-accent-soft: var(--ranch-red-soft, #fff0f0);
+  --pub-bg: #f6f7f9;
+  --pub-card: #ffffff;
+  --pub-border: #e5e7eb;
+  --pub-text: #111827;
+  --pub-muted: #6b7280;
+  --pub-ok: #15803d;
+  --pub-ok-soft: #dcfce7;
+  --pub-bad: #b91c1c;
+  --pub-bad-soft: #fee2e2;
+  --pub-warn: #a16207;
+  --pub-warn-soft: #fef3c7;
+  }
+.pub a { color: var(--pub-accent); text-decoration: none; }
+.pub a:hover { color: var(--pub-accent-dark); }
+.pub svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Tugmalar */
+.pub-btn { background: var(--pub-accent); border: 1px solid var(--pub-accent); color: #fff !important; font-weight: 600; border-radius: 8px; }
+.pub-btn:hover, .pub-btn:focus { background: var(--pub-accent-dark); border-color: var(--pub-accent-dark); color: #fff; }
+.pub-btn:disabled { background: #94a3b8; border-color: #94a3b8; }
+.pub-btn-ghost { background: #fff; border: 1px solid var(--pub-border); color: #374151 !important; font-weight: 600; border-radius: 8px; }
+.pub-btn-ghost:hover { background: #f3f4f6; }
+
+.pub-flashes .alert { border-radius: 10px; }
+.pub-page-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 1rem; margin-bottom: 1.25rem; }
+.pub-h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 .25rem; }
+.pub-h2 { font-size: 1.05rem; font-weight: 700; margin: 1.5rem 0 .75rem; }
+.pub-sub { color: var(--pub-muted); margin: 0; }
+.pub-chip-stat { padding: .45rem .9rem; border-radius: 999px; background: var(--pub-ok-soft); color: var(--pub-ok); font-size: .85rem; }
+.pub-card { background: var(--pub-card); border: 1px solid var(--pub-border); border-radius: 12px; }
+
+/* Filtrlar */
+.pub-filters { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: .75rem; }
+.pub-search { flex: 1 1 280px; display: flex; align-items: center; gap: .5rem; padding: 0 .8rem; background: #fff; border: 1px solid var(--pub-border); border-radius: 8px; color: var(--pub-muted); }
+.pub-search input { flex: 1; height: 38px; border: 0; outline: 0; background: none; color: var(--pub-text); }
+.pub-search:focus-within { border-color: var(--pub-accent); box-shadow: 0 0 0 3px var(--pub-accent-soft); }
+.pub-select { width: auto; min-width: 170px; height: 40px; border-radius: 8px; }
+.pub-levels { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
+.pub-level { padding: .3rem .85rem; border: 1px solid var(--pub-border); border-radius: 8px; background: #fff; color: #374151 !important; font-weight: 500; font-size: .85rem; }
+.pub-level.active { background: var(--pub-accent); border-color: var(--pub-accent); color: #fff !important; }
+
+/* Jadval */
+.pub-table { width: 100%; border-collapse: collapse; }
+.pub-table th { padding: .7rem 1rem; background: #f9fafb; border-bottom: 1px solid var(--pub-border); color: var(--pub-muted); font-size: .76rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.pub-table td { padding: .65rem 1rem; border-bottom: 1px solid #f1f2f4; vertical-align: middle; }
+.pub-table tbody tr:hover { background: #fafbfc; }
+.pub-table tbody tr.is-solved { background: #f3fbf5; }
+.pub-table.compact td, .pub-table.compact th { padding: .45rem .75rem; font-size: .85rem; }
+.pub-table .w-code { width: 90px; }
+.pub-code { font: 600 .82rem/1 ui-monospace, Consolas, monospace; color: var(--pub-muted) !important; }
+.pub-title-link { color: var(--pub-text) !important; font-weight: 500; }
+.pub-title-link:hover { color: var(--pub-accent) !important; }
+.pub-mark { margin-left: .4rem; font-weight: 700; }
+.pub-mark.ok { color: var(--pub-ok); }
+.pub-mark.bad { color: var(--pub-bad); }
+.pub-badge { display: inline-block; padding: .15rem .55rem; border-radius: 6px; font-size: .75rem; font-weight: 600; }
+.lvl-easy.pub-badge { background: var(--pub-ok-soft); color: var(--pub-ok); }
+.lvl-medium.pub-badge { background: var(--pub-warn-soft); color: var(--pub-warn); }
+.lvl-hard.pub-badge { background: var(--pub-bad-soft); color: var(--pub-bad); }
+.pub-table-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; padding: .75rem 1rem; }
+.pub-pager { display: flex; flex-wrap: wrap; gap: .3rem; }
+.pub-pager a { display: grid; place-items: center; min-width: 32px; height: 32px; border: 1px solid var(--pub-border); border-radius: 8px; color: #374151 !important; font-size: .85rem; }
+.pub-pager a.active { background: var(--pub-accent); border-color: var(--pub-accent); color: #fff !important; }
+
+/* Natija belgilari */
+.pub-verdict { display: inline-block; padding: .12rem .5rem; border-radius: 6px; font-size: .8rem; font-weight: 600; white-space: nowrap; }
+.pub-verdict.v-ok { background: var(--pub-ok-soft); color: var(--pub-ok); }
+.pub-verdict.v-wrong { background: var(--pub-bad-soft); color: var(--pub-bad); }
+.pub-verdict.v-pending { background: var(--pub-warn-soft); color: var(--pub-warn); }
+.pub-verdict.v-error { background: #f3f4f6; color: #4b5563; }
+.pub-verdict.big { font-size: 1rem; padding: .35rem .8rem; }
+
+/* Masala sahifasi: ikki panel */
+.pub-main-split { width: 100%; padding: 0; }
+body.pub-workspace .site-footer { display: none; }
+.pub-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); height: calc(100vh - 82px); }
+.pub-pane { min-width: 0; min-height: 0; }
+.pub-statement { background: #fff; border-right: 1px solid var(--pub-border); }
+.pub-pane-scroll { height: 100%; overflow-y: auto; padding: 1.5rem 1.75rem 3rem; }
+.pub-task-code { color: var(--pub-muted); font: 600 .85rem/1 ui-monospace, Consolas, monospace; }
+.pub-task-title { font-size: 1.55rem; font-weight: 700; margin: .35rem 0 .75rem; }
+.pub-task-meta { display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; margin-bottom: .75rem; color: var(--pub-muted); font-size: .85rem; }
+.pub-task-meta span { display: inline-flex; align-items: center; gap: .35rem; }
+.pub-task-meta svg { width: 16px; height: 16px; }
+.pub-task-meta strong { color: var(--pub-text); }
+.pub-task-body { margin-top: 1.25rem; line-height: 1.7; }
+.pub-task-body h2 { font-size: 1.05rem; font-weight: 700; margin: 1.4rem 0 .4rem; }
+.pub-pre { white-space: pre-wrap; margin: 0 0 .5rem; }
+.pub-samples { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: .75rem; }
+.pub-sample { border: 1px solid var(--pub-border); border-radius: 10px; overflow: hidden; }
+.pub-sample-head { display: flex; justify-content: space-between; align-items: center; padding: .35rem .75rem; background: #f9fafb; border-bottom: 1px solid var(--pub-border); color: var(--pub-muted); font: 600 .78rem/1.4 ui-monospace, Consolas, monospace; }
+.pub-sample pre { margin: 0; padding: .65rem .75rem; font-size: .88rem; white-space: pre-wrap; }
+.pub-copy { border: 0; background: none; color: var(--pub-accent); font-size: .78rem; font-weight: 600; }
+
+.pub-editor { display: flex; flex-direction: column; background: #1e1f29; }
+.pub-ide { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; border-radius: 0 !important; }
+.pub-ide .CodeMirror { flex: 1 1 0; height: auto !important; min-height: 220px; }
+.pub-ide .ide-statusbar { background: var(--pub-accent); }
+.pub-ide .ide-tools { display: flex; align-items: center; gap: .4rem; }
+.pub-ide .ide-toolbar { flex-wrap: nowrap; padding: .5rem .75rem; }
+.ide-console-head span { white-space: nowrap; }
+.pub-ide > .code-editor { flex: 1 1 auto; min-height: 220px; }
+.pub-ide-actions { display: flex; justify-content: flex-end; gap: .5rem; padding: .6rem .75rem; background: #14151c; border-top: 1px solid #2c2e3a; }
+.pub-ide-actions .pub-btn-ghost { background: #262835; border-color: #3a3c4c; color: #e6e6ee !important; }
+.pub-bottom { flex: 0 0 auto; background: #fff; border-top: 1px solid var(--pub-border); }
+.pub-tabs { display: flex; gap: .25rem; margin: 0; padding: 0 .75rem; list-style: none; border-bottom: 1px solid var(--pub-border); }
+.pub-tabs button { padding: .6rem .75rem; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--pub-muted); font-weight: 600; font-size: .85rem; }
+.pub-tabs button.active { color: var(--pub-accent); border-bottom-color: var(--pub-accent); }
+.pub-tab-pane { height: 230px; overflow: auto; }
+.pub-tab-pane .ide-console { border-top: 0; height: 100%; }
+.pub-tab-pane .ide-stdin, .pub-tab-pane .ide-output { height: auto; flex: 1; resize: none; }
+.pub-result { padding: 1.25rem; }
+.pub-result-detail { margin-top: .75rem; color: var(--pub-muted); font: .85rem/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; }
+.pub-locked { margin: auto; padding: 2rem; text-align: center; color: #c9cbd6; }
+.pub-locked svg { width: 40px; height: 40px; margin-bottom: .75rem; }
+
+/* Kirish va ro'yxatdan o'tish */
+.pub-auth { display: grid; place-items: center; padding: 1rem 0 2rem; }
+.pub-auth-card { width: 100%; max-width: 460px; padding: 2rem; }
+.pub-auth-card .pub-sub { margin-bottom: 1.5rem; }
+.pub-auth-card .form-control { height: 42px; border-radius: 8px; }
+.pub-auth-card .form-control:focus { border-color: var(--pub-accent); box-shadow: 0 0 0 3px var(--pub-accent-soft); }
+.pub-auth-card .pub-btn { height: 44px; }
+
+/* Mobil */
+@media (max-width: 991.98px) {
+  .pub-split { grid-template-columns: 1fr; height: auto; }
+  .pub-pane-scroll { height: auto; }
+  .pub-editor { min-height: 720px; }
+}
+@media (max-width: 575.98px) { .pub-samples { grid-template-columns: 1fr; } }
+
+/* Flash xabarlar ikki panelli sahifada */
+.pub-main-split > .alert { margin: .75rem 1rem 0; }
+/* Navbar: ochiq platforma havolalari */
+.pub-nav-user { color: #fff !important; font-weight: 600; }
+.pub-signup { color: var(--ranch-red, #e31e24) !important; font-weight: 600; }
+.pub-nav-divider { width: 1px; height: 22px; margin: 0 .5rem; background: rgba(255,255,255,.35); }
+.navbar .nav-link.active { background: rgba(255,255,255,.18); color: #fff; }

@@ -10,7 +10,7 @@
   <script>window.I18N = {{ js_translations()|tojson }}; window.t = (text) => window.I18N[text] || text;</script>
   {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
 <nav class="navbar navbar-expand-lg navbar-dark site-navbar">
   <div class="container">
     <a class="navbar-brand university-brand" href="{{ url_for('index') }}">
@@ -41,9 +41,23 @@
         <button class="btn btn-outline-light btn-sm">{{ _('Chiqish') }}</button>
       </form>
       {% else %}
-      <div class="navbar-nav ms-auto">
+      <div class="navbar-nav me-auto">
+        <a class="nav-link{% if (request.endpoint or '').startswith('task') %} active{% endif %}" href="{{ url_for('tasks') }}">{{ _('Masalalar') }}</a>
+      </div>
+      <div class="navbar-nav align-items-lg-center">
+        {% if current_user %}
+        <span class="nav-link pub-nav-user">{{ current_user.username }}</span>
+        <form method="post" action="{{ url_for('signout') }}" class="ms-lg-1">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="btn btn-outline-light btn-sm">{{ _('Chiqish') }}</button>
+        </form>
+        {% else %}
+        <a class="nav-link" href="{{ url_for('signin') }}">{{ _('Kirish') }}</a>
+        <a class="btn btn-light btn-sm pub-signup ms-lg-1" href="{{ url_for('register') }}">{{ _('Ro‘yxatdan o‘tish') }}</a>
+        <span class="pub-nav-divider d-none d-lg-inline"></span>
         <a class="nav-link" href="{{ url_for('student_login') }}">{{ _('Talaba') }}</a>
         <a class="nav-link" href="{{ url_for('admin_login') }}">{{ _('Ustoz') }}</a>
+        {% endif %}
       </div>
       {% endif %}
       {% block lang_switch %}<div class="dropdown lang-switch ms-lg-2 mt-2 mt-lg-0">

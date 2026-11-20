@@ -77,6 +77,10 @@ JS_MESSAGES = [
     N_("Namuna javobidan farq qiladi"),
     N_("Server bilan aloqa uzildi. Qayta urinib ko‘ring."),
     N_("Ishga tushirish"),
+    # static/js/task.js va templates/public/task.html
+    N_("Kutilmoqda"),
+    N_("Server xatosi"),
+    N_("Nusxa"),
 ]
 
 
@@ -94,7 +98,8 @@ def _pick_language():
     for candidate in (session.get("lang"), request.cookies.get(COOKIE_NAME)):
         if candidate in LANGUAGES:
             return candidate
-    return request.accept_languages.best_match(list(LANGUAGES), default=DEFAULT_LANGUAGE) or DEFAULT_LANGUAGE
+    # Til tanlanmagan bo'lsa — o'zbekcha (lotin). Brauzer tiliga qarab avtomatik almashtirilmaydi.
+    return DEFAULT_LANGUAGE
 
 
 def init_app(application):

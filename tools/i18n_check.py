@@ -53,10 +53,13 @@ def collect():
         for lineno, message in python_messages(os.path.join(ROOT, name)):
             found.setdefault(message, f"{name}:{lineno}")
     templates = os.path.join(ROOT, "templates")
-    for name in sorted(os.listdir(templates)):
-        if name.endswith(".html"):
-            for lineno, message in template_messages(env, os.path.join(templates, name)):
-                found.setdefault(message, f"templates/{name}:{lineno}")
+    for folder, _dirs, files in sorted(os.walk(templates)):
+        for name in sorted(files):
+            if name.endswith(".html"):
+                path = os.path.join(folder, name)
+                relative = os.path.relpath(path, ROOT).replace(os.sep, "/")
+                for lineno, message in template_messages(env, path):
+                    found.setdefault(message, f"{relative}:{lineno}")
     return found
 
 

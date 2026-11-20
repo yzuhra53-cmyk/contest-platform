@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block head %}<link href="{{ url_for('static', filename='css/public.css') }}" rel="stylesheet">{% endblock %}
+{% block title %}{{ _('Kirish') }}{% endblock %}
+{% block content %}
+<div class="pub">
+<div class="pub-auth">
+  <div class="pub-card pub-auth-card">
+    <h1 class="pub-h1">{{ _('Kirish') }}</h1>
+    <p class="pub-sub">{{ _('Hisobingizga kiring va masalalarni yechishni davom ettiring.') }}</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label class="form-label" for="username">{{ _('Login') }}</label>
+      <input class="form-control mb-3" id="username" name="username" value="{{ form.get('username', '') }}" autocomplete="username" required autofocus>
+      <label class="form-label" for="password">{{ _('Parol') }}</label>
+      <input class="form-control mb-4" id="password" name="password" type="password" autocomplete="current-password" required>
+      <button class="btn pub-btn w-100">{{ _('Kirish') }}</button>
+    </form>
+    <p class="text-center small mt-4 mb-0">{{ _('Hisobingiz yo‘qmi?') }} <a href="{{ url_for('register', next=request.args.get('next')) }}">{{ _('Ro‘yxatdan o‘tish') }}</a></p>
+  </div>
+</div>
+</div>
+{% endblock %}
