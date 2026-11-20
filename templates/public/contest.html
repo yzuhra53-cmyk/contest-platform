@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block head %}<link href="{{ url_for('static', filename='css/public.css') }}" rel="stylesheet">{% endblock %}
+{% block title %}{{ contest.title }}{% endblock %}
+{% block content %}
+<div class="pub">
+<a class="small" href="{{ url_for('contests') }}">← {{ _('Musobaqalar') }}</a>
+<div class="pub-page-head mt-1">
+  <div>
+    <h1 class="pub-h1">{{ contest.title }}</h1>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      {% if state == 'running' %}<span class="pub-live">● {{ _('Davom etmoqda') }}</span>
+      {% elif state == 'upcoming' %}<span class="pub-badge lvl-medium">{{ _('Kutilmoqda') }}</span>
+      {% else %}<span class="pub-badge pub-badge-muted">{{ _('Tugagan') }}</span>{% endif %}
+      <span class="pub-badge pub-badge-muted">ICPC</span>
+      {% if contest.is_rated %}<span class="pub-badge pub-badge-muted">{{ _('Reytingli') }}</span>{% endif %}
+      {% if not contest.is_published %}<span class="pub-badge lvl-medium">{{ _('Qoralama') }}</span>{% endif %}
+      {% if session.get('is_admin') %}<a class="small ms-1" href="{{ url_for('admin_public_contest_edit', contest_id=contest.id) }}">{{ _('Tahrirlash') }}</a>{% endif %}
+    </div>
+  </div>
+  <div class="text-end">
+    {% if state != 'finished' %}
+    <div class="small text-secondary">{{ _('Tugashiga') if state == 'running' else _('Boshlanishiga') }}</div>
+    <div class="pub-timer" data-deadline="{{ (contest.end_at if state == 'running' else contest.start_at)|epoch_ms }}">—</div>
+    {% endif %}
+    {% if state != 'finished' %}
+      {% if registered %}
+        <div class="mt-2 d-flex gap-2 justify-content-end align-items-center">
+          <span class="pub-chip-stat">✓ {{ _('Ro‘yxatdasiz') }}</span>
+          {% if state == 'upcoming' %}
+          <form method="post" action="{{ url_for('contest_unregister', contest_id=contest.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button class="btn btn-link btn-sm text-secondary p-0">{{ _('Bekor qilish') }}</button>
+          </form>
+          {% endif %}
+        </div>
+      {% elif current_user %}
+        <form method="post" action="{{ url_for('contest_register', contest_id=contest.id) }}" class="mt-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="btn pub-btn">{{ _('Ro‘yxatdan o‘tish') if state == 'upcoming' else _('Musobaqaga qo‘shilish') }}</button>
+        </form>
+      {% else %}
+        <a class="btn pub-btn mt-2" href="{{ url_for('signin', next=request.path) }}">{{ _('Kirish va ro‘yxatdan o‘tish') }}</a>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<nav class="pub-tabbar">
+  <a class="{% if tab == 'overview' %}active{% endif %}" href="{{ url_for('contest_page', contest_id=contest.id) }}">{{ _('Umumiy') }}</a>
+  {% if opened %}
+  <a class="{% if tab == 'problems' %}active{% endif %}" href="{{ url_for('contest_page', contest_id=contest.id, tab='problems') }}">{{ _('Masalalar') }}</a>
+  <a class="{% if tab == 'standings' %}active{% endif %}" href="{{ url_for('contest_page', contest_id=contest.id, tab='standings') }}">{{ _('Natijalar') }}</a>
+  <a class="{% if tab == 'attempts' %}active{% endif %}" href="{{ url_for('contest_page', contest_id=contest.id, tab='attempts') }}">{{ _('Urinishlar') }}</a>
+  {% endif %}
+</nav>
+
+{% if tab == 'overview' %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="pub-card p-4 h-100">
+      <h2 class="h6 fw-bold mb-3">{{ _('Musobaqa haqida') }}</h2>
+      {% if contest.description %}<p class="pub-pre mb-3">{{ contest.description }}</p>{% endif %}
+      <ul class="pub-rules">
+        <li>{{ _('Qoidalar ICPC bo‘yicha: kim ko‘p masala yechsa, o‘sha yuqorida. Teng bo‘lsa — jarimasi kam bo‘lgan.') }}</li>
+        <li>{{ _('Jarima: har bir yechilgan masala uchun boshlanishdan qabul qilingungacha o‘tgan daqiqalar va har bir xato urinish uchun 20 daqiqa.') }}</li>
+        <li>{{ _('Kompilyatsiya xatosi jarima hisoblanmaydi.') }}</li>
+        <li>{{ _('Masalalar musobaqa boshlanganda ochiladi. Musobaqa tugagach, ular arxivga qaytadi.') }}</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="pub-card p-4 h-100">
+      <dl class="pub-facts p-0">
+        <div><dt>{{ _('Boshlanish') }}</dt><dd>{{ contest.start_at|local }}</dd></div>
+        <div><dt>{{ _('Tugash') }}</dt><dd>{{ contest.end_at|local }}</dd></div>
+        <div><dt>{{ _('Davomiyligi') }}</dt><dd>{{ contest.duration_minutes|duration }}</dd></div>
+        <div><dt>{{ _('Masalalar') }}</dt><dd>{{ contest.problems|length }}</dd></div>
+        <div><dt>{{ _('Ishtirokchilar') }}</dt><dd>{{ participants }}</dd></div>
+        <div><dt>{{ _('Dasturlash tillari') }}</dt><dd>{{ language_names.values()|join(', ') }}</dd></div>
+      </dl>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if tab == 'problems' %}
+<div class="pub-card"><div class="table-responsive"><table class="pub-table">
+  <thead><tr><th class="w-code">#</th><th>{{ _('Nomi') }}</th><th class="text-end">{{ _('Yechganlar') }}</th></tr></thead>
+  <tbody>
+  {% for item in contest.problems %}{% set mark = problem_marks.get(item.question_id) %}
+  <tr class="{% if mark %}is-{{ mark }}{% endif %}">
+    <td class="w-code"><span class="pub-label">{{ item.label }}</span></td>
+    <td><a class="pub-title-link" href="{{ url_for('contest_task', contest_id=contest.id, label=item.label) }}">{{ problem_title(item.question) }}</a>
+      {% if mark == 'solved' %}<span class="pub-mark ok">✓</span>{% elif mark == 'tried' %}<span class="pub-mark bad">•</span>{% endif %}</td>
+    <td class="text-end tabular">{{ problem_solvers.get(item.question_id, 0) }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% if state == 'finished' %}<p class="small text-secondary mt-2">{{ _('Musobaqa tugadi: masalani ochsangiz, arxivda mashq qilishingiz mumkin.') }}</p>{% endif %}
+{% endif %}
+
+{% if tab == 'standings' %}
+<div class="pub-card"><div class="table-responsive"><table class="pub-table pub-standings">
+  <thead><tr>
+    <th>#</th><th>{{ _('Ishtirokchi') }}</th><th class="text-center">{{ _('Yechildi') }}</th><th class="text-center">{{ _('Jarima') }}</th>
+    {% for item in contest.problems %}<th class="text-center"><a href="{{ url_for('contest_task', contest_id=contest.id, label=item.label) }}">{{ item.label }}</a></th>{% endfor %}
+  </tr></thead>
+  <tbody>
+  {% for row in rows %}
+  <tr class="{% if current_user and row.user.id == current_user.id %}is-mine{% endif %}">
+    <td class="tabular text-nowrap">{{ row.place }}</td>
+    <td><a class="pub-user-link fw-semibold rt-{{ rating_tier(row.user.rating)[0] or 'none' }}" href="{{ url_for('profile', username=row.user.username) }}">{{ row.user.full_name }}</a>{% if row.user.organization %}<div class="small text-secondary">{{ row.user.organization }}</div>{% endif %}</td>
+    <td class="text-center fw-bold tabular">{{ row.solved }}</td>
+    <td class="text-center tabular">{{ row.penalty }}</td>
+    {% for item in contest.problems %}{% set cell = row.cells[item.question_id] %}
+    <td class="pub-cell{% if cell.solved %} ok{% if cell.first %} first{% endif %}{% elif cell.tries %} bad{% endif %}">
+      {% if cell.solved %}<b>+{{ cell.tries if cell.tries else '' }}</b><small>{{ cell.time|clock }}</small>
+      {% elif cell.tries %}<b>−{{ cell.tries }}</b>{% if cell.pending %}<small>?</small>{% endif %}
+      {% elif cell.pending %}<small>?</small>{% endif %}
+    </td>
+    {% endfor %}
+  </tr>
+  {% else %}
+  <tr><td colspan="{{ 4 + contest.problems|length }}" class="text-center text-secondary py-5">{{ _('Hali ishtirokchilar yo‘q.') }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+<p class="small text-secondary mt-2">{{ _('Yashil katak — yechilgan masala (vaqti musobaqa boshidan), to‘q yashil — birinchi yechgan. «+2» — qabulgacha 2 ta xato urinish.') }}</p>
+{% endif %}
+
+{% if tab == 'attempts' %}
+{% if current_user %}
+<div class="pub-levels">
+  <a class="pub-level{% if not only_mine %} active{% endif %}" href="{{ url_for('contest_page', contest_id=contest.id, tab='attempts') }}">{{ _('Hammasi') }}</a>
+  <a class="pub-level{% if only_mine %} active{% endif %}" href="{{ url_for('contest_page', contest_id=contest.id, tab='attempts', mine=1) }}">{{ _('Mening urinishlarim') }}</a>
+</div>
+{% endif %}
+<div class="pub-card"><div class="table-responsive"><table class="pub-table">
+  <thead><tr><th>ID</th><th>{{ _('Natija') }}</th><th>{{ _('Vaqt · Xotira') }}</th><th>{{ _('Masala') }}</th><th>{{ _('Foydalanuvchi') }}</th><th>{{ _('Til') }}</th><th>{{ _('Yuborilgan') }}</th></tr></thead>
+  <tbody>
+  {% for item in attempts %}{% set verdict = short_verdict(item.status, item.verdict) %}
+  <tr class="{% if current_user and item.user_id == current_user.id %}is-mine{% endif %}">
+    <td class="tabular">{% if session.get('is_admin') or (current_user and item.user_id == current_user.id) %}<a href="{{ url_for('attempt_detail', submission_id=item.id) }}">#{{ item.id }}</a>{% else %}<span class="text-secondary">#{{ item.id }}</span>{% endif %}</td>
+    <td><span class="pub-verdict v-{{ verdict[1] }}">{{ verdict[0] }}</span></td>
+    <td class="tabular text-nowrap text-secondary">{% if item.status != 'pending' %}{{ item.time_ms if item.time_ms is not none else '—' }} ms · {{ item.memory_kb ~ ' KB' if item.memory_kb is not none else '—' }}{% endif %}</td>
+    <td><a class="pub-title-link" href="{{ url_for('contest_task', contest_id=contest.id, label=labels.get(item.question_id, 'A')) }}"><span class="pub-label sm">{{ labels.get(item.question_id, '?') }}</span> {{ problem_title(item.question) }}</a></td>
+    <td><a class="pub-user-link" href="{{ url_for('profile', username=item.user.username) }}">{{ item.user.full_name }}</a></td>
+    <td class="text-nowrap">{{ language_names.get(item.language, item.language) }}</td>
+    <td class="tabular text-nowrap text-secondary">{{ item.created_at|local('%H:%M:%S') }} <small>(+{{ (item.created_at - contest.start_at).total_seconds()|clock }})</small></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="7" class="text-center text-secondary py-5">{{ _('Hozircha urinishlar yo‘q.') }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/countdown.js') }}"></script>{% endblock %}

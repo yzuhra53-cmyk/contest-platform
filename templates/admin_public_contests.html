@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block head %}<link href="{{ url_for('static', filename='css/public.css') }}" rel="stylesheet">{% endblock %}
+{% block title %}{{ _('Ochiq musobaqalar') }} · Bilim.Arena{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <p class="eyebrow mb-2">{{ _('OCHIQ PLATFORMA') }}</p>
+  <h1 class="page-title">{{ _('Musobaqani tahrirlash') if contest else _('Ochiq musobaqalar') }}</h1>
+  <p class="text-secondary">{{ _('Ro‘yxatdan o‘tgan har qanday foydalanuvchi qatnasha oladigan ICPC uslubidagi musobaqalar.') }}</p>
+</div>
+<div class="row g-4">
+  <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h5 mb-0">{{ _('Musobaqa ma’lumotlari') if contest else _('Yangi musobaqa') }}</h2>
+      {% if contest %}<a class="small" href="{{ url_for('contest_page', contest_id=contest.id) }}">{{ _('Sahifasini ochish') }} →</a>{% endif %}
+    </div>
+    <form method="post" action="{{ url_for('admin_public_contest_edit', contest_id=contest.id) if contest else url_for('admin_public_contests') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <label class="form-label" for="title">{{ _('Nomi') }}</label>
+          <input class="form-control mb-3" id="title" name="title" value="{{ form.get('title', '') }}" maxlength="180" required>
+          <div class="row g-2 mb-3">
+            <div class="col-sm-7"><label class="form-label" for="start_at">{{ _('Boshlanish (Toshkent vaqti)') }}</label>
+              <input class="form-control" type="datetime-local" id="start_at" name="start_at" value="{{ form.get('start_at', '') }}" required></div>
+            <div class="col-sm-5"><label class="form-label" for="duration_minutes">{{ _('Davomiyligi (daqiqa)') }}</label>
+              <input class="form-control" type="number" id="duration_minutes" name="duration_minutes" min="1" max="10080" value="{{ form.get('duration_minutes', 120) }}" required></div>
+          </div>
+          <label class="form-label" for="description">{{ _('Tavsif (ixtiyoriy)') }}</label>
+          <textarea class="form-control mb-3" id="description" name="description" rows="4" maxlength="5000">{{ form.get('description', '') }}</textarea>
+          <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="is_rated" name="is_rated" {% if form.get('is_rated') %}checked{% endif %}><label class="form-check-label" for="is_rated">{{ _('Reytingli musobaqa') }}</label></div>
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="is_published" name="is_published" {% if form.get('is_published') %}checked{% endif %}><label class="form-check-label" for="is_published">{{ _('E’lon qilingan (foydalanuvchilarga ko‘rinadi)') }}</label></div>
+        </div>
+        <div class="col-lg-7">
+          <label class="form-label" for="problem_codes">{{ _('Masalalar (tartib bilan: birinchisi A, keyingisi B …)') }}</label>
+          <textarea class="form-control font-monospace mb-2" id="problem_codes" name="problem_codes" rows="2" placeholder="A0341 A0201 A0251" {% if contest and contest.state() != 'upcoming' %}readonly{% endif %}>{{ form.get('problem_codes', '') }}</textarea>
+          {% if contest and contest.state() != 'upcoming' %}<p class="form-text mt-0">{{ _('Musobaqa boshlangan: masalalarni o‘zgartirib bo‘lmaydi.') }}</p>{% endif %}
+          <p class="form-text mt-0">{{ _('Musobaqa tugaguncha bu masalalar arxivda ko‘rinmaydi.') }}</p>
+          <input class="form-control form-control-sm mb-2" type="search" id="problemFilter" placeholder="{{ _('Masala qidirish…') }}">
+          <div class="pub-pick-list" id="problemPick">
+            {% for item in choices %}
+            <button type="button" class="pub-pick" data-code="{{ item.code }}" data-search="{{ (item.code ~ ' ' ~ item.title)|lower }}">
+              <span class="pub-code">{{ item.code }}</span> {{ item.title }}
+              {% if item.difficulty %}<span class="pub-badge lvl-{{ item.difficulty }} ms-auto">{{ level_labels[item.difficulty] }}</span>{% endif %}
+            </button>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <button class="btn btn-primary">{{ _('Saqlash') if contest else _('Musobaqa yaratish') }}</button>
+        {% if contest %}<a class="btn btn-outline-secondary" href="{{ url_for('admin_public_contests') }}">{{ _('Ro‘yxatga qaytish') }}</a>{% endif %}
+      </div>
+    </form>
+    {% if contest %}
+    <form method="post" action="{{ url_for('admin_public_contest_delete', contest_id=contest.id) }}" class="mt-3" onsubmit='return confirm({{ _("Musobaqa o‘chirilsinmi? Yuborilgan yechimlar arxiv yechimlari bo‘lib qoladi.")|tojson }})'>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="btn btn-link text-danger p-0">{{ _('Musobaqani o‘chirish') }}</button>
+    </form>
+    {% endif %}
+  </div></div></div>
+
+  {% if items is not none %}
+  <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body p-0">
+    <div class="table-responsive"><table class="table align-middle mb-0">
+      <thead><tr><th class="ps-4">{{ _('Nomi') }}</th><th>{{ _('Holat') }}</th><th>{{ _('Boshlanish') }}</th><th>{{ _('Davomiyligi') }}</th><th class="text-end">{{ _('Masalalar') }}</th><th class="text-end">{{ _('Ishtirokchilar') }}</th><th class="pe-4"></th></tr></thead>
+      <tbody>
+      {% for item in items %}{% set item_state = item.state() %}
+      <tr>
+        <td class="ps-4"><a href="{{ url_for('contest_page', contest_id=item.id) }}">{{ item.title }}</a>{% if not item.is_published %} <span class="badge text-bg-warning">{{ _('Qoralama') }}</span>{% endif %}{% if item.is_rated %} <span class="badge text-bg-light">{{ _('Reytingli') }}</span>{% endif %}</td>
+        <td>{% if item_state == 'running' %}<span class="text-success">● {{ _('Davom etmoqda') }}</span>{% elif item_state == 'upcoming' %}{{ _('Kutilmoqda') }}{% else %}<span class="text-secondary">{{ _('Tugagan') }}</span>{% endif %}</td>
+        <td class="text-nowrap">{{ item.start_at|local }}</td>
+        <td class="text-nowrap">{{ item.duration_minutes|duration }}</td>
+        <td class="text-end">{{ item.problems|length }}</td>
+        <td class="text-end">{{ counts.get(item.id, 0) }}</td>
+        <td class="pe-4 text-end"><a href="{{ url_for('admin_public_contest_edit', contest_id=item.id) }}">{{ _('Tahrirlash') }}</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="text-center text-secondary py-4">{{ _('Hali ochiq musobaqa yaratilmagan.') }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div></div></div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const codes = document.getElementById('problem_codes');
+  const list = () => (codes.value.toUpperCase().match(/A\d+/g) || []);
+  function mark() {
+    const chosen = list();
+    document.querySelectorAll('.pub-pick').forEach((button) => {
+      const index = chosen.indexOf(button.dataset.code);
+      button.classList.toggle('chosen', index >= 0);
+      button.dataset.label = index >= 0 ? String.fromCharCode(65 + index) : '';
+    });
+  }
+  document.querySelectorAll('.pub-pick').forEach((button) => button.addEventListener('click', () => {
+    if (codes.readOnly) return;
+    const chosen = list();
+    const index = chosen.indexOf(button.dataset.code);
+    if (index >= 0) chosen.splice(index, 1); else chosen.push(button.dataset.code);
+    codes.value = chosen.join(' ');
+    mark();
+  }));
+  codes.addEventListener('input', mark);
+  document.getElementById('problemFilter').addEventListener('input', (event) => {
+    const query = event.target.value.trim().toLowerCase();
+    document.querySelectorAll('.pub-pick').forEach((button) => { button.hidden = query && !button.dataset.search.includes(query); });
+  });
+  mark();
+})();
+</script>
+{% endblock %}

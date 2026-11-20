@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block head %}<link href="{{ url_for('static', filename='css/public.css') }}" rel="stylesheet">{% endblock %}
+{% block title %}{{ person.full_name }} (@{{ person.username }}){% endblock %}
+{% block content %}
+{% set level = rating_tier(person.rating) %}
+{% set best = rating_tier(person.max_rating) %}
+<div class="pub">
+<div class="pub-card pub-profile-head mb-3">
+  <span class="pub-avatar-lg rt-bg-{{ level[0] or 'none' }}">{{ person.full_name[:1]|upper }}</span>
+  <div class="flex-grow-1">
+    {% if level[0] %}<div class="pub-tier rt-{{ level[0] }} mb-1">{{ level[1] }}</div>{% endif %}
+    <h1 class="pub-h1 rt-{{ level[0] or 'none' }}">{{ person.full_name }}</h1>
+    <div class="text-secondary">@{{ person.username }}{% if person.organization %} · {{ person.organization }}{% endif %}</div>
+    <div class="small text-secondary mt-1">{{ _('Ro‘yxatdan o‘tgan: %(date)s', date=person.created_at|local('%d.%m.%Y')) }}</div>
+  </div>
+  {% if current_user and current_user.id == person.id %}<a class="btn pub-btn-ghost align-self-start" href="{{ url_for('settings') }}">{{ _('Sozlamalar') }}</a>{% endif %}
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3"><div class="pub-card pub-stat"><span>{{ _('Reyting') }}</span><strong class="rt-{{ level[0] or 'none' }}">{{ person.rating if person.rating is not none else '—' }}</strong>{% if rank %}<small>#{{ rank }} {{ _('o‘rin') }}</small>{% endif %}</div></div>
+  <div class="col-6 col-lg-3"><div class="pub-card pub-stat"><span>{{ _('Eng yuqori reyting') }}</span><strong class="rt-{{ best[0] or 'none' }}">{{ person.max_rating if person.max_rating is not none else '—' }}</strong>{% if best[0] %}<small>{{ best[1] }}</small>{% endif %}</div></div>
+  <div class="col-6 col-lg-3"><div class="pub-card pub-stat"><span>{{ _('Yechilgan masalalar') }}</span><strong>{{ solved_problems|length }}</strong></div></div>
+  <div class="col-6 col-lg-3"><div class="pub-card pub-stat"><span>{{ _('Urinishlar') }}</span><strong>{{ total_submissions }}</strong>{% if total_submissions %}<small>{{ _('%(p)s%% qabul qilingan', p=(accepted_submissions * 100 / total_submissions)|round(1)) }}</small>{% endif %}</div></div>
+</div>
+
+{% if graph %}
+<div class="pub-card p-3 mb-3">
+  <h2 class="h6 fw-bold mb-2">{{ _('Reyting tarixi') }}</h2>
+  <svg class="pub-graph" viewBox="0 0 {{ graph.width }} {{ graph.height }}" role="img" aria-label="{{ _('Reyting tarixi') }}">
+    {% for band in graph.bands %}<rect class="band rt-fill-{{ band.key }}" x="0" y="{{ band.y }}" width="{{ graph.width }}" height="{{ band.height }}"/>{% endfor %}
+    {% for line in graph.grid %}<line class="grid" x1="0" x2="{{ graph.width }}" y1="{{ line.y }}" y2="{{ line.y }}"/><text class="grid-label" x="4" y="{{ line.y - 3 }}">{{ line.value }}</text>{% endfor %}
+    <polyline class="line" points="{{ graph.path }}"/>
+    {% for point in graph.points %}<circle class="dot" cx="{{ point.x }}" cy="{{ point.y }}" r="4"><title>{{ point.value }}{% if point.change %} · {{ point.change.contest.title }} ({{ '%+d'|format(point.change.delta) }}){% endif %}</title></circle>{% endfor %}
+  </svg>
+</div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="pub-card h-100">
+      <h2 class="h6 fw-bold p-3 pb-0">{{ _('Musobaqalar tarixi') }}</h2>
+      <div class="table-responsive"><table class="pub-table compact">
+        <thead><tr><th>{{ _('Musobaqa') }}</th><th class="text-center">{{ _('O‘rin') }}</th><th class="text-center">{{ _('Yechildi') }}</th><th class="text-end">{{ _('Reyting') }}</th><th class="text-end">±</th></tr></thead>
+        <tbody>
+        {% for change in changes %}
+        <tr>
+          <td><a class="pub-title-link" href="{{ url_for('contest_page', contest_id=change.contest_id, tab='standings') }}">{{ change.contest.title }}</a><div class="small text-secondary">{{ change.contest.start_at|local('%d.%m.%Y') }}</div></td>
+          <td class="text-center tabular">{{ change.place }}</td>
+          <td class="text-center tabular">{{ change.solved }}</td>
+          <td class="text-end tabular rt-{{ rating_tier(change.new_rating)[0] }}">{{ change.new_rating }}</td>
+          <td class="text-end tabular fw-semibold {{ 'text-success' if change.delta > 0 else ('text-danger' if change.delta < 0 else 'text-secondary') }}">{{ '%+d'|format(change.delta) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-secondary py-4">{{ _('Hali reytingli musobaqalarda qatnashmagan.') }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="pub-card h-100 p-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h6 fw-bold mb-0">{{ _('Yechilgan masalalar') }}</h2>
+        <a class="small" href="{{ url_for('attempts', user=person.username) }}">{{ _('Barcha urinishlari') }} →</a>
+      </div>
+      {% if solved_problems %}
+      <div class="pub-solved">
+        {% for question in solved_problems %}<a href="{{ url_for('task', code=problem_code(question)) }}" title="{{ problem_title(question) }}">{{ problem_code(question) }}</a>{% endfor %}
+      </div>
+      {% else %}<p class="text-secondary mb-0">{{ _('Hali masala yechilmagan.') }}</p>{% endif %}
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

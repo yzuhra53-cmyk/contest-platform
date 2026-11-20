@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block head %}<link href="{{ url_for('static', filename='css/public.css') }}" rel="stylesheet">{% endblock %}
+{% block title %}Bilim.Arena · {{ _('Dasturlash masalalari va musobaqalar') }}{% endblock %}
+{% block content %}
+<div class="pub">
+<section class="pub-home-hero">
+  <div class="pub-home-hero-text">
+    <h1>{{ _('Algoritmlarni mukammal egallang. Reyting cho‘qqisiga chiqing.') }}</h1>
+    <p>{{ _('Bilim.Arena — dasturlash masalalari, muntazam musobaqalar va faol dasturchilar hamjamiyati.') }}</p>
+    <div class="d-flex flex-wrap gap-2">
+      {% if current_user %}
+      <a class="btn pub-btn btn-lg" href="{{ url_for('tasks') }}">{{ _('Masalalarni yechish') }} →</a>
+      <a class="btn pub-btn-ghost btn-lg" href="{{ url_for('profile', username=current_user.username) }}">{{ _('Profilim') }}</a>
+      {% else %}
+      <a class="btn pub-btn btn-lg" href="{{ url_for('register') }}">{{ _('Ro‘yxatdan o‘tish') }} →</a>
+      <a class="btn pub-btn-ghost btn-lg" href="{{ url_for('tasks') }}">{{ _('Masalalar') }}</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="pub-home-hero-stats">
+    <div><strong>{{ '{:,}'.format(stats.users) }}</strong><span>{{ _('foydalanuvchi') }}</span></div>
+    <div><strong>{{ '{:,}'.format(stats.attempts_day) }}</strong><span>{{ _('kunlik urinish') }}</span></div>
+    <div><strong>{{ '{:,}'.format(stats.problems) }}</strong><span>{{ _('masala') }}</span></div>
+  </div>
+</section>
+
+<div class="row g-3 mb-4">
+  {% for endpoint, title, text, icon in [
+    ('tasks', _('Masalalar'), _('Qiyinligi bo‘yicha masala tanlang va yechimingizni tekshiring.'), 'M4 5h16M4 12h16M4 19h10'),
+    ('contests', _('Musobaqalar'), _('Yaqin musobaqalarda boshqalar bilan kuch sinang.'), 'M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z'),
+    ('attempts', _('Urinishlar'), _('Barcha yuborilgan yechimlar va natijalar jonli lentasi.'), 'M4 12l5 5L20 6'),
+    ('users', _('Reyting'), _('Reytingda yuqorilang va unvonlarni qo‘lga kiriting.'), 'M3 17l6-6 4 4 8-8M14 7h7v7'),
+  ] %}
+  <div class="col-6 col-lg-3">
+    <a class="pub-card pub-quick" href="{{ url_for(endpoint) }}">
+      <span class="pub-quick-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{ icon }}"/></svg></span>
+      <strong>{{ title }}</strong><span>{{ text }}</span>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="pub-card mb-4">
+      <div class="pub-card-head"><h2>{{ _('Yaqin musobaqalar') }}</h2><a href="{{ url_for('contests') }}">{{ _('Barcha musobaqalar') }} →</a></div>
+      {% for contest in soon %}{% set running = contest.state() == 'running' %}
+      <a class="pub-soon" href="{{ url_for('contest_page', contest_id=contest.id) }}">
+        <div>
+          <div class="fw-semibold">{{ contest.title }}</div>
+          <div class="small text-secondary">{{ contest.start_at|local }} · {{ contest.duration_minutes|duration }} · {{ _('%(n)s ta ishtirokchi', n=counts.get(contest.id, 0)) }}</div>
+        </div>
+        <div class="text-end text-nowrap">
+          {% if running %}<span class="pub-live">● {{ _('Davom etmoqda') }}</span>{% endif %}
+          <div class="pub-countdown fw-bold" data-deadline="{{ (contest.end_at if running else contest.start_at)|epoch_ms }}" data-reload="no">—</div>
+        </div>
+      </a>
+      {% else %}
+      <p class="text-secondary p-3 mb-0">{{ _('Hozircha rejalashtirilgan musobaqa yo‘q.') }}</p>
+      {% endfor %}
+    </div>
+
+    <div class="pub-card">
+      <div class="pub-card-head"><h2>{{ _('Yangiliklar') }}</h2><a href="{{ url_for('news_list') }}">{{ _('Barcha yangiliklar') }} →</a></div>
+      {% for post in news %}
+      <article class="pub-news-item">
+        <a class="pub-news-title" href="{{ url_for('news_post', post_id=post.id) }}">{{ post.title }}</a>
+        <div class="small text-secondary">{% if post.author %}{{ post.author }} · {% endif %}{{ post.created_at|local('%H:%M / %d.%m.%Y') }}</div>
+        <p class="pub-news-excerpt">{{ post.body|truncate(220) }}</p>
+        {% if post.tag_list %}<div class="pub-tags">{% for tag in post.tag_list %}<a href="{{ url_for('news_list', tag=tag) }}">#{{ tag }}</a>{% endfor %}</div>{% endif %}
+      </article>
+      {% else %}
+      <p class="text-secondary p-3 mb-0">{{ _('Hozircha yangiliklar yo‘q.') }}</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="pub-card mb-4">
+      <div class="pub-card-head"><h2>{{ _('Eng kuchli ishtirokchilar') if top_by == 'rating' else _('Eng ko‘p yechganlar') }}</h2><a href="{{ url_for('users') }}">{{ _('Barchasi') }} →</a></div>
+      {% for person in top %}{% set level = rating_tier(person.rating) %}
+      <a class="pub-top-row" href="{{ url_for('profile', username=person.username) }}">
+        <span class="pub-rank{% if loop.index <= 3 %} top{{ loop.index }}{% endif %}">{{ loop.index }}</span>
+        <span class="pub-avatar-sm rt-bg-{{ level[0] or 'none' }}">{{ person.full_name[:1]|upper }}</span>
+        <span class="flex-grow-1 text-truncate"><span class="fw-semibold rt-{{ level[0] or 'none' }}">{{ person.full_name }}</span>
+          {% if person.organization %}<span class="d-block small text-secondary text-truncate">{{ person.organization }}</span>{% endif %}</span>
+        <strong class="tabular rt-{{ level[0] or 'none' }}">{{ person.rating if top_by == 'rating' else solved.get(person.id, 0) }}</strong>
+      </a>
+      {% else %}
+      <p class="text-secondary p-3 mb-0">{{ _('Hali reytingli musobaqa o‘tkazilmagan.') }}</p>
+      {% endfor %}
+    </div>
+
+    <div class="pub-card">
+      <div class="pub-card-head"><h2>{{ _('Hamjamiyat statistikasi') }}</h2></div>
+      <div class="pub-stat-grid">
+        <div><span>{{ _('Jami foydalanuvchi') }}</span><strong>{{ '{:,}'.format(stats.users) }}</strong>{% if stats.users_week %}<small class="text-success">+{{ stats.users_week }} {{ _('shu hafta') }}</small>{% endif %}</div>
+        <div><span>{{ _('Ochiq masala') }}</span><strong>{{ '{:,}'.format(stats.problems) }}</strong></div>
+        <div><span>{{ _('Urinish (24 soat)') }}</span><strong>{{ '{:,}'.format(stats.attempts_day) }}</strong></div>
+        <div><span>{{ _('Bugun yechildi') }}</span><strong>{{ '{:,}'.format(stats.solved_today) }}</strong></div>
+        <div><span>{{ _('O‘tkazilgan musobaqa') }}</span><strong>{{ stats.contests }}</strong></div>
+        <div><span>{{ _('Onlayn') }}</span><strong><span class="pub-online-dot"></span>{{ stats.online }}</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if not current_user %}
+<section class="pub-home-cta">
+  <div>
+    <h2>{{ _('Musobaqaga tayyormisiz?') }}</h2>
+    <p>{{ _('Bir necha soniyada ro‘yxatdan o‘ting va bugundan reytingga kiring.') }}</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-light btn-lg fw-semibold" href="{{ url_for('register') }}">{{ _('Boshlash') }}</a>
+    <a class="btn btn-outline-light btn-lg" href="{{ url_for('tasks') }}">{{ _('Masalalarni ko‘rish') }}</a>
+  </div>
+</section>
+{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/countdown.js') }}"></script>{% endblock %}

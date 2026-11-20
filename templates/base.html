@@ -29,6 +29,8 @@
         <a class="nav-link" href="{{ url_for('admin_contests') }}">{{ _('Kontestlar') }}</a>
         <a class="nav-link" href="{{ url_for('admin_submissions') }}">{{ _('Kod yechimlari') }}</a>
         <a class="nav-link" href="{{ url_for('admin_results') }}">{{ _('Natijalar') }}</a>
+        <a class="nav-link" href="{{ url_for('admin_public_contests') }}">{{ _('Ochiq musobaqalar') }}</a>
+        <a class="nav-link" href="{{ url_for('admin_news') }}">{{ _('Yangiliklar') }}</a>
       </div>
       <form method="post" action="{{ url_for('admin_logout') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -43,10 +45,14 @@
       {% else %}
       <div class="navbar-nav me-auto">
         <a class="nav-link{% if (request.endpoint or '').startswith('task') %} active{% endif %}" href="{{ url_for('tasks') }}">{{ _('Masalalar') }}</a>
+        <a class="nav-link{% if (request.endpoint or '').startswith('contest') %} active{% endif %}" href="{{ url_for('contests') }}">{{ _('Musobaqalar') }}</a>
+        <a class="nav-link{% if (request.endpoint or '').startswith('attempt') %} active{% endif %}" href="{{ url_for('attempts') }}">{{ _('Urinishlar') }}</a>
+        <a class="nav-link{% if request.endpoint in ('users', 'profile') %} active{% endif %}" href="{{ url_for('users') }}">{{ _('Reyting') }}</a>
+        <a class="nav-link{% if (request.endpoint or '').startswith('news') %} active{% endif %}" href="{{ url_for('news_list') }}">{{ _('Yangiliklar') }}</a>
       </div>
       <div class="navbar-nav align-items-lg-center">
         {% if current_user %}
-        <span class="nav-link pub-nav-user">{{ current_user.username }}</span>
+        <a class="nav-link pub-nav-user" href="{{ url_for('profile', username=current_user.username) }}">{{ current_user.username }}{% if current_user.rating is not none %} <span class="pub-nav-rating">{{ current_user.rating }}</span>{% endif %}</a>
         <form method="post" action="{{ url_for('signout') }}" class="ms-lg-1">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <button class="btn btn-outline-light btn-sm">{{ _('Chiqish') }}</button>

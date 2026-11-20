@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block head %}<link href="{{ url_for('static', filename='css/public.css') }}" rel="stylesheet">{% endblock %}
+{% block title %}{{ _('Sozlamalar') }}{% endblock %}
+{% block content %}
+<div class="pub">
+<div class="pub-page-head">
+  <div>
+    <a class="small" href="{{ url_for('profile', username=current_user.username) }}">← {{ _('Profilim') }}</a>
+    <h1 class="pub-h1 mt-1">{{ _('Sozlamalar') }}</h1>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-6">
+    <form class="pub-card p-4 h-100" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="action" value="profile">
+      <h2 class="h6 fw-bold mb-3">{{ _('Profil') }}</h2>
+      <label class="form-label">{{ _('Login') }}</label>
+      <input class="form-control mb-3" value="{{ current_user.username }}" disabled>
+      <label class="form-label" for="full_name">{{ _('Ism-familiya') }}</label>
+      <input class="form-control mb-3" id="full_name" name="full_name" value="{{ current_user.full_name }}" maxlength="120" required>
+      <label class="form-label" for="organization">{{ _('O‘quv yurti yoki tashkilot') }}</label>
+      <input class="form-control mb-4" id="organization" name="organization" value="{{ current_user.organization or '' }}" maxlength="160">
+      <button class="btn pub-btn">{{ _('Saqlash') }}</button>
+    </form>
+  </div>
+  <div class="col-lg-6">
+    <form class="pub-card p-4 h-100" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="action" value="password">
+      <h2 class="h6 fw-bold mb-3">{{ _('Parolni o‘zgartirish') }}</h2>
+      <label class="form-label" for="current_password">{{ _('Joriy parol') }}</label>
+      <input class="form-control mb-3" id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+      <label class="form-label" for="new_password">{{ _('Yangi parol') }}</label>
+      <input class="form-control mb-3" id="new_password" name="new_password" type="password" minlength="8" autocomplete="new-password" required>
+      <label class="form-label" for="new_password2">{{ _('Parolni takrorlang') }}</label>
+      <input class="form-control mb-4" id="new_password2" name="new_password2" type="password" minlength="8" autocomplete="new-password" required>
+      <button class="btn pub-btn">{{ _('Parolni o‘zgartirish') }}</button>
+    </form>
+  </div>
+</div>
+</div>
+{% endblock %}

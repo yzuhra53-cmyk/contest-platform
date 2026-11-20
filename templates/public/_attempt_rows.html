@@ -1,0 +1,14 @@
+{% for item in rows %}{% set verdict = short_verdict(item.status, item.verdict) %}
+<tr{% if current_user and item.user_id == current_user.id %} class="is-mine"{% endif %}>
+  <td class="tabular">{% if can_view(item) %}<a href="{{ url_for('attempt_detail', submission_id=item.id) }}">#{{ item.id }}</a>{% else %}<span class="text-secondary">#{{ item.id }}</span>{% endif %}</td>
+  <td><span class="pub-verdict v-{{ verdict[1] }}">{{ verdict[0] }}</span></td>
+  <td class="tabular text-nowrap text-secondary">{% if item.status == 'pending' %}—{% else %}{{ item.time_ms if item.time_ms is not none else '—' }} ms · {{ '{:,}'.format(item.memory_kb) ~ ' KB' if item.memory_kb is not none else '—' }}{% endif %}</td>
+  <td><a class="pub-title-link" href="{{ url_for('task', code=problem_code(item.question)) }}"><span class="pub-code me-1">{{ problem_code(item.question) }}</span> {{ problem_title(item.question) }}</a></td>
+  <td><a class="pub-user-link rt-{{ rating_tier(item.user.rating)[0] or 'none' }}" href="{{ url_for('profile', username=item.user.username) }}" title="@{{ item.user.username }}">{{ item.user.full_name }}</a></td>
+  <td class="text-nowrap">{{ language_names.get(item.language, item.language) }}</td>
+  <td class="tabular text-nowrap text-secondary">{{ item.created_at|local('%d.%m.%Y %H:%M:%S') }}</td>
+</tr>
+{% else %}
+<tr><td colspan="7" class="text-center text-secondary py-5">{{ _('Hozircha urinishlar yo‘q.') }}</td></tr>
+{% endfor %}
+<tr hidden data-updated="{{ updated_at|local('%d.%m.%Y %H:%M:%S') }}"></tr>

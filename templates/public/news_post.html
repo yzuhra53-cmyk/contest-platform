@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block head %}<link href="{{ url_for('static', filename='css/public.css') }}" rel="stylesheet">{% endblock %}
+{% block title %}{{ post.title }}{% endblock %}
+{% block content %}
+<div class="pub">
+<a class="small" href="{{ url_for('news_list') }}">← {{ _('Yangiliklar') }}</a>
+<article class="pub-card pub-article mt-2">
+  {% if not post.is_published %}<span class="pub-badge lvl-medium mb-2">{{ _('Qoralama') }}</span>{% endif %}
+  <h1 class="pub-h1">{{ post.title }}</h1>
+  <div class="small text-secondary mb-3">{% if post.author %}{{ post.author }} · {% endif %}{{ post.created_at|local('%H:%M / %d.%m.%Y') }}
+    {% if session.get('is_admin') %} · <a href="{{ url_for('admin_news_edit', post_id=post.id) }}">{{ _('Tahrirlash') }}</a>{% endif %}</div>
+  <div class="pub-pre pub-article-body">{{ post.body }}</div>
+  {% if post.tag_list %}<div class="pub-tags mt-3">{% for tag in post.tag_list %}<a href="{{ url_for('news_list', tag=tag) }}">#{{ tag }}</a>{% endfor %}</div>{% endif %}
+</article>
+</div>
+{% endblock %}

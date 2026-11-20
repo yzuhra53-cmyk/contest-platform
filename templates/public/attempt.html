@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block head %}<link href="{{ url_for('static', filename='css/public.css') }}" rel="stylesheet">{% endblock %}
+{% block title %}{{ _('Urinish') }} #{{ item.id }}{% endblock %}
+{% block content %}
+<div class="pub">
+<div class="pub-page-head">
+  <div>
+    <a class="small" href="{{ url_for('attempts') }}">← {{ _('Urinishlar') }}</a>
+    <h1 class="pub-h1 mt-1">{{ _('Urinish') }} #{{ item.id }}</h1>
+  </div>
+  <span class="pub-verdict big v-{{ kind }}">{{ label }}</span>
+</div>
+<div class="pub-card mb-3">
+  <dl class="pub-facts">
+    <div><dt>{{ _('Masala') }}</dt><dd><a href="{{ url_for('task', code=problem_code(item.question)) }}">{{ problem_code(item.question) }} · {{ problem_title(item.question) }}</a></dd></div>
+    <div><dt>{{ _('Foydalanuvchi') }}</dt><dd><a href="{{ url_for('profile', username=item.user.username) }}">{{ item.user.full_name }}</a> <span class="text-secondary">@{{ item.user.username }}</span></dd></div>
+    <div><dt>{{ _('Til') }}</dt><dd>{{ language_names.get(item.language, item.language) }}</dd></div>
+    <div><dt>{{ _('Vaqt') }}</dt><dd class="tabular">{{ item.time_ms ~ ' ms' if item.time_ms is not none else '—' }}</dd></div>
+    <div><dt>{{ _('Xotira') }}</dt><dd class="tabular">{{ '{:,}'.format(item.memory_kb) ~ ' KB' if item.memory_kb is not none else '—' }}</dd></div>
+    <div><dt>{{ _('Yuborilgan') }}</dt><dd class="tabular">{{ item.created_at|local('%d.%m.%Y %H:%M:%S') }}</dd></div>
+  </dl>
+  {% if item.verdict and item.status != 'pending' %}<div class="pub-result-detail px-3 pb-3">{{ item.verdict|verdict }}</div>{% endif %}
+</div>
+{% if show_source %}
+<div class="pub-card overflow-hidden">
+  <div class="pub-sample-head"><span>{{ 'main.cpp' if item.language == 'cpp' else 'main.py' }}</span><button type="button" class="pub-copy" data-copy="{{ item.source_code }}">{{ _('Nusxa') }}</button></div>
+  <pre class="pub-source">{{ item.source_code }}</pre>
+</div>
+{% else %}
+<p class="text-secondary">{{ _('Yechim kodini faqat uning muallifi ko‘ra oladi.') }}</p>
+{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.pub-copy').forEach((button) => button.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(button.dataset.copy); button.textContent = '✓'; } catch (error) { /* bo'sh */ }
+  setTimeout(() => { button.textContent = t('Nusxa'); }, 1200);
+}));
+</script>
+{% endblock %}

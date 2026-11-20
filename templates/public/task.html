@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ title }} #{{ code }}{% endblock %}
+{% block title %}{% if contest %}{{ label }}. {{ title }} · {{ contest.title }}{% else %}{{ title }} #{{ code }}{% endif %}{% endblock %}
 {% block body_class %}pub-workspace{% endblock %}
 {% block main_class %}pub-main-split{% endblock %}
 {% block head %}
@@ -11,13 +11,14 @@
 {% macro sub_rows(items) %}
   {% for item in items %}{% set verdict = short_verdict(item.status, item.verdict) %}
   <tr>
-    <td class="tabular text-secondary">#{{ item.id }}</td>
+    <td class="tabular"><a href="{{ url_for('attempt_detail', submission_id=item.id) }}">#{{ item.id }}</a></td>
     <td class="text-nowrap tabular">{{ item.created_at|local('%d.%m.%Y %H:%M:%S') }}</td>
     <td>{{ language_names.get(item.language, item.language) }}</td>
     <td><span class="pub-verdict v-{{ verdict[1] }}" {% if item.verdict and verdict[1] != 'ok' %}title="{{ item.verdict|verdict }}"{% endif %}>{{ verdict[0] }}</span></td>
+    <td class="tabular text-nowrap text-secondary">{% if item.status != 'pending' %}{{ item.time_ms if item.time_ms is not none else '—' }} ms · {{ item.memory_kb ~ ' KB' if item.memory_kb is not none else '—' }}{% endif %}</td>
   </tr>
   {% else %}
-  <tr><td colspan="4" class="text-center text-secondary py-4">{{ _('Hali yechim yubormagansiz.') }}</td></tr>
+  <tr><td colspan="5" class="text-center text-secondary py-4">{{ _('Hali yechim yubormagansiz.') }}</td></tr>
   {% endfor %}
 {% endmacro %}
 {% block content %}
@@ -25,15 +26,25 @@
 <div class="pub-split">
   <section class="pub-pane pub-statement" aria-label="{{ _('Masala sharti') }}">
     <div class="pub-pane-scroll">
+      {% if contest %}
+      <div class="pub-contest-strip">
+        <a href="{{ url_for('contest_page', contest_id=contest.id, tab='problems') }}">← {{ contest.title }}</a>
+        {% if contest.state() == 'running' %}<span class="pub-countdown" data-deadline="{{ contest.end_at|epoch_ms }}" title="{{ _('Tugashiga') }}">—</span>{% endif %}
+      </div>
+      <div class="pub-task-code">{{ _('Masala') }} {{ label }}</div>
+      {% else %}
       <div class="pub-task-code">#{{ code }}</div>
+      {% endif %}
       <h1 class="pub-task-title">{{ title }}</h1>
       <div class="pub-task-meta">
         <span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{{ _('Vaqt') }}: <strong>{{ time_limit_ms }} ms</strong></span>
         <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 1v4M15 1v4M9 19v4M15 19v4M1 9h4M1 15h4M19 9h4M19 15h4"/></svg>{{ _('Xotira') }}: <strong>{{ memory_limit_mb ~ ' MB' if memory_limit_mb else '—' }}</strong></span>
+        {% if not contest %}
         <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>{{ _('Yechganlar') }}: <strong>{{ solvers }}</strong></span>
         {% if success is not none %}<span>{{ _('Muvaffaqiyat') }}: <strong>{{ success }}%</strong></span>{% endif %}
+        {% endif %}
       </div>
-      {% if question.difficulty %}<span class="pub-badge lvl-{{ question.difficulty }}">{{ level_labels[question.difficulty] }}</span>{% endif %}
+      {% if question.difficulty and not contest %}<span class="pub-badge lvl-{{ question.difficulty }}">{{ level_labels[question.difficulty] }}</span>{% endif %}
 
       <div class="pub-task-body">
         {% for key, text in sections %}
@@ -57,8 +68,8 @@
   </section>
 
   <section class="pub-pane pub-editor" aria-label="{{ _('Kod muharriri') }}">
-    {% if current_user %}
-    <form method="post" action="{{ url_for('task_submit', code=code) }}" class="ide pub-ide" id="codeForm">
+    {% if current_user and can_submit %}
+    <form method="post" action="{{ submit_url }}" class="ide pub-ide" id="codeForm">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="ide-toolbar">
         <div class="ide-tabs"><span class="ide-file" id="ideFile">main.py</span></div>
@@ -106,20 +117,20 @@
         </div>
       </div>
       <div class="pub-tab-pane" id="tabMine" hidden>
-        <table class="pub-table compact"><thead><tr><th>ID</th><th>{{ _('Vaqt') }}</th><th>{{ _('Til') }}</th><th>{{ _('Natija') }}</th></tr></thead>
+        <table class="pub-table compact"><thead><tr><th>ID</th><th>{{ _('Vaqt') }}</th><th>{{ _('Til') }}</th><th>{{ _('Natija') }}</th><th>{{ _('Vaqt · Xotira') }}</th></tr></thead>
           <tbody id="mySubs">{{ sub_rows(submissions) }}</tbody></table>
       </div>
     </div>
     <script type="application/json" id="codingConfig">{{ {
-      'runUrl': url_for('task_run', code=code),
-      'draftKey': 'task-draft-%s' % code,
+      'runUrl': run_url,
+      'draftKey': ('contest-%s-%s' % (contest.id, label)) if contest else ('task-draft-%s' % code),
       'submittedCode': last_source,
       'sampleInput': samples[0].input if samples else '',
       'sampleOutput': samples[0].output if samples else '',
       'pendingId': (submissions[0].id if pending else none),
       'statusUrl': url_for('submission_status', submission_id=0),
     }|tojson }}</script>
-    {% else %}
+    {% elif not current_user %}
     <div class="pub-locked">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
       <p>{{ _('Yechim yuborish uchun tizimga kiring.') }}</p>
@@ -128,6 +139,17 @@
         <a class="btn pub-btn-ghost" href="{{ url_for('register', next=request.path) }}">{{ _('Ro‘yxatdan o‘tish') }}</a>
       </div>
     </div>
+    {% elif contest and contest.state() == 'running' %}
+    <div class="pub-locked">
+      <p>{{ _('Yechim yuborish uchun musobaqaga ro‘yxatdan o‘ting.') }}</p>
+      <form method="post" action="{{ url_for('contest_register', contest_id=contest.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <button class="btn pub-btn">{{ _('Musobaqaga qo‘shilish') }}</button>
+      </form>
+    </div>
+    {% else %}
+    <div class="pub-locked"><p>{{ _('Musobaqa hozir davom etmayapti: yechim yuborib bo‘lmaydi.') }}</p></div>
     {% endif %}
   </section>
 </div>
@@ -140,7 +162,8 @@ document.querySelectorAll('.pub-copy').forEach((button) => button.addEventListen
   setTimeout(() => { button.textContent = t('Nusxa'); }, 1200);
 }));
 </script>
-{% if current_user %}
+{% if contest %}<script src="{{ url_for('static', filename='js/countdown.js') }}"></script>{% endif %}
+{% if current_user and can_submit %}
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/clike/clike.min.js"></script>

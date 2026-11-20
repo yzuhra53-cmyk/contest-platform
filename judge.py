@@ -167,10 +167,40 @@ def _read_limited(handle):
     return data[:MAX_OUTPUT_BYTES].decode("utf-8", errors="replace"), len(data) > MAX_OUTPUT_BYTES
 
 
-def _run(command, workdir, stdin_text, timeout, memory_mb, file_bytes, identity, cpu_limit=None):
+def _wait_with_usage(process, timeout):
+    """Jarayon tugashini kutadi. Qaytaradi: (timed_out, cpu_ms, max_rss_kb).
+
+    POSIX'da os.wait4 bilan aynan shu jarayonning resurs sarfi olinadi (protsessor
+    vaqti va eng yuqori xotira). Windows'da faqat kutiladi: cpu_ms va xotira None.
+    """
+    if os.name != "posix" or not hasattr(os, "wait4"):
+        try:
+            process.wait(timeout=timeout)
+            return False, None, None
+        except subprocess.TimeoutExpired:
+            return True, None, None
+    deadline = time.monotonic() + timeout
+    delay = 0.001
+    while True:
+        try:
+            pid, status, usage = os.wait4(process.pid, os.WNOHANG)
+        except ChildProcessError:
+            return False, None, None
+        if pid:
+            process.returncode = os.waitstatus_to_exitcode(status)
+            max_rss = usage.ru_maxrss // 1024 if sys.platform == "darwin" else usage.ru_maxrss
+            return False, int((usage.ru_utime + usage.ru_stime) * 1000), int(max_rss)
+        if time.monotonic() >= deadline:
+            return True, None, None
+        time.sleep(delay)
+        delay = min(delay * 2, 0.01)
+
+
+def _run(command, workdir, stdin_text, timeout, memory_mb, file_bytes, identity, cpu_limit=None, metrics=None):
     """Buyruqni cheklovlar bilan ishga tushiradi.
 
     Qaytaradi: (returncode, timed_out, stdout, stderr, output_too_big)
+    metrics (dict) berilsa, unga time_ms va memory_kb yoziladi (xotira faqat Linux'da).
 
     Kirish/chiqish fayllari ish papkasidan tashqarida, nomsiz vaqtinchalik
     fayllarda turadi: talaba kodi ularni almashtirib (masalan, symlink bilan)
@@ -208,14 +238,17 @@ def _run(command, workdir, stdin_text, timeout, memory_mb, file_bytes, identity,
             )
         except OSError as error:
             raise JudgeError(N_("Tekshiruv jarayonini ishga tushirib bo‘lmadi.")) from error
-        timed_out = False
+        started = time.perf_counter()
+        cpu_ms = max_rss_kb = None
         try:
-            process.wait(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            timed_out = True
+            timed_out, cpu_ms, max_rss_kb = _wait_with_usage(process, timeout)
         finally:
+            wall_ms = int((time.perf_counter() - started) * 1000)
             _kill_group(process)  # orqada qolgan bola jarayonlarni ham to'xtatadi
             process.wait()
+        if metrics is not None:
+            metrics["time_ms"] = cpu_ms if cpu_ms is not None else wall_ms
+            metrics["memory_kb"] = max_rss_kb
         stdout, too_big = _read_limited(stdout_file)
         stderr, _ = _read_limited(stderr_file)
     return process.returncode, timed_out, stdout, stderr, too_big
@@ -310,11 +343,14 @@ def _prepare(language, source_code, workdir, identity):
 
 
 def _judge(language, source_code, test_cases, workdir, identity):
+    """Qaytaradi: (accepted, xabar, stats). stats: {"time_ms", "memory_kb"} — testlar ichidagi eng kattasi."""
+    stats = {"time_ms": 0, "memory_kb": None}
     run_command, compile_error = _prepare(language, source_code, workdir, identity)
     if compile_error is not None:
-        return False, f"Compilation Error. {compile_error[-300:]}"
+        return False, f"Compilation Error. {compile_error[-300:]}", stats
 
     for index, case in enumerate(test_cases, start=1):
+        metrics = {}
         returncode, timed_out, stdout, stderr, too_big = _run(
             run_command,
             workdir,
@@ -324,11 +360,16 @@ def _judge(language, source_code, test_cases, workdir, identity):
             memory_mb=MEMORY_LIMIT_MB,
             file_bytes=MAX_OUTPUT_BYTES * 2,
             identity=identity,
+            metrics=metrics,
         )
+        stats["time_ms"] = max(stats["time_ms"], metrics.get("time_ms") or 0)
+        if metrics.get("memory_kb") is not None:
+            stats["memory_kb"] = max(stats["memory_kb"] or 0, metrics["memory_kb"])
         if timed_out or returncode == -getattr(signal, "SIGXCPU", 24):
-            return False, f"{index}-test: Time Limit Exceeded ({TIME_LIMIT:g} soniya)."
+            stats["time_ms"] = max(stats["time_ms"], int(TIME_LIMIT * 1000))
+            return False, f"{index}-test: Time Limit Exceeded ({TIME_LIMIT:g} soniya).", stats
         if too_big or returncode == -getattr(signal, "SIGXFSZ", 25):
-            return False, f"{index}-test: Output Limit Exceeded."
+            return False, f"{index}-test: Output Limit Exceeded.", stats
         if returncode != 0:
             details = _tail(stderr, workdir)
             if not details and returncode < 0:
@@ -337,10 +378,10 @@ def _judge(language, source_code, test_cases, workdir, identity):
                 except ValueError:
                     details = ""
             details = details or f"Dastur {returncode} kodi bilan tugadi."
-            return False, f"{index}-test: Runtime Error. {details}"
+            return False, f"{index}-test: Runtime Error. {details}", stats
         if _normalize(stdout) != _normalize(case["output"]):
-            return False, f"{index}-test: javob noto‘g‘ri."
-    return True, f"Barcha {len(test_cases)} ta testdan o‘tdi."
+            return False, f"{index}-test: javob noto‘g‘ri.", stats
+    return True, f"Barcha {len(test_cases)} ta testdan o‘tdi.", stats
 
 
 class _Sandbox:
@@ -382,6 +423,16 @@ def judge_solution(language, source_code, test_cases):
     """Kodni barcha testlarda tekshiradi. Qaytaradi: (accepted: bool, xabar: str).
 
     Birinchi muvaffaqiyatsiz testda to'xtaydi. Faqat barcha testlar o'tsa True.
+    """
+    accepted, message, _stats = judge_solution_detailed(language, source_code, test_cases)
+    return accepted, message
+
+
+def judge_solution_detailed(language, source_code, test_cases):
+    """judge_solution kabi, lekin uchinchi qiymat ham qaytaradi: {"time_ms", "memory_kb"}.
+
+    time_ms — eng sekin testdagi vaqt (Linux'da protsessor vaqti, aks holda devor soati);
+    memory_kb — eng ko'p xotira ishlatgan test (faqat Linux'da, aks holda None).
     """
     _validate(language, source_code, test_cases)
     with _Sandbox(QUEUE_TIMEOUT) as box:

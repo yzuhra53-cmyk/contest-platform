@@ -329,15 +329,9 @@ def create_app(test_config=None):
     def client_ip():
         return request.remote_addr or "unknown"
 
-    @application.route("/")
-    def index():
-        if session.get("is_admin"):
-            return redirect(url_for("admin_dashboard"))
-        if session.get("student_id"):
-            return redirect(url_for("student_dashboard"))
-        return redirect(url_for("tasks"))
+    # Bosh sahifa ("/", endpoint "index") — public_home.py da.
 
-    register_public(application, judge_pool, throttle, client_ip)
+    register_public(application, judge_pool, throttle, client_ip, admin_required, parse_local, to_local)
 
     @application.route("/health")
     def health():
@@ -2045,6 +2039,28 @@ def create_app(test_config=None):
             db.session.commit()
         if "access_code_hash" not in student_columns:
             db.session.execute(db.text("ALTER TABLE students ADD COLUMN access_code_hash VARCHAR(255)"))
+            db.session.commit()
+
+        submission_table_columns = {column["name"] for column in db.inspect(db.engine).get_columns("submissions")}
+        for name, ddl in (("time_ms", "INTEGER"), ("memory_kb", "INTEGER"),
+                          ("contest_id", "INTEGER REFERENCES public_contests(id) ON DELETE SET NULL")):
+            if name not in submission_table_columns:
+                db.session.execute(db.text(f"ALTER TABLE submissions ADD COLUMN {name} {ddl}"))
+                db.session.commit()
+        if "contest_id" not in submission_table_columns:
+            db.session.execute(db.text("CREATE INDEX IF NOT EXISTS ix_submissions_contest_id ON submissions (contest_id)"))
+            db.session.commit()
+
+        user_table_columns = {column["name"] for column in db.inspect(db.engine).get_columns("users")}
+        for name in ("rating", "max_rating"):
+            if name not in user_table_columns:
+                db.session.execute(db.text(f"ALTER TABLE users ADD COLUMN {name} INTEGER"))
+                db.session.commit()
+        public_contest_columns = {column["name"] for column in db.inspect(db.engine).get_columns("public_contests")}
+        if "rating_applied" not in public_contest_columns:
+            db.session.execute(
+                db.text("ALTER TABLE public_contests ADD COLUMN rating_applied BOOLEAN NOT NULL DEFAULT FALSE")
+            )
             db.session.commit()
 
         if Question.query.count() == 0:

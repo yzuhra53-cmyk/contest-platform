@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block head %}<link href="{{ url_for('static', filename='css/public.css') }}" rel="stylesheet">{% endblock %}
+{% block title %}{{ _('Urinishlar') }}{% endblock %}
+{% block content %}
+<div class="pub">
+<div class="pub-page-head">
+  <div>
+    <h1 class="pub-h1">{{ _('Oxirgi urinishlar') }}</h1>
+    <p class="pub-sub">{{ _('Barcha foydalanuvchilarning yuborgan yechimlari va ularning natijalari.') }}</p>
+  </div>
+</div>
+
+<form class="pub-filters" method="get" action="{{ url_for('attempts') }}">
+  <div class="pub-search pub-search-sm">
+    <input name="task" value="{{ args.task }}" placeholder="{{ _('Masala raqami, masalan A0341') }}" aria-label="{{ _('Masala') }}">
+  </div>
+  {% if not args.mine %}
+  <div class="pub-search pub-search-sm">
+    <input name="user" value="{{ args.user }}" placeholder="{{ _('Foydalanuvchi logini') }}" aria-label="{{ _('Foydalanuvchi') }}">
+  </div>
+  {% else %}<input type="hidden" name="mine" value="1">{% endif %}
+  <select class="form-select pub-select" name="verdict" aria-label="{{ _('Natija') }}">
+    <option value="">{{ _('Barcha natijalar') }}</option>
+    <option value="accepted" {% if args.verdict == 'accepted' %}selected{% endif %}>{{ _('Qabul qilindi') }}</option>
+    <option value="rejected" {% if args.verdict == 'rejected' %}selected{% endif %}>{{ _('Rad etildi') }}</option>
+    <option value="pending" {% if args.verdict == 'pending' %}selected{% endif %}>{{ _('Kutilmoqda') }}</option>
+  </select>
+  <button class="btn pub-btn">{{ _('Filtrlash') }}</button>
+  {% if args.task or args.user or args.verdict or args.mine %}<a class="btn pub-btn-ghost" href="{{ url_for('attempts') }}">{{ _('Tozalash') }}</a>{% endif %}
+</form>
+{% if current_user %}
+<div class="pub-levels">
+  <a class="pub-level{% if not args.mine %} active{% endif %}" href="{{ url_for('attempts', task=args.task or None, verdict=args.verdict or None) }}">{{ _('Hammasi') }}</a>
+  <a class="pub-level{% if args.mine %} active{% endif %}" href="{{ url_for('attempts', mine=1, task=args.task or None, verdict=args.verdict or None) }}">{{ _('Mening urinishlarim') }}</a>
+</div>
+{% endif %}
+
+<div class="pub-card">
+  <div class="table-responsive">
+    <table class="pub-table">
+      <thead><tr>
+        <th>ID</th><th>{{ _('Natija') }}</th><th>{{ _('Vaqt · Xotira') }}</th><th>{{ _('Masala') }}</th>
+        <th>{{ _('Foydalanuvchi') }}</th><th>{{ _('Til') }}</th><th>{{ _('Yuborilgan') }}</th>
+      </tr></thead>
+      <tbody id="attemptRows">{% include 'public/_attempt_rows.html' %}</tbody>
+    </table>
+  </div>
+  <div class="pub-table-foot">
+    <span class="text-secondary small">{{ _('Jadval yangilangan vaqt') }}: <span id="updatedAt">{{ updated_at|local('%d.%m.%Y %H:%M:%S') }}</span>{% if page == 1 %} · {{ _('har 5 soniyada yangilanadi') }}{% endif %}</span>
+    <nav class="pub-pager">
+      {% if page > 1 %}<a class="px-2" href="{{ url_for('attempts', page=page - 1, mine=args.mine or None, task=args.task or None, user=args.user or None, verdict=args.verdict or None) }}">← {{ _('Oldingi') }}</a>{% endif %}
+      {% if has_next %}<a class="px-2" href="{{ url_for('attempts', page=page + 1, mine=args.mine or None, task=args.task or None, user=args.user or None, verdict=args.verdict or None) }}">{{ _('Keyingi') }} →</a>{% endif %}
+    </nav>
+  </div>
+</div>
+</div>
+{% endblock %}
+{% block scripts %}
+{% if page == 1 %}
+<script>
+// Birinchi sahifa jonli lenta: har 5 soniyada jadval qatorlari yangilanadi.
+(() => {
+  const url = new URL(location.href);
+  url.searchParams.set('partial', '1');
+  const body = document.getElementById('attemptRows');
+  async function refresh() {
+    if (document.hidden) return;
+    try {
+      const response = await fetch(url, {cache: 'no-store', credentials: 'same-origin'});
+      if (!response.ok) return;
+      body.innerHTML = await response.text();
+      const stamp = body.querySelector('[data-updated]');
+      if (stamp) document.getElementById('updatedAt').textContent = stamp.dataset.updated;
+    } catch (error) { /* keyingi safar */ }
+  }
+  setInterval(refresh, 5000);
+})();
+</script>
+{% endif %}
+{% endblock %}

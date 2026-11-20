@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -259,23 +259,118 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
     last_seen_at = db.Column(db.DateTime)
+    # Musobaqa reytingi: birinchi reytingli musobaqadan keyin paydo bo'ladi (rating.py).
+    rating = db.Column(db.Integer, index=True)
+    max_rating = db.Column(db.Integer)
 
     submissions = db.relationship("Submission", back_populates="user")
 
 
+class PublicContest(db.Model):
+    """Ochiq musobaqa (ro'yxatdan o'tgan foydalanuvchilar uchun, ICPC qoidalari)."""
+
+    __tablename__ = "public_contests"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(180), nullable=False)
+    description = db.Column(db.Text)
+    start_at = db.Column(db.DateTime, nullable=False)  # UTC
+    duration_minutes = db.Column(db.Integer, nullable=False)
+    # Reytingga ta'sir qiladimi (4-bosqichda ishlatiladi).
+    is_rated = db.Column(db.Boolean, nullable=False, default=False)
+    # E'lon qilinmagan musobaqa faqat ustozga ko'rinadi.
+    is_published = db.Column(db.Boolean, nullable=False, default=False)
+    # Reyting o'zgarishlari hisoblanganmi (tugagan reytingli musobaqa uchun).
+    rating_applied = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+
+    problems = db.relationship(
+        "PublicContestProblem",
+        back_populates="contest",
+        order_by="PublicContestProblem.position",
+        cascade="all, delete-orphan",
+    )
+    registrations = db.relationship("ContestRegistration", back_populates="contest", cascade="all, delete-orphan")
+
+    @property
+    def end_at(self):
+        return self.start_at + timedelta(minutes=self.duration_minutes)
+
+    def state(self, now=None):
+        """upcoming / running / finished."""
+        now = now or utcnow()
+        if now < self.start_at:
+            return "upcoming"
+        if now < self.end_at:
+            return "running"
+        return "finished"
+
+
+class PublicContestProblem(db.Model):
+    __tablename__ = "public_contest_problems"
+
+    contest_id = db.Column(db.Integer, db.ForeignKey("public_contests.id", ondelete="CASCADE"), primary_key=True)
+    question_id = db.Column(db.Integer, db.ForeignKey("questions.id", ondelete="CASCADE"), primary_key=True)
+    position = db.Column(db.Integer, nullable=False)
+
+    contest = db.relationship("PublicContest", back_populates="problems")
+    question = db.relationship("Question")
+
+    @property
+    def label(self):
+        return chr(ord("A") + self.position) if self.position < 26 else f"Z{self.position - 25}"
+
+
+class ContestRegistration(db.Model):
+    __tablename__ = "contest_registrations"
+
+    contest_id = db.Column(db.Integer, db.ForeignKey("public_contests.id", ondelete="CASCADE"), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    registered_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+
+    contest = db.relationship("PublicContest", back_populates="registrations")
+    user = db.relationship("User")
+
+
+class RatingChange(db.Model):
+    """Bitta reytingli musobaqadagi reyting o'zgarishi (profil grafigi va tarixi uchun)."""
+
+    __tablename__ = "rating_changes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    contest_id = db.Column(db.Integer, db.ForeignKey("public_contests.id", ondelete="CASCADE"), nullable=False, index=True)
+    place = db.Column(db.String(20), nullable=False)
+    solved = db.Column(db.Integer, nullable=False, default=0)
+    old_rating = db.Column(db.Integer, nullable=False)
+    new_rating = db.Column(db.Integer, nullable=False)
+
+    user = db.relationship("User")
+    contest = db.relationship("PublicContest")
+
+    @property
+    def delta(self):
+        return self.new_rating - self.old_rating
+
+
 class Submission(db.Model):
-    """Masalalar arxiviga yuborilgan yechim (kontestdan tashqari)."""
+    """Masalalar arxiviga yoki ochiq musobaqaga yuborilgan yechim."""
 
     __tablename__ = "submissions"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     question_id = db.Column(db.Integer, db.ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
+    # Musobaqa vaqtida yuborilgan bo'lsa — o'sha musobaqa (natijalar jadvali uchun).
+    contest_id = db.Column(db.Integer, db.ForeignKey("public_contests.id", ondelete="SET NULL"), index=True)
     language = db.Column(db.String(10), nullable=False)
     source_code = db.Column(db.Text, nullable=False)
     # pending / accepted / rejected / error
     status = db.Column(db.String(20), nullable=False, default="pending")
     verdict = db.Column(db.String(500))
+    # Eng sekin test vaqti (ms) va eng ko'p ishlatilgan xotira (KB; faqat Linux serverda o'lchanadi).
+    time_ms = db.Column(db.Integer)
+    memory_kb = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow, index=True)
     judged_at = db.Column(db.DateTime)
 
@@ -283,6 +378,25 @@ class Submission(db.Model):
     question = db.relationship("Question")
 
     __table_args__ = (db.Index("ix_submissions_question_status", "question_id", "status"),)
+
+
+class NewsPost(db.Model):
+    """Bosh sahifadagi yangiliklar (ustoz yozadi)."""
+
+    __tablename__ = "news_posts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    # Vergul bilan ajratilgan teglar: "contest, rated".
+    tags = db.Column(db.String(200))
+    author = db.Column(db.String(120))
+    is_published = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow, index=True)
+
+    @property
+    def tag_list(self):
+        return [tag.strip().lstrip("#") for tag in (self.tags or "").split(",") if tag.strip().lstrip("#")]
 
 
 class SubmissionLog(db.Model):

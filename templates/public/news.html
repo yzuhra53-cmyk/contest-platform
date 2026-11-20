@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block head %}<link href="{{ url_for('static', filename='css/public.css') }}" rel="stylesheet">{% endblock %}
+{% block title %}{{ _('Yangiliklar') }}{% endblock %}
+{% block content %}
+<div class="pub">
+<div class="pub-page-head">
+  <div>
+    <h1 class="pub-h1">{{ _('Yangiliklar') }}</h1>
+    <p class="pub-sub">{% if tag %}{{ _('Teg bo‘yicha: #%(tag)s', tag=tag) }} · <a href="{{ url_for('news_list') }}">{{ _('Hammasi') }}</a>{% else %}{{ _('Platforma va musobaqalar haqidagi so‘nggi xabarlar.') }}{% endif %}</p>
+  </div>
+  {% if session.get('is_admin') %}<a class="btn pub-btn" href="{{ url_for('admin_news') }}">＋ {{ _('Yangilik yozish') }}</a>{% endif %}
+</div>
+<div class="pub-card">
+  {% for post in posts %}
+  <article class="pub-news-item">
+    <a class="pub-news-title" href="{{ url_for('news_post', post_id=post.id) }}">{{ post.title }}</a>
+    <div class="small text-secondary">{% if post.author %}{{ post.author }} · {% endif %}{{ post.created_at|local('%H:%M / %d.%m.%Y') }}</div>
+    <p class="pub-news-excerpt">{{ post.body|truncate(320) }}</p>
+    {% if post.tag_list %}<div class="pub-tags">{% for item in post.tag_list %}<a href="{{ url_for('news_list', tag=item) }}">#{{ item }}</a>{% endfor %}</div>{% endif %}
+  </article>
+  {% else %}
+  <p class="text-secondary p-4 mb-0">{{ _('Hozircha yangiliklar yo‘q.') }}</p>
+  {% endfor %}
+  {% if pages > 1 %}
+  <div class="pub-table-foot"><span></span><nav class="pub-pager">
+    {% for p in range(1, pages + 1) %}<a class="{% if p == page %}active{% endif %}" href="{{ url_for('news_list', page=p, tag=tag or None) }}">{{ p }}</a>{% endfor %}
+  </nav></div>
+  {% endif %}
+</div>
+</div>
+{% endblock %}

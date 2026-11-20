@@ -13,14 +13,15 @@ from datetime import timedelta
 from functools import wraps
 
 from flask import abort, flash, g, jsonify, redirect, render_template, request, session, url_for
-from sqlalchemy import case, distinct, func
+from sqlalchemy import case, distinct, func, or_
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import contains_eager
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import content_i18n
 from i18n import _
-from judge import MEMORY_LIMIT_MB, TIME_LIMIT, JudgeError, judge_solution, run_program
-from models import Question, Submission, User, db, utcnow
+from judge import MEMORY_LIMIT_MB, TIME_LIMIT, JudgeError, judge_solution_detailed, run_program
+from models import PublicContest, Question, Submission, User, db, utcnow
 from verdicts import short_verdict
 
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,32}$")
@@ -28,8 +29,10 @@ PASSWORD_MIN = 8
 SIGNIN_MAX_FAILURES = 10
 REGISTER_MAX_PER_WINDOW = 10
 TASKS_PER_PAGE = 50
+ATTEMPTS_PER_PAGE = 50
 MAX_SOURCE_CHARS = 20000
 PENDING_STALE_SECONDS = 180
+MAX_CONTEST_DAYS = 7
 LANGUAGE_NAMES = {"python": "Python 3", "cpp": "C++17"}
 
 # Masala matnini bo'limlarga ajratish (o'zbek, rus va ingliz tarjimalari uchun).
@@ -120,7 +123,7 @@ def problem_stats():
     return {qid: (solvers or 0, total or 0, accepted or 0) for qid, solvers, total, accepted in rows}
 
 
-def register_public(application, judge_pool, throttle, client_ip):
+def register_public(application, judge_pool, throttle, client_ip, admin_required, parse_local, to_local):
     run_times = {}
     run_lock = threading.Lock()
 
@@ -132,7 +135,12 @@ def register_public(application, judge_pool, throttle, client_ip):
 
     @application.context_processor
     def inject_user():
-        return {"current_user": current_user(), "problem_code": problem_code, "language_names": LANGUAGE_NAMES}
+        return {
+            "current_user": current_user(),
+            "problem_code": problem_code,
+            "problem_title": problem_title,
+            "language_names": LANGUAGE_NAMES,
+        }
 
     application.jinja_env.globals["short_verdict"] = short_verdict
 
@@ -150,10 +158,34 @@ def register_public(application, judge_pool, throttle, client_ip):
     def safe_next(value):
         return value if isinstance(value, str) and value.startswith("/") and not value.startswith("//") else None
 
+    def hidden_question_ids():
+        """Hali tugamagan musobaqalardagi masalalar: musobaqa tugaguncha arxivda ko'rinmaydi."""
+        if "hidden_question_ids" not in g:
+            now = utcnow()
+            hidden = set()
+            recent = PublicContest.query.filter(PublicContest.start_at > now - timedelta(days=MAX_CONTEST_DAYS + 1)).all()
+            for contest in recent:
+                if contest.end_at > now:
+                    hidden.update(item.question_id for item in contest.problems)
+            g.hidden_question_ids = hidden
+        return g.hidden_question_ids
+
+    def running_contest_ids():
+        """Hozir davom etayotgan musobaqalar: ularning yechimlari global lentada ko'rinmaydi."""
+        if "running_contest_ids" not in g:
+            now = utcnow()
+            recent = PublicContest.query.filter(
+                PublicContest.start_at <= now, PublicContest.start_at > now - timedelta(days=MAX_CONTEST_DAYS + 1)
+            ).all()
+            g.running_contest_ids = [contest.id for contest in recent if contest.end_at > now]
+        return g.running_contest_ids
+
     def get_problem(code):
         question_id = parse_code(code)
         question = db.session.get(Question, question_id) if question_id else None
         if question is None or question.question_type != "code_problem" or question.archived:
+            abort(404)
+        if question.id in hidden_question_ids() and not session.get("is_admin"):
             abort(404)
         return question
 
@@ -252,7 +284,10 @@ def register_public(application, judge_pool, throttle, client_ip):
             ):
                 (solved if status == "accepted" else tried).add(question_id)
         rows = []
+        hidden = set() if session.get("is_admin") else hidden_question_ids()
         for question in archive_problems():
+            if question.id in hidden:
+                continue
             if level in ("easy", "medium", "hard") and question.difficulty != level:
                 continue
             code = problem_code(question)
@@ -291,18 +326,15 @@ def register_public(application, judge_pool, throttle, client_ip):
             solved_count=len(solved),
         )
 
-    @application.route("/tasks/<code>")
-    def task(code):
-        question = get_problem(code)
+    def render_problem(question, submit_url, run_url, contest=None, label=None, can_submit=True):
+        """Masala sahifasi (arxiv yoki musobaqa ichida)."""
         user = current_user()
         submissions = []
         if user:
-            submissions = (
-                Submission.query.filter_by(user_id=user.id, question_id=question.id)
-                .order_by(Submission.id.desc())
-                .limit(30)
-                .all()
-            )
+            query = Submission.query.filter_by(user_id=user.id, question_id=question.id)
+            if contest is not None:
+                query = query.filter_by(contest_id=contest.id)
+            submissions = query.order_by(Submission.id.desc()).limit(30).all()
         solvers, total, accepted = problem_stats().get(question.id, (0, 0, 0))
         return render_template(
             "public/task.html",
@@ -319,12 +351,27 @@ def register_public(application, judge_pool, throttle, client_ip):
             last_source=submissions[0].source_code if submissions else "",
             last_language=submissions[0].language if submissions else "python",
             pending=any(item.status == "pending" for item in submissions),
+            submit_url=submit_url,
+            run_url=run_url,
+            contest=contest,
+            label=label,
+            can_submit=can_submit,
         )
+
+    @application.route("/tasks/<code>")
+    def task(code):
+        question = get_problem(code)
+        code = problem_code(question)
+        return render_problem(question, url_for("task_submit", code=code), url_for("task_run", code=code))
 
     @application.route("/tasks/<code>/run", methods=["POST"])
     @login_required
     def task_run(code):
         get_problem(code)
+        return handle_run()
+
+    def handle_run():
+        """Konsol: kodni foydalanuvchi kiritgan input bilan ishga tushiradi (baholanmaydi)."""
         data = request.get_json(silent=True) or {}
         language = data.get("language")
         source_code = data.get("source_code") or ""
@@ -355,6 +402,10 @@ def register_public(application, judge_pool, throttle, client_ip):
     @login_required
     def task_submit(code):
         question = get_problem(code)
+        return handle_submit(question, url_for("task", code=problem_code(question)))
+
+    def handle_submit(question, back_url, contest_id=None):
+        """Yechimni qabul qiladi va tekshiruv navbatiga qo'yadi (arxiv va musobaqa uchun umumiy)."""
         user = current_user()
         wants_json = request.headers.get("X-Requested-With") == "fetch"
 
@@ -362,7 +413,7 @@ def register_public(application, judge_pool, throttle, client_ip):
             if wants_json:
                 return jsonify(error=message if category != "info" else None, message=message, id=submission_id), status
             flash(message, category)
-            return redirect(url_for("task", code=problem_code(question)))
+            return redirect(back_url)
 
         source_code = request.form.get("source_code", "").strip()
         language = request.form.get("language", "")
@@ -387,6 +438,7 @@ def register_public(application, judge_pool, throttle, client_ip):
         submission = Submission(
             user_id=user.id,
             question_id=question.id,
+            contest_id=contest_id,
             language=language,
             source_code=source_code,
             status="pending",
@@ -405,8 +457,11 @@ def register_public(application, judge_pool, throttle, client_ip):
     def run_public_judge(submission_id, language, source_code, test_cases_json):
         with application.app_context():
             try:
+                stats = {}
                 try:
-                    accepted, message = judge_solution(language, source_code, json.loads(test_cases_json or "[]"))
+                    accepted, message, stats = judge_solution_detailed(
+                        language, source_code, json.loads(test_cases_json or "[]")
+                    )
                     status = "accepted" if accepted else "rejected"
                 except JudgeError as error:
                     message, status = str(error), "error"
@@ -419,6 +474,8 @@ def register_public(application, judge_pool, throttle, client_ip):
                 if submission is not None:
                     submission.status = status
                     submission.verdict = message[:500]
+                    submission.time_ms = stats.get("time_ms")
+                    submission.memory_kb = stats.get("memory_kb")
                     submission.judged_at = utcnow()
                     db.session.commit()
             except Exception:
@@ -426,6 +483,69 @@ def register_public(application, judge_pool, throttle, client_ip):
                 application.logger.exception("Tekshiruv natijasini saqlab bo‘lmadi")
             finally:
                 db.session.remove()
+
+    # ---------------- Urinishlar ----------------
+
+    @application.route("/attempts")
+    def attempts():
+        """Barcha urinishlar lentasi (eng yangilari tepada), filtrlar bilan."""
+        user = current_user()
+        mine = request.args.get("mine") == "1" and user is not None
+        task_code = request.args.get("task", "").strip().upper()
+        username = request.args.get("user", "").strip()
+        verdict = request.args.get("verdict", "")
+        query = (
+            db.select(Submission)
+            .join(Question, Submission.question_id == Question.id)
+            .join(User, Submission.user_id == User.id)
+            .options(contains_eager(Submission.user), contains_eager(Submission.question))
+        )
+        running = running_contest_ids()
+        if running and not session.get("is_admin"):
+            query = query.where(or_(Submission.contest_id.is_(None), Submission.contest_id.not_in(running)))
+        if mine:
+            query = query.where(Submission.user_id == user.id)
+        elif username:
+            query = query.where(func.lower(User.username) == username.lower())
+        if task_code:
+            question_id = parse_code(task_code)
+            query = query.where(Submission.question_id == (question_id or -1))
+        if verdict in ("accepted", "rejected", "pending"):
+            query = query.where(Submission.status == verdict)
+        page = max(request.args.get("page", 1, type=int), 1)
+        rows = db.session.execute(
+            query.order_by(Submission.id.desc()).offset((page - 1) * ATTEMPTS_PER_PAGE).limit(ATTEMPTS_PER_PAGE + 1)
+        ).scalars().all()
+        has_next = len(rows) > ATTEMPTS_PER_PAGE
+        context = dict(
+            rows=rows[:ATTEMPTS_PER_PAGE],
+            page=page,
+            has_next=has_next,
+            args={"mine": "1" if mine else "", "task": task_code, "user": username, "verdict": verdict},
+            updated_at=utcnow(),
+            can_view=lambda item: can_view_source(item),
+        )
+        if request.args.get("partial") == "1":
+            return render_template("public/_attempt_rows.html", **context)
+        return render_template("public/attempts.html", **context)
+
+    def can_view_source(submission):
+        user = current_user()
+        return bool(session.get("is_admin")) or (user is not None and submission.user_id == user.id)
+
+    @application.route("/attempts/<int:submission_id>")
+    def attempt_detail(submission_id):
+        submission = db.session.get(Submission, submission_id)
+        if submission is None:
+            abort(404)
+        label, kind = short_verdict(submission.status, submission.verdict)
+        return render_template(
+            "public/attempt.html",
+            item=submission,
+            label=label,
+            kind=kind,
+            show_source=can_view_source(submission),
+        )
 
     @application.route("/submissions/<int:submission_id>.json")
     @login_required
@@ -435,3 +555,42 @@ def register_public(application, judge_pool, throttle, client_ip):
             abort(404)
         label, kind = short_verdict(submission.status, submission.verdict)
         return jsonify(id=submission.id, status=submission.status, label=label, kind=kind)
+
+    from public_contests import register_contests
+
+    register_contests(
+        application,
+        helpers={
+            "current_user": current_user,
+            "login_required": login_required,
+            "admin_required": admin_required,
+            "render_problem": render_problem,
+            "handle_submit": handle_submit,
+            "handle_run": handle_run,
+            "parse_local": parse_local,
+            "to_local": to_local,
+        },
+    )
+
+    from public_users import register_users
+
+    register_users(
+        application,
+        helpers={
+            "current_user": current_user,
+            "login_required": login_required,
+            "hidden_question_ids": hidden_question_ids,
+        },
+    )
+
+    from public_home import register_home
+
+    register_home(
+        application,
+        helpers={
+            "current_user": current_user,
+            "admin_required": admin_required,
+            "hidden_question_ids": hidden_question_ids,
+            "to_local": to_local,
+        },
+    )
