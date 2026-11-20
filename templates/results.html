@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Natijalar · Bilim.Arena{% endblock %}
+{% block title %}{{ _('Natijalar') }} · Bilim.Arena{% endblock %}
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-  <div class="page-heading mb-0"><p class="eyebrow mb-2">HISOBOT</p><h1 class="page-title">Umumiy natijalar</h1><p class="text-secondary mb-0">Yakunlangan kontestlar bo‘yicha talabalar natijalari.</p></div>
+  <div class="page-heading mb-0"><p class="eyebrow mb-2">{{ _('HISOBOT') }}</p><h1 class="page-title">{{ _('Umumiy natijalar') }}</h1><p class="text-secondary mb-0">{{ _('Yakunlangan kontestlar bo‘yicha talabalar natijalari.') }}</p></div>
   <a class="btn btn-success" href="{{ url_for('export_results') }}">↓ Excel (.xlsx)</a>
 </div>
 <div class="card border-0 shadow-sm"><div class="table-responsive"><table class="table align-middle mb-0">
-  <thead><tr><th>Talaba</th><th>HEMIS ID</th><th>Guruh</th><th>Kontest</th><th>To‘g‘ri</th><th>Ball</th><th>Yakunlagan vaqt</th></tr></thead>
-  <tbody>{% for attempt in attempts %}<tr><td class="fw-medium">{{ attempt.student.full_name }}</td><td>{{ attempt.student.hemis_id }}</td><td>{{ attempt.student.group_name }}</td><td>{{ attempt.contest.title }}</td><td>{{ attempt.correct_count }}/{{ attempt.total_questions }}</td><td><span class="badge text-bg-primary">{{ '%.2f'|format(attempt.score or 0) }}%</span></td><td class="text-nowrap">{{ attempt.completed_at|local }}</td></tr>{% else %}<tr><td colspan="7" class="empty-state">Hali yakunlangan urinishlar yo‘q.</td></tr>{% endfor %}</tbody>
+  <thead><tr><th>{{ _('Talaba') }}</th><th>HEMIS ID</th><th>{{ _('Guruh') }}</th><th>{{ _('Kontest') }}</th><th>{{ _('To‘g‘ri') }}</th><th>{{ _('Ball') }}</th><th>{{ _('Yakunlagan vaqt') }}</th></tr></thead>
+  <tbody>{% for attempt in attempts %}<tr><td class="fw-medium">{{ attempt.student.full_name }}</td><td>{{ attempt.student.hemis_id }}</td><td>{{ attempt.student.group_name }}</td><td>{{ attempt.contest.title }}</td><td>{{ attempt.correct_count }}/{{ attempt.total_questions }}</td><td><span class="badge text-bg-primary">{{ '%.2f'|format(attempt.score or 0) }}%</span></td><td class="text-nowrap">{{ attempt.completed_at|local }}</td></tr>{% else %}<tr><td colspan="7" class="empty-state">{{ _('Hali yakunlangan urinishlar yo‘q.') }}</td></tr>{% endfor %}</tbody>
 </table></div></div>
 {% endblock %}

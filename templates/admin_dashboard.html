@@ -1,26 +1,26 @@
 {% extends "base.html" %}
-{% block title %}Boshqaruv · Bilim.Arena{% endblock %}
+{% block title %}{{ _('Boshqaruv') }} · Bilim.Arena{% endblock %}
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-  <div><p class="eyebrow mb-2">BOSHQARUV PANELI</p><h1 class="page-title mb-1">Xush kelibsiz, ustoz</h1><p class="text-secondary mb-0">Olimpiada jarayonini shu yerdan boshqaring.</p></div>
-  <a class="btn btn-primary" href="{{ url_for('admin_contests') }}">＋ Yangi kontest</a>
+  <div><p class="eyebrow mb-2">{{ _('BOSHQARUV PANELI') }}</p><h1 class="page-title mb-1">{{ _('Xush kelibsiz, ustoz') }}</h1><p class="text-secondary mb-0">{{ _('Olimpiada jarayonini shu yerdan boshqaring.') }}</p></div>
+  <a class="btn btn-primary" href="{{ url_for('admin_contests') }}">＋ {{ _('Yangi kontest') }}</a>
 </div>
 <div class="row g-3 mb-4">
-  <div class="col-6 col-lg-3"><div class="stat-card"><span>Talabalar</span><strong>{{ student_count }}</strong><a href="{{ url_for('admin_students') }}">Ro‘yxatni ko‘rish →</a></div></div>
-  <div class="col-6 col-lg-3"><div class="stat-card"><span>Savollar</span><strong>{{ question_count }}</strong><a href="{{ url_for('admin_questions') }}">Baza →</a></div></div>
-  <div class="col-6 col-lg-3"><div class="stat-card"><span>Kontestlar</span><strong>{{ contest_count }}</strong><a href="{{ url_for('admin_contests') }}">Boshqarish →</a></div></div>
-  <div class="col-6 col-lg-3"><div class="stat-card"><span>Yakunlangan urinishlar</span><strong>{{ attempt_count }}</strong><a href="{{ url_for('admin_results') }}">Natijalar →</a></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card"><span>{{ _('Talabalar') }}</span><strong>{{ student_count }}</strong><a href="{{ url_for('admin_students') }}">{{ _('Ro‘yxatni ko‘rish') }} →</a></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card"><span>{{ _('Savollar') }}</span><strong>{{ question_count }}</strong><a href="{{ url_for('admin_questions') }}">{{ _('Baza') }} →</a></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card"><span>{{ _('Kontestlar') }}</span><strong>{{ contest_count }}</strong><a href="{{ url_for('admin_contests') }}">{{ _('Boshqarish') }} →</a></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card"><span>{{ _('Yakunlangan urinishlar') }}</span><strong>{{ attempt_count }}</strong><a href="{{ url_for('admin_results') }}">{{ _('Natijalar') }} →</a></div></div>
 </div>
 <div class="card border-0 shadow-sm">
   <div class="card-body p-4">
-    <div class="d-flex justify-content-between align-items-center mb-3"><div><h2 class="h5 mb-1">Faol kontestlar</h2><p class="text-secondary small mb-0">Talabalar hozir qatnasha oladigan kontestlar</p></div><span class="badge text-bg-success">FAOL</span></div>
+    <div class="d-flex justify-content-between align-items-center mb-3"><div><h2 class="h5 mb-1">{{ _('Faol kontestlar') }}</h2><p class="text-secondary small mb-0">{{ _('Talabalar hozir qatnasha oladigan kontestlar') }}</p></div><span class="badge text-bg-success">{{ _('FAOL') }}</span></div>
     {% if active_contests %}
     <div class="list-group list-group-flush">
       {% for contest in active_contests %}
-      <div class="list-group-item px-0 d-flex justify-content-between align-items-center"><div><strong>{{ contest.title }}</strong><div class="small text-secondary">{{ contest.questions|length }} ta savol · {{ contest.duration_minutes }} daqiqa</div></div><div class="d-flex align-items-center gap-3">{% if contest.monitored or contest.lockdown %}<a class="small" href="{{ url_for('admin_proctor', contest_id=contest.id) }}">📹 Kuzatuv →</a>{% endif %}<a class="small" href="{{ url_for('admin_leaderboard', contest_id=contest.id) }}">Reyting →</a><span class="text-success">● Ochiq</span></div></div>
+      <div class="list-group-item px-0 d-flex justify-content-between align-items-center"><div><strong>{{ contest.title }}</strong><div class="small text-secondary">{{ _('%(n)s ta savol', n=contest.questions|length) }} · {{ _('%(n)s daqiqa', n=contest.duration_minutes) }}</div></div><div class="d-flex align-items-center gap-3">{% if contest.monitored or contest.lockdown %}<a class="small" href="{{ url_for('admin_proctor', contest_id=contest.id) }}">📹 {{ _('Kuzatuv') }} →</a>{% endif %}<a class="small" href="{{ url_for('admin_leaderboard', contest_id=contest.id) }}">{{ _('Reyting') }} →</a><span class="text-success">● {{ _('Ochiq') }}</span></div></div>
       {% endfor %}
     </div>
-    {% else %}<p class="text-secondary mb-0">Hozircha faol kontest yo‘q.</p>{% endif %}
+    {% else %}<p class="text-secondary mb-0">{{ _('Hozircha faol kontest yo‘q.') }}</p>{% endif %}
   </div>
 </div>
 {% endblock %}

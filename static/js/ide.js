@@ -1,6 +1,7 @@
 // Kontest kod muharriri: rangli sintaksis, avto-maslahatlar, ishga tushirish va konsol.
 // CodeMirror CDN'dan yuklanmasa ham sahifa oddiy textarea bilan ishlayveradi.
 (function () {
+  const t = window.t || ((s) => s);
   const PY_KEYWORDS = ['and', 'as', 'assert', 'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except',
     'False', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'None', 'nonlocal', 'not',
     'or', 'pass', 'raise', 'return', 'True', 'try', 'while', 'with', 'yield'];
@@ -46,11 +47,11 @@
     cpp: '#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n\n    int n;\n    cin >> n;\n    \n    return 0;\n}\n',
   };
   const STATUS = {
-    ok: ['Bajarildi', 'ok'],
-    compile_error: ['Kompilyatsiya xatosi', 'bad'],
-    runtime_error: ['Runtime Error', 'bad'],
-    time_limit: ['Vaqt limiti oshdi', 'bad'],
-    output_limit: ['Chiqish juda katta', 'bad'],
+    ok: [t('Bajarildi'), 'ok'],
+    compile_error: [t('Kompilyatsiya xatosi'), 'bad'],
+    runtime_error: [t('Runtime Error'), 'bad'],
+    time_limit: [t('Vaqt limiti oshdi'), 'bad'],
+    output_limit: [t('Chiqish juda katta'), 'bad'],
   };
   const normalize = (text) => (text || '').split(/\s+/).filter(Boolean).join(' ');
 
@@ -149,7 +150,7 @@
       cm.on('change', () => { cm.save(); lastTyped = Date.now(); saveDraft(); });
       cm.on('cursorActivity', () => {
         const pos = cm.getCursor();
-        document.getElementById('ideCursor').textContent = `Qator ${pos.line + 1}, ustun ${pos.ch + 1}`;
+        document.getElementById('ideCursor').textContent = t('Qator %(line)s, ustun %(col)s').replace('%(line)s', pos.line + 1).replace('%(col)s', pos.ch + 1);
       });
       // Harf yozilganda maslahatlar o'zi chiqadi.
       cm.on('inputRead', (editor, change) => {
@@ -169,7 +170,7 @@
     setLanguageUi();
 
     document.getElementById('ideTemplate').addEventListener('click', () => {
-      if (getCode().trim() && !confirm('Joriy kod shablon bilan almashtirilsinmi?')) return;
+      if (getCode().trim() && !confirm(t('Joriy kod shablon bilan almashtirilsinmi?'))) return;
       const template = TEMPLATES[language()];
       if (cm) { cm.setValue(template); cm.focus(); } else { textarea.value = template; }
     });
@@ -185,13 +186,13 @@
 
     async function run() {
       if (runButton.disabled) return;
-      if (!getCode().trim()) { output.textContent = 'Avval kod yozing.'; return; }
+      if (!getCode().trim()) { output.textContent = t('Avval kod yozing.'); return; }
       runButton.disabled = true;
-      runButton.textContent = '⏳ Ishlamoqda…';
+      runButton.textContent = '⏳ ' + t('Ishlamoqda…');
       runStatus.textContent = '';
       runStatus.className = 'ide-run-status';
       output.textContent = '';
-      show('Dastur ishga tushirilmoqda…', 'ide-muted');
+      show(t('Dastur ishga tushirilmoqda…'), 'ide-muted');
       try {
         const response = await fetch(options.runUrl, {
           method: 'POST',
@@ -201,7 +202,7 @@
         const data = response.headers.get('Content-Type')?.includes('json') ? await response.json() : null;
         output.textContent = '';
         if (!response.ok || !data || data.error) {
-          show((data && data.error) || `Server xatosi (${response.status}).`, 'ide-err');
+          show((data && data.error) || t('Server xatosi (%(status)s).').replace('%(status)s', response.status), 'ide-err');
           if (data && data.finished) setTimeout(() => { window.allowContestLeave?.(); window.location.reload(); }, 1500);
           return;
         }
@@ -209,19 +210,19 @@
         runStatus.textContent = data.status === 'compile_error' ? label : `${label} · ${data.time_ms} ms`;
         runStatus.classList.add(kind === 'ok' ? 'is-ok' : 'is-bad');
         data.stdout = (data.stdout || '').replace(/\r\n/g, '\n').replace(/\s+$/, '');
-        if (data.stdout) show(data.stdout +(data.stdout_truncated ? '\n… (chiqish qisqartirildi)' : ''));
-        else if (data.status === 'ok') show('(dastur hech narsa chiqarmadi)', 'ide-muted');
+        if (data.stdout) show(data.stdout +(data.stdout_truncated ? '\n… (' + t('chiqish qisqartirildi') + ')' : ''));
+        else if (data.status === 'ok') show(t('(dastur hech narsa chiqarmadi)'), 'ide-muted');
         if (data.stderr) show((data.stdout ? '\n' : '') + data.stderr, 'ide-err');
         if (data.status === 'ok' && options.sampleOutput && normalize(stdin.value) === normalize(options.sampleInput)) {
           const same = normalize(data.stdout) === normalize(options.sampleOutput);
-          show(same ? '\n\n✓ Namuna javobiga mos keldi' : '\n\n✗ Namuna javobidan farq qiladi', same ? 'ide-ok' : 'ide-err');
+          show(same ? '\n\n✓ ' + t('Namuna javobiga mos keldi') : '\n\n✗ ' + t('Namuna javobidan farq qiladi'), same ? 'ide-ok' : 'ide-err');
         }
       } catch (error) {
         output.textContent = '';
-        show('Server bilan aloqa uzildi. Qayta urinib ko‘ring.', 'ide-err');
+        show(t('Server bilan aloqa uzildi. Qayta urinib ko‘ring.'), 'ide-err');
       } finally {
         runButton.disabled = false;
-        runButton.textContent = '▶ Ishga tushirish';
+        runButton.textContent = '▶ ' + t('Ishga tushirish');
       }
     }
     runButton.addEventListener('click', run);

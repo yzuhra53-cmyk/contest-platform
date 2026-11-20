@@ -1,13 +1,13 @@
 {# Kontest bloklari gorizontal qadamlar ko'rinishida. stage: 'code' yoki 'tests'. #}
 {% set blocks = contest.blocks %}
 {% if blocks|length > 1 %}
-<nav class="block-steps" aria-label="Kontest bloklari">
+<nav class="block-steps" aria-label="{{ _('Kontest bloklari') }}">
   {% for key, title, count in blocks %}
   {% set done = stage == 'tests' and key == 'code' %}
   {% set active = (stage == 'code' and key == 'code') or (stage == 'tests' and key != 'code') %}
   <div class="step {{ 'is-done' if done else ('is-active' if active else '') }}">
     <span class="block-step">{{ '✓' if done else loop.index }}</span>
-    <div><div class="fw-semibold">{{ title }}</div><div class="small">{{ count }} ta {{ 'masala' if key == 'code' else 'savol' }}{% if done %} · yakunlandi{% elif not active %} · keyin ochiladi{% endif %}</div></div>
+    <div><div class="fw-semibold">{{ title }}</div><div class="small">{{ _('%(n)s ta masala', n=count) if key == 'code' else _('%(n)s ta savol', n=count) }}{% if done %} · {{ _('yakunlandi') }}{% elif not active %} · {{ _('keyin ochiladi') }}{% endif %}</div></div>
   </div>
   {% endfor %}
 </nav>

@@ -2,14 +2,14 @@
 <div id="lockOverlay" class="lock-overlay">
   <div class="lock-overlay-card">
     <div class="lock-icon" aria-hidden="true">🔒</div>
-    <h2 class="h4 mb-2" id="lockTitle">Kontest qulflangan rejimda o‘tadi</h2>
-    <p class="mb-2" id="lockText">Kontest to‘liq ekranda ochiladi va uni tugatmaguningizcha shu sahifada qolasiz.</p>
+    <h2 class="h4 mb-2" id="lockTitle">{{ _('Kontest qulflangan rejimda o‘tadi') }}</h2>
+    <p class="mb-2" id="lockText">{{ _('Kontest to‘liq ekranda ochiladi va uni tugatmaguningizcha shu sahifada qolasiz.') }}</p>
     <ul class="text-start small mb-3">
-      <li>To‘liq ekrandan chiqish, boshqa oyna, tab yoki dasturga o‘tish ustozga qoidabuzarlik sifatida yuboriladi.</li>
-      <li>Sahifani yangilash, orqaga qaytish, qidiruv (Ctrl+F), chop etish va dasturchi vositalari bloklangan.</li>
-      <li>Masala matnini nusxalab bo‘lmaydi.</li>
+      <li>{{ _('To‘liq ekrandan chiqish, boshqa oyna, tab yoki dasturga o‘tish ustozga qoidabuzarlik sifatida yuboriladi.') }}</li>
+      <li>{{ _('Sahifani yangilash, orqaga qaytish, qidiruv (Ctrl+F), chop etish va dasturchi vositalari bloklangan.') }}</li>
+      <li>{{ _('Masala matnini nusxalab bo‘lmaydi.') }}</li>
     </ul>
-    <button type="button" class="btn btn-primary btn-lg" id="lockStart">To‘liq ekranda boshlash</button>
+    <button type="button" class="btn btn-primary btn-lg" id="lockStart">{{ _('To‘liq ekranda boshlash') }}</button>
   </div>
 </div>
 <div id="lockToast" class="lock-toast" role="alert" hidden></div>
@@ -53,7 +53,7 @@
       if (root.requestFullscreen) await root.requestFullscreen({navigationUI: 'hide'});
       else if (root.webkitRequestFullscreen) root.webkitRequestFullscreen();
     } catch (error) {
-      notify('To‘liq ekranga o‘tib bo‘lmadi. Qayta bosing.');
+      notify({{ _('To‘liq ekranga o‘tib bo‘lmadi. Qayta bosing.')|tojson }});
       return;
     }
     // Chrome/Edge: to'liq ekranda Esc, Ctrl+T/W/N, Alt+Tab kabi tugmalarni sahifa ushlaydi
@@ -69,9 +69,9 @@
   ['fullscreenchange', 'webkitfullscreenchange'].forEach((type) => document.addEventListener(type, () => {
     syncOverlay();
     if (!isFullscreen() && entered && !allowed) {
-      document.getElementById('lockTitle').textContent = 'Siz to‘liq ekrandan chiqdingiz';
-      document.getElementById('lockText').textContent = 'Bu ustozga qoidabuzarlik sifatida yuborildi. Davom etish uchun to‘liq ekranga qayting.';
-      document.getElementById('lockStart').textContent = 'To‘liq ekranga qaytish';
+      document.getElementById('lockTitle').textContent = {{ _('Siz to‘liq ekrandan chiqdingiz')|tojson }};
+      document.getElementById('lockText').textContent = {{ _('Bu ustozga qoidabuzarlik sifatida yuborildi. Davom etish uchun to‘liq ekranga qayting.')|tojson }};
+      document.getElementById('lockStart').textContent = {{ _('To‘liq ekranga qaytish')|tojson }};
       overlay.classList.add('is-violation');
       report('fullscreen_exit');
     }
@@ -94,7 +94,7 @@
   window.addEventListener('popstate', () => {
     if (allowed) return;
     history.pushState({contestLock: true}, '', location.href);
-    notify('Kontest tugaguncha sahifadan chiqib bo‘lmaydi.');
+    notify({{ _('Kontest tugaguncha sahifadan chiqib bo‘lmaydi.')|tojson }});
   });
 
   const blockedCtrl = new Set(['r', 'f', 'g', 'p', 's', 'u', 'o', 'h', 'j', 'l', 'd', 't', 'n', 'w', 'e', 'k']);
@@ -113,7 +113,7 @@
     if (block) {
       event.preventDefault();
       event.stopPropagation();
-      notify('Bu tugma kontest davomida bloklangan.');
+      notify({{ _('Bu tugma kontest davomida bloklangan.')|tojson }});
     }
   }, true);
   document.addEventListener('contextmenu', (event) => {
@@ -122,7 +122,7 @@
   ['copy', 'cut'].forEach((type) => document.addEventListener(type, (event) => {
     if (!event.target.closest?.('.CodeMirror, textarea, input')) {
       event.preventDefault();
-      notify('Masala matnini nusxalab bo‘lmaydi.');
+      notify({{ _('Masala matnini nusxalab bo‘lmaydi.')|tojson }});
     }
   }));
 

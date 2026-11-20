@@ -58,7 +58,26 @@ def N_(text):  # noqa: N802 — tarjima uchun belgi
 _ = gettext
 
 # static/js fayllaridagi matnlar: sahifaga window.I18N sifatida beriladi, JS'da t('...') bilan o'qiladi.
-JS_MESSAGES = []
+JS_MESSAGES = [
+    # static/js/ide.js
+    N_("Bajarildi"),
+    N_("Kompilyatsiya xatosi"),
+    N_("Runtime Error"),
+    N_("Vaqt limiti oshdi"),
+    N_("Chiqish juda katta"),
+    N_("Qator %(line)s, ustun %(col)s"),
+    N_("Joriy kod shablon bilan almashtirilsinmi?"),
+    N_("Avval kod yozing."),
+    N_("Ishlamoqda…"),
+    N_("Dastur ishga tushirilmoqda…"),
+    N_("Server xatosi (%(status)s)."),
+    N_("chiqish qisqartirildi"),
+    N_("(dastur hech narsa chiqarmadi)"),
+    N_("Namuna javobiga mos keldi"),
+    N_("Namuna javobidan farq qiladi"),
+    N_("Server bilan aloqa uzildi. Qayta urinib ko‘ring."),
+    N_("Ishga tushirish"),
+]
 
 
 def js_translations():

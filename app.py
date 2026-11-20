@@ -217,9 +217,9 @@ def create_app(test_config=None):
             supplied_token = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token")
             expected_token = session.get("csrf_token")
             if not isinstance(expected_token, str) or not isinstance(supplied_token, str):
-                abort(400, description="So‘rov xavfsizlik tekshiruvidan o‘tmadi. Sahifani yangilang.")
+                abort(400, description=_("So‘rov xavfsizlik tekshiruvidan o‘tmadi. Sahifani yangilang."))
             if not hmac.compare_digest(supplied_token, expected_token):
-                abort(400, description="So‘rov xavfsizlik tekshiruvidan o‘tmadi. Sahifani yangilang.")
+                abort(400, description=_("So‘rov xavfsizlik tekshiruvidan o‘tmadi. Sahifani yangilang."))
 
     @application.context_processor
     def inject_csrf_token():
@@ -247,7 +247,7 @@ def create_app(test_config=None):
             student = db.session.get(Student, session["student_id"])
             if student is None:
                 session.clear()
-                flash("Talaba hisobi topilmadi. Qayta kiring.", "warning")
+                flash(_("Talaba hisobi topilmadi. Qayta kiring."), "warning")
                 return redirect(url_for("student_login"))
             if student.session_token and not hmac.compare_digest(
                 str(session.get("student_token", "")), student.session_token
@@ -255,7 +255,7 @@ def create_app(test_config=None):
                 # Bir vaqtda faqat bitta qurilma/brauzer: yangi kirish eskisini chiqaradi.
                 session.clear()
                 flash(
-                    "Hisobingizga boshqa qurilma yoki brauzerdan kirildi. Bir vaqtda faqat bitta joyda ishlash mumkin.",
+                    _("Hisobingizga boshqa qurilma yoki brauzerdan kirildi. Bir vaqtda faqat bitta joyda ishlash mumkin."),
                     "warning",
                 )
                 return redirect(url_for("student_login"))
@@ -339,7 +339,7 @@ def create_app(test_config=None):
         if request.method == "POST":
             throttle_key = ("admin", client_ip())
             if throttle.blocked(throttle_key, ADMIN_MAX_FAILURES):
-                flash("Juda ko‘p noto‘g‘ri urinish. 15 daqiqadan so‘ng qayta urinib ko‘ring.", "danger")
+                flash(_("Juda ko‘p noto‘g‘ri urinish. 15 daqiqadan so‘ng qayta urinib ko‘ring."), "danger")
                 return render_template("admin_login.html"), 429
             username = request.form.get("username", "")
             password = request.form.get("password", "")
@@ -351,7 +351,7 @@ def create_app(test_config=None):
                 session["is_admin"] = True
                 return redirect(url_for("admin_dashboard"))
             throttle.fail(throttle_key)
-            flash("Login yoki parol noto‘g‘ri.", "danger")
+            flash(_("Login yoki parol noto‘g‘ri."), "danger")
         return render_template("admin_login.html")
 
     @application.route("/login", methods=["GET", "POST"])
@@ -361,12 +361,12 @@ def create_app(test_config=None):
             full_name = " ".join(request.form.get("full_name", "").split())
             group_name = " ".join(request.form.get("group_name", "").split())
             if not hemis_id or not full_name or not group_name:
-                flash("HEMIS ID, F.I.Sh. va guruhni to‘liq kiriting.", "danger")
+                flash(_("HEMIS ID, F.I.Sh. va guruhni to‘liq kiriting."), "danger")
                 return render_template("student_login.html", form=request.form), 400
             # Bazada yo'q HEMIS ID larni ketma-ket sinash IP bo'yicha sekinlashtiriladi.
             ip_key = ("student-ip", client_ip())
             if throttle.blocked(ip_key, STUDENT_MAX_FAILURES * 5):
-                flash("Juda ko‘p noto‘g‘ri urinish. 15 daqiqadan so‘ng qayta urinib ko‘ring.", "danger")
+                flash(_("Juda ko‘p noto‘g‘ri urinish. 15 daqiqadan so‘ng qayta urinib ko‘ring."), "danger")
                 return render_template("student_login.html", form=request.form), 429
             student = db.session.get(Student, hemis_id)
             if (
@@ -391,8 +391,8 @@ def create_app(test_config=None):
                 return redirect(url_for("student_dashboard"))
             throttle.fail(ip_key)
             flash(
-                "HEMIS ID, F.I.Sh. yoki guruh ro‘yxatdagi ma’lumotga mos kelmadi. "
-                "Ismingizni ro‘yxatdan tanlang va HEMIS ID’ni tekshiring.",
+                _("HEMIS ID, F.I.Sh. yoki guruh ro‘yxatdagi ma’lumotga mos kelmadi. "
+                  "Ismingizni ro‘yxatdan tanlang va HEMIS ID’ni tekshiring."),
                 "danger",
             )
             return render_template("student_login.html", form=request.form)
@@ -473,13 +473,13 @@ def create_app(test_config=None):
             full_name = request.form.get("full_name", "").strip()
             group_name = request.form.get("group_name", "").strip()
             if not all((hemis_id, full_name, group_name)):
-                flash("Barcha maydonlarni to‘ldiring.", "danger")
+                flash(_("Barcha maydonlarni to‘ldiring."), "danger")
             elif db.session.get(Student, hemis_id):
-                flash("Bu HEMIS ID avval ro‘yxatga qo‘shilgan.", "warning")
+                flash(_("Bu HEMIS ID avval ro‘yxatga qo‘shilgan."), "warning")
             else:
                 db.session.add(Student(hemis_id=hemis_id, full_name=full_name, group_name=group_name))
                 db.session.commit()
-                flash("Talaba qo‘shildi. U HEMIS ID, F.I.Sh. va guruhini yozib kira oladi.", "success")
+                flash(_("Talaba qo‘shildi. U HEMIS ID, F.I.Sh. va guruhini yozib kira oladi."), "success")
             return redirect(url_for("admin_students"))
         students = Student.query.order_by(Student.full_name).all()
         return render_template(
@@ -504,12 +504,12 @@ def create_app(test_config=None):
             query = query.filter(Student.access_code_hash.is_(None))
         students = query.all()
         if not students:
-            flash("Kirish kodi kerak bo‘lgan talaba topilmadi.", "info")
+            flash(_("Kirish kodi kerak bo‘lgan talaba topilmadi."), "info")
             return redirect(url_for("admin_students"))
         workbook = Workbook()
         sheet = workbook.active
-        sheet.title = "Kirish kodlari"
-        sheet.append(["HEMIS ID", "F.I.O", "Guruh", "Kirish kodi"])
+        sheet.title = _("Kirish kodlari")
+        sheet.append(["HEMIS ID", _("F.I.O"), _("Guruh"), _("Kirish kodi")])
         for student in students:
             code = generate_access_code()
             student.access_code_hash = hash_access_code(code)
@@ -535,8 +535,8 @@ def create_app(test_config=None):
         student.access_code_hash = hash_access_code(code)
         db.session.commit()
         flash(
-            f"{student.full_name} uchun yangi kirish kodi: {format_access_code(code)} "
-            "(eski kod endi ishlamaydi).",
+            _("%(name)s uchun yangi kirish kodi: %(code)s (eski kod endi ishlamaydi).",
+              name=student.full_name, code=format_access_code(code)),
             "success",
         )
         return redirect(url_for("admin_students"))
@@ -547,11 +547,11 @@ def create_app(test_config=None):
         """Word (.docx) yoki Excel (.xlsx) fayldan nazariy test savollarini qo'shadi."""
         uploaded = request.files.get("file")
         if not uploaded or not uploaded.filename:
-            flash("Yuklash uchun .docx yoki .xlsx faylni tanlang.", "danger")
+            flash(_("Yuklash uchun .docx yoki .xlsx faylni tanlang."), "danger")
             return redirect(url_for("admin_questions"))
         data = uploaded.read(5 * 1024 * 1024 + 1)
         if len(data) > 5 * 1024 * 1024:
-            flash("Fayl 5 MB dan katta.", "danger")
+            flash(_("Fayl 5 MB dan katta."), "danger")
             return redirect(url_for("admin_questions"))
         category = " ".join(request.form.get("category", "").split())[:160] or None
         default_level = normalize_difficulty(request.form.get("difficulty"))
@@ -561,7 +561,7 @@ def create_app(test_config=None):
             flash(str(error), "danger")
             return redirect(url_for("admin_questions"))
         if not parsed:
-            flash("Faylda savol topilmadi. Jadval: № | Savol | A (to‘g‘ri javob) | B | C | D.", "warning")
+            flash(_("Faylda savol topilmadi. Jadval: № | Savol | A (to‘g‘ri javob) | B | C | D."), "warning")
             return redirect(url_for("admin_questions"))
 
         def key(text):
@@ -593,9 +593,9 @@ def create_app(test_config=None):
             ))
             added += 1
         db.session.commit()
-        message = f"Fayldan {added} ta nazariy savol qo‘shildi."
+        message = _("Fayldan %(count)s ta nazariy savol qo‘shildi.", count=added)
         if skipped:
-            message += f" {skipped} tasi bazada bor edi, takror qo‘shilmadi."
+            message += " " + _("%(count)s tasi bazada bor edi, takror qo‘shilmadi.", count=skipped)
         flash(message, "success" if added else "info")
         return redirect(url_for("admin_questions"))
 
@@ -604,11 +604,11 @@ def create_app(test_config=None):
     def import_students():
         uploaded = request.files.get("file")
         if not uploaded or not uploaded.filename:
-            flash("Yuklash uchun .xlsx yoki .csv faylni tanlang.", "danger")
+            flash(_("Yuklash uchun .xlsx yoki .csv faylni tanlang."), "danger")
             return redirect(url_for("admin_students"))
         file_extension = os.path.splitext(uploaded.filename)[1].lower()
         if file_extension not in {".xlsx", ".csv"}:
-            flash("Faqat .xlsx yoki .csv formatidagi fayl qabul qilinadi.", "danger")
+            flash(_("Faqat .xlsx yoki .csv formatidagi fayl qabul qilinadi."), "danger")
             return redirect(url_for("admin_students"))
         workbook = None
         try:
@@ -616,7 +616,7 @@ def create_app(test_config=None):
                 workbook = load_workbook(uploaded.stream, read_only=True, data_only=True)
                 sheet = workbook.worksheets[0] if workbook.worksheets else None
                 if sheet is None:
-                    raise ValueError("Excel faylida faol varaq topilmadi.")
+                    raise ValueError(_("Excel faylida faol varaq topilmadi."))
                 rows = sheet.iter_rows(values_only=True)
             else:
                 raw_csv = uploaded.stream.read()
@@ -626,7 +626,7 @@ def create_app(test_config=None):
                     try:
                         csv_text = raw_csv.decode("cp1251")
                     except UnicodeDecodeError as error:
-                        raise ValueError("CSV fayli UTF-8 yoki Windows-1251 kodlashida bo‘lishi kerak.") from error
+                        raise ValueError(_("CSV fayli UTF-8 yoki Windows-1251 kodlashida bo‘lishi kerak.")) from error
                 sample = csv_text[:4096]
                 try:
                     dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
@@ -649,7 +649,7 @@ def create_app(test_config=None):
                 for position, normalized_name in enumerate(normalized_names):
                     if normalized_name in aliases:
                         return position
-                raise ValueError("Ustunlar: HEMIS ID, F.I.O va Guruh bo‘lishi kerak.")
+                raise ValueError(_("Ustunlar: HEMIS ID, F.I.O va Guruh bo‘lishi kerak."))
 
             header_row = None
             data_rows = iter(rows)
@@ -663,7 +663,7 @@ def create_app(test_config=None):
                         header_row = candidate
                         break
             if header_row is None:
-                raise ValueError("Faylda HEMIS ID, F.I.O va Guruh sarlavhalari topilmadi.")
+                raise ValueError(_("Faylda HEMIS ID, F.I.O va Guruh sarlavhalari topilmadi."))
 
             id_col = column("hemis id", "hemis_id", "id")
             name_col = column("f.i.o", "fio", "full name", "ism")
@@ -679,15 +679,16 @@ def create_app(test_config=None):
                 db.session.add(Student(hemis_id=hemis_id, full_name=full_name, group_name=group_name))
                 added += 1
             db.session.commit()
-            flash(f"{added} ta talaba qo‘shildi, {skipped} ta qator o‘tkazib yuborildi. "
-                "Yangi talabalar uchun «Kodlarni yaratish» tugmasi orqali kirish kodlarini oling.", "success")
+            flash(_("%(added)s ta talaba qo‘shildi, %(skipped)s ta qator o‘tkazib yuborildi. "
+                    "Yangi talabalar uchun «Kodlarni yaratish» tugmasi orqali kirish kodlarini oling.",
+                    added=added, skipped=skipped), "success")
         except (ValueError, KeyError) as error:
             db.session.rollback()
             flash(str(error), "danger")
         except (InvalidFileException, BadZipFile, OSError, TypeError):
             db.session.rollback()
             application.logger.exception("Excel faylni o‘qishda xatolik")
-            flash("Faylni o‘qib bo‘lmadi. Fayl buzilmaganini va kodlashini tekshiring.", "danger")
+            flash(_("Faylni o‘qib bo‘lmadi. Fayl buzilmaganini va kodlashini tekshiring."), "danger")
         finally:
             if workbook is not None:
                 workbook.close()
@@ -700,11 +701,11 @@ def create_app(test_config=None):
         if student is None:
             abort(404)
         if student.attempts:
-            flash("Natijalari mavjud talabani o‘chirib bo‘lmaydi.", "warning")
+            flash(_("Natijalari mavjud talabani o‘chirib bo‘lmaydi."), "warning")
         else:
             db.session.delete(student)
             db.session.commit()
-            flash("Talaba o‘chirildi.", "success")
+            flash(_("Talaba o‘chirildi."), "success")
         return redirect(url_for("admin_students"))
 
     @application.route("/admin/questions", methods=["GET", "POST"])
@@ -721,10 +722,10 @@ def create_app(test_config=None):
                 question.option_d = request.form.get("option_d", "").strip()
                 question.correct_option = request.form.get("correct_option", "").upper()
                 if not prompt or not all((question.option_a, question.option_b, question.option_c, question.option_d)):
-                    flash("Savol va to‘rtta javob variantini kiriting.", "danger")
+                    flash(_("Savol va to‘rtta javob variantini kiriting."), "danger")
                     return redirect(url_for("admin_questions"))
                 if question.correct_option not in {"A", "B", "C", "D"}:
-                    flash("To‘g‘ri javobni A, B, C yoki D sifatida tanlang.", "danger")
+                    flash(_("To‘g‘ri javobni A, B, C yoki D sifatida tanlang."), "danger")
                     return redirect(url_for("admin_questions"))
             elif question_type == "code_output":
                 question.code_snippet = request.form.get("code_snippet", "").strip()
@@ -737,23 +738,23 @@ def create_app(test_config=None):
                 if not prompt or not question.code_snippet or not all(
                     (question.option_a, question.option_b, question.option_c, question.option_d)
                 ):
-                    flash("Savol, Python kodi va to‘rtta chiqish variantini kiriting.", "danger")
+                    flash(_("Savol, Python kodi va to‘rtta chiqish variantini kiriting."), "danger")
                     return redirect(url_for("admin_questions"))
                 if question.correct_option not in {"A", "B", "C", "D"}:
-                    flash("To‘g‘ri chiqishni A, B, C yoki D sifatida belgilang.", "danger")
+                    flash(_("To‘g‘ri chiqishni A, B, C yoki D sifatida belgilang."), "danger")
                     return redirect(url_for("admin_questions"))
             elif question_type == "code":
                 question.input_data = request.form.get("input_data", "").strip()
                 question.expected_output = request.form.get("expected_output", "").strip()
                 if not prompt or not question.expected_output:
-                    flash("Masala sharti va kutilgan chiqish ma’lumotini kiriting.", "danger")
+                    flash(_("Masala sharti va kutilgan chiqish ma’lumotini kiriting."), "danger")
                     return redirect(url_for("admin_questions"))
             elif question_type == "code_problem":
                 question.input_data = request.form.get("input_data", "").strip()
                 question.expected_output = request.form.get("expected_output", "").strip()
                 raw_test_cases = request.form.get("test_cases_json", "").strip()
                 if not prompt or not question.input_data or not question.expected_output:
-                    flash("Masala sharti, namunaviy Input va Outputni kiriting.", "danger")
+                    flash(_("Masala sharti, namunaviy Input va Outputni kiriting."), "danger")
                     return redirect(url_for("admin_questions"))
                 try:
                     test_cases = json.loads(raw_test_cases)
@@ -767,7 +768,7 @@ def create_app(test_config=None):
                     ):
                         raise ValueError
                 except (ValueError, json.JSONDecodeError):
-                    flash("Yashirin testlar JSON ro‘yxati bo‘lishi, har birida input va output satrlari bo‘lishi kerak.", "danger")
+                    flash(_("Yashirin testlar JSON ro‘yxati bo‘lishi, har birida input va output satrlari bo‘lishi kerak."), "danger")
                     return redirect(url_for("admin_questions"))
                 question.test_cases_json = json.dumps(test_cases, ensure_ascii=False)
             else:
@@ -775,7 +776,7 @@ def create_app(test_config=None):
             question.difficulty = normalize_difficulty(request.form.get("difficulty")) or classify_difficulty(question)
             db.session.add(question)
             db.session.commit()
-            flash("Savol bazaga qo‘shildi.", "success")
+            flash(_("Savol bazaga qo‘shildi."), "success")
             return redirect(url_for("admin_questions"))
         questions = Question.query.order_by(Question.id.desc()).all()
         level_counts = {level: 0 for level in ("easy", "medium", "hard")}
@@ -803,11 +804,11 @@ def create_app(test_config=None):
         if question is None:
             abort(404)
         if question.contests:
-            flash("Kontestga biriktirilgan savolni o‘chirib bo‘lmaydi.", "warning")
+            flash(_("Kontestga biriktirilgan savolni o‘chirib bo‘lmaydi."), "warning")
         else:
             db.session.delete(question)
             db.session.commit()
-            flash("Savol o‘chirildi.", "success")
+            flash(_("Savol o‘chirildi."), "success")
         return redirect(url_for("admin_questions"))
 
     @application.route("/admin/contests", methods=["GET", "POST"])
@@ -846,7 +847,7 @@ def create_app(test_config=None):
             else:
                 contest_type = "quiz"
             if not title or not 1 <= duration <= 600 or not questions:
-                flash("Kontest nomi, 1–600 daqiqalik vaqt va kamida bitta blokdan savol kerak.", "danger")
+                flash(_("Kontest nomi, 1–600 daqiqalik vaqt va kamida bitta blokdan savol kerak."), "danger")
             elif window_error:
                 flash(window_error, "danger")
             else:
@@ -867,9 +868,9 @@ def create_app(test_config=None):
                 db.session.add(contest)
                 db.session.commit()
                 if start_as_teacher:
-                    flash("Kontest yaratildi. Ustoz ko‘rigi ochildi; talabalar uchun alohida faollashtiring.", "success")
+                    flash(_("Kontest yaratildi. Ustoz ko‘rigi ochildi; talabalar uchun alohida faollashtiring."), "success")
                     return redirect(url_for("admin_preview_contest", contest_id=contest.id))
-                flash("Kontest yaratildi.", "success")
+                flash(_("Kontest yaratildi."), "success")
             return redirect(url_for("admin_contests"))
         return render_template(
             "contests.html",
@@ -884,9 +885,10 @@ def create_app(test_config=None):
     def group_theory_questions():
         """Nazariy savollar mavzu (blok) bo'yicha: [(nom, [savollar]), ...]."""
         groups = {}
+        other = _("Boshqa savollar")
         for question in Question.query.filter_by(question_type="test").order_by(Question.id):
-            groups.setdefault(question.category or "Boshqa savollar", []).append(question)
-        return sorted(groups.items(), key=lambda item: (item[0] == "Boshqa savollar", item[0]))
+            groups.setdefault(question.category or other, []).append(question)
+        return sorted(groups.items(), key=lambda item: (item[0] == other, item[0]))
 
     def read_max_violations(form):
         try:
@@ -899,9 +901,9 @@ def create_app(test_config=None):
             start_at = parse_local(form.get("start_at"))
             end_at = parse_local(form.get("end_at"))
         except ValueError:
-            raise ValueError("Boshlanish yoki tugash vaqti noto‘g‘ri formatda.") from None
+            raise ValueError(_("Boshlanish yoki tugash vaqti noto‘g‘ri formatda.")) from None
         if start_at and end_at and end_at <= start_at:
-            raise ValueError("Tugash vaqti boshlanish vaqtidan keyin bo‘lishi kerak.")
+            raise ValueError(_("Tugash vaqti boshlanish vaqtidan keyin bo‘lishi kerak."))
         return start_at, end_at
 
     @application.route("/admin/contests/<int:contest_id>/settings", methods=["POST"])
@@ -922,7 +924,7 @@ def create_app(test_config=None):
         contest.require_seb = False  # Safe Exam Browser olib tashlangan
         contest.max_violations = read_max_violations(request.form)
         db.session.commit()
-        flash(f"“{contest.title}” sozlamalari saqlandi.", "success")
+        flash(_("“%(title)s” sozlamalari saqlandi.", title=contest.title), "success")
         return redirect(url_for("admin_contests"))
 
     @application.route("/admin/contests/<int:contest_id>/preview", methods=["GET", "POST"])
@@ -972,7 +974,7 @@ def create_app(test_config=None):
         submission.reviewer_note = request.form.get("reviewer_note", "").strip()[:500]
         submission.reviewed_at = utcnow()
         db.session.commit()
-        flash("Yechim qabul qilindi; keyingi masala ochildi." if status == "accepted" else "Yechim qaytarildi; talaba kodni tuzatib qayta yuborishi mumkin.", "success" if status == "accepted" else "warning")
+        flash(_("Yechim qabul qilindi; keyingi masala ochildi.") if status == "accepted" else _("Yechim qaytarildi; talaba kodni tuzatib qayta yuborishi mumkin."), "success" if status == "accepted" else "warning")
         return redirect(url_for("admin_submissions"))
 
     @application.route("/admin/contests/<int:contest_id>/toggle", methods=["POST"])
@@ -983,7 +985,7 @@ def create_app(test_config=None):
             abort(404)
         contest.is_active = not contest.is_active
         db.session.commit()
-        flash("Kontest holati yangilandi.", "success")
+        flash(_("Kontest holati yangilandi."), "success")
         return redirect(url_for("admin_contests"))
 
     @application.route("/admin/contests/<int:contest_id>/delete", methods=["POST"])
@@ -1008,7 +1010,7 @@ def create_app(test_config=None):
             Attempt.query.filter(Attempt.id.in_(attempt_ids)).delete(synchronize_session=False)
         db.session.delete(contest)
         db.session.commit()
-        flash("Kontest, urinishlari va yuborilgan kodlari butunlay o‘chirildi. Savollar bazada saqlandi.", "success")
+        flash(_("Kontest, urinishlari va yuborilgan kodlari butunlay o‘chirildi. Savollar bazada saqlandi."), "success")
         return redirect(url_for("admin_contests"))
 
     def build_leaderboard(contest):
@@ -1127,14 +1129,14 @@ def create_app(test_config=None):
         coding = contest.contest_type == "coding"
         workbook = Workbook()
         sheet = workbook.active
-        sheet.title = "Reyting"
-        header = ["O‘rin", "HEMIS ID", "F.I.O", "Guruh"]
+        sheet.title = _("Reyting")
+        header = [_("O‘rin"), "HEMIS ID", _("F.I.O"), _("Guruh")]
         if coding:
-            header += [f"Masala {index}" for index in range(1, len(contest.questions) + 1)]
-            header += ["Yechilgan", "Jarima (daqiqa)"]
+            header += [_("Masala %(n)s", n=index) for index in range(1, len(contest.questions) + 1)]
+            header += [_("Yechilgan"), _("Jarima (daqiqa)")]
         else:
-            header += ["To‘g‘ri javob", "Jami savol", "Sarflangan vaqt (daqiqa)"]
-        header.append("Holat")
+            header += [_("To‘g‘ri javob"), _("Jami savol"), _("Sarflangan vaqt (daqiqa)")]
+        header.append(_("Holat"))
         sheet.append(header)
         for row in rows:
             line = [row["rank"] or "—", row["student"].hemis_id, row["student"].full_name, row["student"].group_name]
@@ -1151,7 +1153,7 @@ def create_app(test_config=None):
                     row["attempt"].total_questions,
                     row["penalty"] if row["penalty"] is not None else "",
                 ]
-            line.append("Yakunlangan" if row["finished"] else "Davom etmoqda")
+            line.append(_("Yakunlangan") if row["finished"] else _("Davom etmoqda"))
             sheet.append(line)
         output = io.BytesIO()
         workbook.save(output)
@@ -1194,8 +1196,8 @@ def create_app(test_config=None):
         finalize_expired_attempts()
         workbook = Workbook()
         sheet = workbook.active
-        sheet.title = "Natijalar"
-        sheet.append(["HEMIS ID", "F.I.O", "Guruh", "Kontest", "To‘g‘ri javob", "Jami savol", "Ball (%)", "Yakunlagan vaqt"])
+        sheet.title = _("Natijalar")
+        sheet.append(["HEMIS ID", _("F.I.O"), _("Guruh"), _("Kontest"), _("To‘g‘ri javob"), _("Jami savol"), _("Ball (%)"), _("Yakunlagan vaqt")])
         attempts = (
             Attempt.query.filter(Attempt.completed_at.is_not(None))
             .join(Attempt.student)
@@ -1310,9 +1312,9 @@ def create_app(test_config=None):
     def monitoring_problem(contest, attempt):
         """Kuzatuv talablari bajarilmasa, talabaga ko'rsatiladigan sabab (aks holda None)."""
         if contest.proctoring and not camera_is_live(attempt) and not camera_waived(contest, attempt):
-            return "Kamera ishlamayapti: kamerani yoqing va sahifani yangilang."
+            return _("Kamera ishlamayapti: kamerani yoqing va sahifani yangilang.")
         if contest.screen_capture and not screen_is_live(attempt):
-            return "Ekran ulashilmayapti: butun ekraningizni ulashing va sahifani yangilang."
+            return _("Ekran ulashilmayapti: butun ekraningizni ulashing va sahifani yangilang.")
         return None
 
     def store_live_code(contest, state):
@@ -1416,7 +1418,7 @@ def create_app(test_config=None):
     @application.route("/contest/<int:contest_id>/proctor/event", methods=["POST"])
     @student_required
     def proctor_client_event(contest_id):
-        _, attempt = open_proctored_attempt(contest_id, allow_lockdown=True)
+        _contest, attempt = open_proctored_attempt(contest_id, allow_lockdown=True)
         payload = request.get_json(silent=True) or {}
         kind = payload.get("kind")
         if kind not in proctoring.CLIENT_EVENT_KINDS:
@@ -1595,7 +1597,7 @@ def create_app(test_config=None):
             state=db.session.get(ProctorState, attempt.id),
             events=events,
             image_ids=image_ids,
-            labels=proctoring.EVENT_LABELS,
+            labels={kind: _(label) for kind, label in proctoring.EVENT_LABELS.items()},
         )
 
     @application.route("/admin/contests/<int:contest_id>/proctor/clear", methods=["POST"])
@@ -1608,7 +1610,7 @@ def create_app(test_config=None):
         ProctorEvent.query.filter(ProctorEvent.attempt_id.in_(attempt_ids)).delete(synchronize_session=False)
         ProctorState.query.filter(ProctorState.attempt_id.in_(attempt_ids)).delete(synchronize_session=False)
         db.session.commit()
-        flash("Kontestning barcha kamera kadrlari va kuzatuv hodisalari o‘chirildi.", "success")
+        flash(_("Kontestning barcha kamera kadrlari va kuzatuv hodisalari o‘chirildi."), "success")
         return redirect(url_for("admin_proctor", contest_id=contest.id))
 
     @application.route("/contest/<int:contest_id>", methods=["GET", "POST"])
@@ -1625,9 +1627,9 @@ def create_app(test_config=None):
             state = contest_state(contest)
             if state != "open":
                 messages = {
-                    "closed": "Bu kontest hozir faol emas.",
-                    "upcoming": f"Kontest {format_local(contest.start_at)} da boshlanadi.",
-                    "finished": "Kontest vaqti tugagan.",
+                    "closed": _("Bu kontest hozir faol emas."),
+                    "upcoming": _("Kontest %(time)s da boshlanadi.", time=format_local(contest.start_at)),
+                    "finished": _("Kontest vaqti tugagan."),
                 }
                 flash(messages[state], "warning")
                 return redirect(url_for("student_dashboard"))
@@ -1658,7 +1660,7 @@ def create_app(test_config=None):
             if all(question.id in accepted for question in contest.coding_questions):
                 attempt.coding_done_at = now
                 db.session.commit()
-                flash("Barcha kod masalalari qabul qilindi. Endi test bloki ochildi.", "success")
+                flash(_("Barcha kod masalalari qabul qilindi. Endi test bloki ochildi."), "success")
         if contest.contest_type == "coding" or (contest.contest_type == "mixed" and attempt.coding_done_at is None):
             questions = contest.coding_questions
             submissions = {
@@ -1675,7 +1677,7 @@ def create_app(test_config=None):
                 return redirect(url_for("student_result", attempt_id=attempt.id))
             remaining_seconds = max(0, int((deadline - now).total_seconds()))
             if remaining_seconds == 0:
-                flash("Kontest vaqti tugadi. Qabul qilingan masalalaringiz natijaga qo‘shildi.", "warning")
+                flash(_("Kontest vaqti tugadi. Qabul qilingan masalalaringiz natijaga qo‘shildi."), "warning")
                 score_attempt(attempt, saved_answers)
                 return redirect(url_for("student_result", attempt_id=attempt.id))
             return render_template(
@@ -1725,7 +1727,7 @@ def create_app(test_config=None):
         if attempt.coding_done_at is None:
             attempt.coding_done_at = utcnow()
             db.session.commit()
-            flash("Kod bo‘limi yakunlandi. Qabul qilingan masalalaringiz natijaga qo‘shiladi. Endi test bloki.", "info")
+            flash(_("Kod bo‘limi yakunlandi. Qabul qilingan masalalaringiz natijaga qo‘shiladi. Endi test bloki."), "info")
         return redirect(url_for("take_contest", contest_id=contest_id))
 
     run_times = {}
@@ -1744,9 +1746,9 @@ def create_app(test_config=None):
             abort(404)
         attempt = get_attempt(session["student_id"], contest_id)
         if not attempt or attempt.completed_at or utcnow() >= attempt_deadline(attempt):
-            return jsonify(error="Kontest vaqti tugagan.", finished=True), 409
+            return jsonify(error=_("Kontest vaqti tugagan."), finished=True), 409
         if attempt.coding_done_at is not None:
-            return jsonify(error="Kod bo‘limi yakunlangan.", finished=True), 409
+            return jsonify(error=_("Kod bo‘limi yakunlangan."), finished=True), 409
         data = request.get_json(silent=True) or {}
         language = data.get("language")
         source_code = data.get("source_code") or ""
@@ -1754,13 +1756,14 @@ def create_app(test_config=None):
         if language not in {"python", "cpp"} or not isinstance(source_code, str) or not isinstance(stdin_text, str):
             abort(400)
         if not source_code.strip():
-            return jsonify(error="Avval kod yozing."), 400
+            return jsonify(error=_("Avval kod yozing.")), 400
         cooldown = application.config["RUN_COOLDOWN_SECONDS"]
         now = time.monotonic()
         with run_lock:
             last = run_times.get(attempt.id)
             if cooldown and last and now - last < cooldown:
-                return jsonify(error=f"Juda tez. {cooldown - (now - last):.0f} soniyadan so‘ng qayta ishga tushiring."), 429
+                return jsonify(error=_("Juda tez. %(seconds)s soniyadan so‘ng qayta ishga tushiring.",
+                                       seconds=f"{cooldown - (now - last):.0f}")), 429
             run_times[attempt.id] = now
         attempt_id = attempt.id
         db.session.remove()  # dastur ishlayotganda baza ulanishini band qilib turmaymiz
@@ -1769,7 +1772,7 @@ def create_app(test_config=None):
         except JudgeError as error:
             with run_lock:
                 run_times.pop(attempt_id, None)
-            return jsonify(error=str(error)), 503
+            return jsonify(error=_(str(error))), 503
         return jsonify(result)
 
     @application.route("/contest/<int:contest_id>/code/<int:question_id>", methods=["POST"])
@@ -1786,10 +1789,10 @@ def create_app(test_config=None):
         if not attempt or attempt.completed_at:
             abort(409)
         if attempt.coding_done_at is not None:
-            flash("Kod bo‘limi yakunlangan, endi test bloki ochiq.", "warning")
+            flash(_("Kod bo‘limi yakunlangan, endi test bloki ochiq."), "warning")
             return redirect(url_for("take_contest", contest_id=contest_id))
         if utcnow() >= attempt_deadline(attempt):
-            flash("Kontest vaqti tugagan.", "warning")
+            flash(_("Kontest vaqti tugagan."), "warning")
             return redirect(url_for("take_contest", contest_id=contest_id))
         problem = monitoring_problem(contest, attempt)
         if problem:
@@ -1811,7 +1814,7 @@ def create_app(test_config=None):
         if language not in {"python", "cpp"}:
             abort(400)
         if not source_code or len(source_code) > 20000:
-            flash("Kodingizni kiriting (ko‘pi bilan 20 000 belgi).", "danger")
+            flash(_("Kodingizni kiriting (ko‘pi bilan 20 000 belgi)."), "danger")
             return redirect(url_for("take_contest", contest_id=contest_id))
         cooldown = application.config["SUBMIT_COOLDOWN_SECONDS"]
         last_submitted = db.session.execute(
@@ -1821,7 +1824,8 @@ def create_app(test_config=None):
         ).scalar()
         if cooldown and last_submitted and (utcnow() - last_submitted).total_seconds() < cooldown:
             wait = int(cooldown - (utcnow() - last_submitted).total_seconds()) + 1
-            flash(f"Yechimlar orasida kamida {cooldown} soniya bo‘lishi kerak. {wait} soniyadan so‘ng yuboring.", "warning")
+            flash(_("Yechimlar orasida kamida %(cooldown)s soniya bo‘lishi kerak. %(wait)s soniyadan so‘ng yuboring.",
+                    cooldown=cooldown, wait=wait), "warning")
             return redirect(url_for("take_contest", contest_id=contest_id))
         submission = submissions.get(question.id)
         if (
@@ -1832,7 +1836,7 @@ def create_app(test_config=None):
         ):
             # Tekshiruv hali ketmoqda. 3 daqiqadan eski "pending" — uzilib qolgan
             # tekshiruv deb hisoblanadi va talaba qayta yuborishi mumkin.
-            flash("Oldingi yechimingiz hali tekshirilmoqda. Biroz kuting.", "warning")
+            flash(_("Oldingi yechimingiz hali tekshirilmoqda. Biroz kuting."), "warning")
             return redirect(url_for("take_contest", contest_id=contest_id))
         now = utcnow()
         if submission is None:
@@ -1861,7 +1865,7 @@ def create_app(test_config=None):
         else:
             # Tekshiruv fon oqimida: veb-so'rov darhol qaytadi, sahifa natijani o'zi yangilaydi.
             judge_pool.submit(run_judge_job, *job)
-        flash("Yechim qabul qilindi va tekshiruv navbatiga qo‘yildi.", "info")
+        flash(_("Yechim qabul qilindi va tekshiruv navbatiga qo‘yildi."), "info")
         return redirect(url_for("take_contest", contest_id=contest_id))
 
     def run_judge_job(submission_id, log_id, language, source_code, test_cases_json):

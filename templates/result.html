@@ -1,21 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Natija · Bilim.Arena{% endblock %}
+{% block title %}{{ _('Natija') }} · Bilim.Arena{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-lg-7">
     <div class="card border-0 shadow-sm text-center result-card">
       <div class="card-body p-4 p-lg-5">
         <div class="result-icon mb-3">✓</div>
-        <p class="eyebrow mb-2">KONTЕST YAKUNLANDI</p>
+        <p class="eyebrow mb-2">{{ _('KONTЕST YAKUNLANDI') }}</p>
         <h1 class="h3 mb-2">{{ attempt.contest.title }}</h1>
         <p class="text-secondary mb-4">{{ attempt.student.full_name }} · HEMIS ID: {{ attempt.student.hemis_id }}</p>
         <div class="score-display mb-4">{{ '%.2f'|format(percentage) }}<span>%</span></div>
         <div class="row g-3 text-start mb-4">
-          <div class="col-6"><div class="result-metric"><span>To‘g‘ri javoblar</span><strong>{{ attempt.correct_count }} / {{ attempt.total_questions }}</strong></div></div>
-          <div class="col-6"><div class="result-metric"><span>To‘plangan ball</span><strong>{{ '%.2f'|format(attempt.score or 0) }} / 100</strong></div></div>
+          <div class="col-6"><div class="result-metric"><span>{{ _('To‘g‘ri javoblar') }}</span><strong>{{ attempt.correct_count }} / {{ attempt.total_questions }}</strong></div></div>
+          <div class="col-6"><div class="result-metric"><span>{{ _('To‘plangan ball') }}</span><strong>{{ '%.2f'|format(attempt.score or 0) }} / 100</strong></div></div>
         </div>
-        <p class="text-secondary small">Yakunlangan vaqt: {{ attempt.completed_at|local }}</p>
-        <a class="btn btn-primary" href="{{ url_for('student_dashboard') }}">Kontestlar sahifasiga qaytish</a>
+        <p class="text-secondary small">{{ _('Yakunlangan vaqt: %(time)s', time=attempt.completed_at|local) }}</p>
+        <a class="btn btn-primary" href="{{ url_for('student_dashboard') }}">{{ _('Kontestlar sahifasiga qaytish') }}</a>
       </div>
     </div>
   </div>

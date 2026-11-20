@@ -1,63 +1,63 @@
 {% extends "base.html" %}
-{% block title %}Savollar bazasi · Bilim.Arena{% endblock %}
+{% block title %}{{ _('Savollar bazasi') }} · Bilim.Arena{% endblock %}
 {% block content %}
-<div class="page-heading"><p class="eyebrow mb-2">KONTENT</p><h1 class="page-title">Savollar bazasi</h1><p class="text-secondary">Kod natijasini topish testi, oddiy test yoki dasturlash masalasini yarating.</p></div>
+<div class="page-heading"><p class="eyebrow mb-2">{{ _('KONTENT') }}</p><h1 class="page-title">{{ _('Savollar bazasi') }}</h1><p class="text-secondary">{{ _('Kod natijasini topish testi, oddiy test yoki dasturlash masalasini yarating.') }}</p></div>
 <div class="row g-4">
   <div class="col-lg-5"><div class="card border-0 shadow-sm"><div class="card-body p-4">
-    <h2 class="h5 mb-3">Yangi savol</h2>
+    <h2 class="h5 mb-3">{{ _('Yangi savol') }}</h2>
     <form method="post" id="questionForm">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <label class="form-label" for="question_type">Savol turi</label>
-      <select class="form-select mb-3" id="question_type" name="question_type"><option value="code_output">Kod natijasini topish (A–D)</option><option value="test">Oddiy test (A–D)</option><option value="code_problem">Kod yozish masalasi (ustoz tekshiradi)</option><option value="code">Output yoziladigan masala</option></select>
-<label class="form-label" for="difficulty">Qiyinlik darajasi</label>
-      <select class="form-select mb-3" id="difficulty" name="difficulty"><option value="">Avtomatik aniqlansin</option>{% for level in ('easy', 'medium', 'hard') %}<option value="{{ level }}">{{ level_labels[level] }}</option>{% endfor %}</select>
-      <label class="form-label">Savol yoki masala sharti</label><textarea class="form-control mb-3" name="prompt" rows="4" required></textarea>
+      <label class="form-label" for="question_type">{{ _('Savol turi') }}</label>
+      <select class="form-select mb-3" id="question_type" name="question_type"><option value="code_output">{{ _('Kod natijasini topish (A–D)') }}</option><option value="test">{{ _('Oddiy test (A–D)') }}</option><option value="code_problem">{{ _('Kod yozish masalasi (ustoz tekshiradi)') }}</option><option value="code">{{ _('Output yoziladigan masala') }}</option></select>
+<label class="form-label" for="difficulty">{{ _('Qiyinlik darajasi') }}</label>
+      <select class="form-select mb-3" id="difficulty" name="difficulty"><option value="">{{ _('Avtomatik aniqlansin') }}</option>{% for level in ('easy', 'medium', 'hard') %}<option value="{{ level }}">{{ level_labels[level] }}</option>{% endfor %}</select>
+      <label class="form-label">{{ _('Savol yoki masala sharti') }}</label><textarea class="form-control mb-3" name="prompt" rows="4" required></textarea>
       <div id="choiceFields">
         <div id="snippetFields">
-          <label class="form-label">Python kodi</label><textarea class="form-control font-monospace mb-3" name="code_snippet" rows="7" placeholder="a, b = map(int, input().split())&#10;print(a + b)"></textarea>
-          <label class="form-label">Kirish ma’lumoti (Input)</label><textarea class="form-control font-monospace mb-3" name="code_input_data" rows="2" placeholder="3 5"></textarea>
+          <label class="form-label">{{ _('Python kodi') }}</label><textarea class="form-control font-monospace mb-3" name="code_snippet" rows="7" placeholder="a, b = map(int, input().split())&#10;print(a + b)"></textarea>
+          <label class="form-label">{{ _('Kirish ma’lumoti (Input)') }}</label><textarea class="form-control font-monospace mb-3" name="code_input_data" rows="2" placeholder="3 5"></textarea>
         </div>
-        {% for letter in ['a','b','c','d'] %}<label class="form-label">Variant {{ letter|upper }}</label><input class="form-control mb-2" name="option_{{ letter }}">{% endfor %}
-        <label class="form-label mt-2">To‘g‘ri javob / chiqish</label><select class="form-select mb-3" name="correct_option"><option value="">Tanlang</option><option>A</option><option>B</option><option>C</option><option>D</option></select>
+        {% for letter in ['a','b','c','d'] %}<label class="form-label">{{ _('Variant %(letter)s', letter=letter|upper) }}</label><input class="form-control mb-2" name="option_{{ letter }}">{% endfor %}
+        <label class="form-label mt-2">{{ _('To‘g‘ri javob / chiqish') }}</label><select class="form-select mb-3" name="correct_option"><option value="">{{ _('Tanlang') }}</option><option>A</option><option>B</option><option>C</option><option>D</option></select>
       </div>
       <div id="codeFields" class="d-none">
-        <label class="form-label">Kirish ma’lumoti (Input)</label><textarea class="form-control mb-3" name="input_data" rows="3" placeholder="Namuna kiruvchi ma’lumot"></textarea>
-        <label class="form-label">Kutilgan chiqish (Output)</label><textarea class="form-control mb-3" name="expected_output" rows="3" placeholder="To‘g‘ri javob chiqishi"></textarea>
+        <label class="form-label">{{ _('Kirish ma’lumoti (Input)') }}</label><textarea class="form-control mb-3" name="input_data" rows="3" placeholder="{{ _('Namuna kiruvchi ma’lumot') }}"></textarea>
+        <label class="form-label">{{ _('Kutilgan chiqish (Output)') }}</label><textarea class="form-control mb-3" name="expected_output" rows="3" placeholder="{{ _('To‘g‘ri javob chiqishi') }}"></textarea>
       </div>
       <div id="codeProblemFields" class="d-none">
-        <div class="alert alert-info small">Python 3 va C++17 yechimlari JUDGE0_URL sozlangan bo‘lsa yashirin testlarda avtomatik tekshiriladi. Barcha testlardan o‘tgan yechim qabul qilinadi.</div>
-        <label class="form-label">Namuna Input</label><textarea class="form-control font-monospace mb-3" name="input_data" rows="2"></textarea>
-        <label class="form-label">Namuna Output</label><textarea class="form-control font-monospace mb-3" name="expected_output" rows="2"></textarea>
-        <label class="form-label">Yashirin testlar (JSON)</label><textarea class="form-control font-monospace mb-3" name="test_cases_json" rows="6" placeholder='[{"input":"3 5","output":"8"},{"input":"10 20","output":"30"}]'></textarea>
+        <div class="alert alert-info small">{{ _('Python 3 va C++17 yechimlari JUDGE0_URL sozlangan bo‘lsa yashirin testlarda avtomatik tekshiriladi. Barcha testlardan o‘tgan yechim qabul qilinadi.') }}</div>
+        <label class="form-label">{{ _('Namuna Input') }}</label><textarea class="form-control font-monospace mb-3" name="input_data" rows="2"></textarea>
+        <label class="form-label">{{ _('Namuna Output') }}</label><textarea class="form-control font-monospace mb-3" name="expected_output" rows="2"></textarea>
+        <label class="form-label">{{ _('Yashirin testlar (JSON)') }}</label><textarea class="form-control font-monospace mb-3" name="test_cases_json" rows="6" placeholder='[{"input":"3 5","output":"8"},{"input":"10 20","output":"30"}]'></textarea>
       </div>
-      <button class="btn btn-primary">Savolni saqlash</button>
+      <button class="btn btn-primary">{{ _('Savolni saqlash') }}</button>
     </form>
   </div></div>
   <div class="card border-0 shadow-sm mt-4"><div class="card-body p-4">
-    <h2 class="h5 mb-1">Fayldan yuklash (nazariy test)</h2>
-    <p class="text-secondary small">Word (.docx) yoki Excel (.xlsx) jadvali: <strong>№ | Savol | A (to‘g‘ri javob) | B | C | D</strong>. Variantlar avtomatik aralashtiriladi. Jadvalda «To‘g‘ri» ustuni (A–D) bo‘lsa, javob shundan olinadi. Word’dagi «N-blok: Nomi» sarlavhasi blok nomiga aylanadi; bazada bor savollar takror qo‘shilmaydi.</p>
+    <h2 class="h5 mb-1">{{ _('Fayldan yuklash (nazariy test)') }}</h2>
+    <p class="text-secondary small">{{ _('Word (.docx) yoki Excel (.xlsx) jadvali:') }} <strong>№ | Savol | A (to‘g‘ri javob) | B | C | D</strong>. {{ _('Variantlar avtomatik aralashtiriladi. Jadvalda «To‘g‘ri» ustuni (A–D) bo‘lsa, javob shundan olinadi. Word’dagi «N-blok: Nomi» sarlavhasi blok nomiga aylanadi; bazada bor savollar takror qo‘shilmaydi.') }}</p>
     <form method="post" action="{{ url_for('import_questions') }}" enctype="multipart/form-data">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <input class="form-control mb-2" type="file" name="file" accept=".docx,.xlsx" required>
-      <input class="form-control mb-2" name="category" maxlength="160" placeholder="Blok nomi (ixtiyoriy, faylda bo‘lmasa)">
-      <select class="form-select mb-2" name="difficulty"><option value="">Daraja: avtomatik (yoki fayldagi «Daraja» ustuni)</option>{% for level in ('easy', 'medium', 'hard') %}<option value="{{ level }}">{{ level_labels[level] }}</option>{% endfor %}</select>
-      <p class="form-text mt-0 mb-3">Jadvalda «Daraja» ustuni bo‘lsa (Oson / O‘rta / Qiyin), har bir savolga o‘sha daraja beriladi.</p>
-      <button class="btn btn-outline-primary">Savollarni yuklash</button>
+      <input class="form-control mb-2" name="category" maxlength="160" placeholder="{{ _('Blok nomi (ixtiyoriy, faylda bo‘lmasa)') }}">
+      <select class="form-select mb-2" name="difficulty"><option value="">{{ _('Daraja: avtomatik (yoki fayldagi «Daraja» ustuni)') }}</option>{% for level in ('easy', 'medium', 'hard') %}<option value="{{ level }}">{{ level_labels[level] }}</option>{% endfor %}</select>
+      <p class="form-text mt-0 mb-3">{{ _('Jadvalda «Daraja» ustuni bo‘lsa (Oson / O‘rta / Qiyin), har bir savolga o‘sha daraja beriladi.') }}</p>
+      <button class="btn btn-outline-primary">{{ _('Savollarni yuklash') }}</button>
     </form>
   </div></div></div>
   <div class="col-lg-7"><div class="card border-0 shadow-sm"><div class="card-body p-0">
-    <div class="p-4 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2"><h2 class="h5 mb-0">Mavjud savollar <span class="badge rounded-pill text-bg-light">{{ questions|length }}</span></h2>
+    <div class="p-4 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2"><h2 class="h5 mb-0">{{ _('Mavjud savollar') }} <span class="badge rounded-pill text-bg-light">{{ questions|length }}</span></h2>
       <div class="d-flex flex-wrap gap-1" id="bankLevelFilter">{% for level in ('easy', 'medium', 'hard') %}<button type="button" class="btn btn-sm level-chip level-{{ level }} is-on" data-level-chip="{{ level }}">{{ level_labels[level] }} · {{ level_counts[level] }}</button>{% endfor %}</div></div>
     {% if questions %}<div class="list-group list-group-flush">
       {% for question in questions %}<div class="list-group-item p-4" data-level="{{ question.difficulty or 'medium' }}">
-        <div class="d-flex justify-content-between gap-3"><div><span class="badge {{ 'text-bg-info' if question.question_type == 'code_output' else ('text-bg-primary' if question.question_type == 'test' else 'text-bg-secondary') }} mb-2">{{ 'Kod natijasini topish' if question.question_type == 'code_output' else ('Nazariy test' if question.question_type == 'test' else 'Dasturlash') }}</span>{% if question.category %} <span class="badge text-bg-light mb-2">{{ question.category }}</span>{% endif %} <span class="level-badge level-{{ question.difficulty or 'medium' }} mb-2">{{ level_labels[question.difficulty or 'medium'] }}</span><div class="fw-medium">{{ question.prompt }}</div>
-          {% if question.question_type == 'code_output' %}<pre class="sample-input mt-2 mb-2"><code>{{ question.code_snippet }}</code></pre><div class="small text-secondary">Input: {{ question.input_data or 'bo‘sh' }} · Chiqish variantli test</div>
-          {% elif question.question_type == 'code_problem' %}<div class="small text-secondary mt-2">Namuna Input: {{ question.input_data or '—' }} · yashirin testlar: {{ (question.test_cases_json or '[]')|length }} belgili JSON</div>
+        <div class="d-flex justify-content-between gap-3"><div><span class="badge {{ 'text-bg-info' if question.question_type == 'code_output' else ('text-bg-primary' if question.question_type == 'test' else 'text-bg-secondary') }} mb-2">{{ _('Kod natijasini topish') if question.question_type == 'code_output' else (_('Nazariy test') if question.question_type == 'test' else _('Dasturlash')) }}</span>{% if question.category %} <span class="badge text-bg-light mb-2">{{ question.category }}</span>{% endif %} <span class="level-badge level-{{ question.difficulty or 'medium' }} mb-2">{{ level_labels[question.difficulty or 'medium'] }}</span><div class="fw-medium">{{ question.prompt }}</div>
+          {% if question.question_type == 'code_output' %}<pre class="sample-input mt-2 mb-2"><code>{{ question.code_snippet }}</code></pre><div class="small text-secondary">Input: {{ question.input_data or _('bo‘sh') }} · {{ _('Chiqish variantli test') }}</div>
+          {% elif question.question_type == 'code_problem' %}<div class="small text-secondary mt-2">{{ _('Namuna Input') }}: {{ question.input_data or '—' }} · {{ _('yashirin testlar: %(n)s belgili JSON', n=(question.test_cases_json or '[]')|length) }}</div>
           {% elif question.question_type == 'test' %}<div class="small text-secondary mt-2">A. {{ question.option_a }} · B. {{ question.option_b }} · C. {{ question.option_c }} · D. {{ question.option_d }}</div>
-          {% else %}<div class="small text-secondary mt-2">Input: {{ question.input_data or '—' }} · Output belgilangan</div>{% endif %}
-        </div><div class="d-flex flex-column align-items-end gap-2"><form method="post" class="question-level-form" action="{{ url_for('set_question_difficulty', question_id=question.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><select class="form-select form-select-sm" name="difficulty" aria-label="Qiyinlik darajasi" onchange="this.form.submit()">{% for level in ('easy', 'medium', 'hard') %}<option value="{{ level }}" {% if (question.difficulty or 'medium') == level %}selected{% endif %}>{{ level_labels[level] }}</option>{% endfor %}</select></form><form method="post" action="{{ url_for('delete_question', question_id=question.id) }}" onsubmit="return confirm('Savolni o‘chirmoqchimisiz?')"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger">O‘chirish</button></form></div></div>
+          {% else %}<div class="small text-secondary mt-2">Input: {{ question.input_data or '—' }} · {{ _('Output belgilangan') }}</div>{% endif %}
+        </div><div class="d-flex flex-column align-items-end gap-2"><form method="post" class="question-level-form" action="{{ url_for('set_question_difficulty', question_id=question.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><select class="form-select form-select-sm" name="difficulty" aria-label="{{ _('Qiyinlik darajasi') }}" onchange="this.form.submit()">{% for level in ('easy', 'medium', 'hard') %}<option value="{{ level }}" {% if (question.difficulty or 'medium') == level %}selected{% endif %}>{{ level_labels[level] }}</option>{% endfor %}</select></form><form method="post" action="{{ url_for('delete_question', question_id=question.id) }}" onsubmit="return confirm({{ _('Savolni o‘chirmoqchimisiz?')|tojson|forceescape }})"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger">{{ _('O‘chirish') }}</button></form></div></div>
       </div>{% endfor %}
-    </div>{% else %}<div class="empty-state">Savollar bazasi hozircha bo‘sh.</div>{% endif %}
+    </div>{% else %}<div class="empty-state">{{ _('Savollar bazasi hozircha bo‘sh.') }}</div>{% endif %}
   </div></div></div>
 </div>
 {% endblock %}

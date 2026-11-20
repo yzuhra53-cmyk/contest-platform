@@ -1,36 +1,36 @@
 {% extends "base.html" %}
-{% block title %}Reyting · {{ contest.title }}{% endblock %}
+{% block title %}{{ _('Reyting') }} · {{ contest.title }}{% endblock %}
 {% block content %}
 {% set coding = contest.contest_type == 'coding' %}
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
   <div class="page-heading mb-0">
-    <p class="eyebrow mb-2">REYTING{% if state == 'open' %} · JONLI{% endif %}</p>
+    <p class="eyebrow mb-2">{{ _('REYTING') }}{% if state == 'open' %} · {{ _('JONLI') }}{% endif %}</p>
     <h1 class="page-title">{{ contest.title }}</h1>
     <p class="text-secondary mb-0">
-      {{ 'Kod yozish' if coding else 'Output testi' }} · {{ contest.questions|length }} ta masala · {{ rows|length }} ishtirokchi
-      {% if contest.start_at %} · Boshlanish: {{ contest.start_at|local }}{% endif %}
-      {% if contest.end_at %} · Tugash: {{ contest.end_at|local }}{% endif %}
+      {{ _('Kod yozish') if coding else _('Output testi') }} · {{ _('%(n)s ta masala', n=contest.questions|length) }} · {{ _('%(n)s ishtirokchi', n=rows|length) }}
+      {% if contest.start_at %} · {{ _('Boshlanish: %(time)s', time=contest.start_at|local) }}{% endif %}
+      {% if contest.end_at %} · {{ _('Tugash: %(time)s', time=contest.end_at|local) }}{% endif %}
     </p>
   </div>
   {% if not viewer_student_id %}
   <div class="d-flex gap-2">
-    <a class="btn btn-outline-secondary" href="{{ url_for('admin_contests') }}">← Kontestlar</a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin_contests') }}">← {{ _('Kontestlar') }}</a>
     <a class="btn btn-success" href="{{ url_for('export_leaderboard', contest_id=contest.id) }}">↓ Excel (.xlsx)</a>
   </div>
   {% else %}
-  <a class="btn btn-outline-secondary" href="{{ url_for('student_dashboard') }}">← Kontestlarim</a>
+  <a class="btn btn-outline-secondary" href="{{ url_for('student_dashboard') }}">← {{ _('Kontestlarim') }}</a>
   {% endif %}
 </div>
 <div class="card border-0 shadow-sm"><div class="table-responsive"><table class="table align-middle mb-0 leaderboard-table">
   <thead><tr>
-    <th class="text-center">#</th><th>Talaba</th><th>Guruh</th>
+    <th class="text-center">#</th><th>{{ _('Talaba') }}</th><th>{{ _('Guruh') }}</th>
     {% if coding %}
       {% for question in contest.questions %}<th class="text-center" title="{{ question.prompt|truncate(80) }}">{{ loop.index }}</th>{% endfor %}
-      <th class="text-center">Yechilgan</th><th class="text-center">Jarima</th>
+      <th class="text-center">{{ _('Yechilgan') }}</th><th class="text-center">{{ _('Jarima') }}</th>
     {% else %}
-      <th class="text-center">To‘g‘ri</th><th class="text-center">Vaqt (daq.)</th>
+      <th class="text-center">{{ _('To‘g‘ri') }}</th><th class="text-center">{{ _('Vaqt (daq.)') }}</th>
     {% endif %}
-    <th>Holat</th>
+    <th>{{ _('Holat') }}</th>
   </tr></thead>
   <tbody>
   {% for row in rows %}
@@ -53,18 +53,18 @@
         <td class="text-center fw-semibold">{% if row.solved is not none %}{{ row.solved }}/{{ row.attempt.total_questions }}{% else %}—{% endif %}</td>
         <td class="text-center">{{ row.penalty if row.penalty is not none else '—' }}</td>
       {% endif %}
-      <td>{% if row.finished %}<span class="badge text-bg-secondary">Yakunlangan</span>{% else %}<span class="badge text-bg-info">Davom etmoqda</span>{% endif %}</td>
+      <td>{% if row.finished %}<span class="badge text-bg-secondary">{{ _('Yakunlangan') }}</span>{% else %}<span class="badge text-bg-info">{{ _('Davom etmoqda') }}</span>{% endif %}</td>
     </tr>
   {% else %}
-    <tr><td colspan="{{ (contest.questions|length + 6) if coding else 6 }}" class="empty-state">Hali hech kim qatnashmagan.</td></tr>
+    <tr><td colspan="{{ (contest.questions|length + 6) if coding else 6 }}" class="empty-state">{{ _('Hali hech kim qatnashmagan.') }}</td></tr>
   {% endfor %}
   </tbody>
 </table></div></div>
 <p class="small text-secondary mt-3 mb-0">
   {% if coding %}
-  Tartib: yechilgan masalalar soni, teng bo‘lsa jarima kamroq bo‘lgani yuqorida. Jarima = har bir yechilgan masala uchun boshlagandan qabul qilingungacha o‘tgan daqiqalar + har bir noto‘g‘ri urinish uchun {{ wrong_penalty }} daqiqa (kompilyatsiya xatolari hisobga olinmaydi). «+2» — 2 ta noto‘g‘ri urinishdan keyin qabul qilingan, ostidagi raqam — daqiqa.
+  {{ _('Tartib: yechilgan masalalar soni, teng bo‘lsa jarima kamroq bo‘lgani yuqorida. Jarima = har bir yechilgan masala uchun boshlagandan qabul qilingungacha o‘tgan daqiqalar + har bir noto‘g‘ri urinish uchun %(penalty)s daqiqa (kompilyatsiya xatolari hisobga olinmaydi). «+2» — 2 ta noto‘g‘ri urinishdan keyin qabul qilingan, ostidagi raqam — daqiqa.', penalty=wrong_penalty) }}
   {% else %}
-  Tartib: to‘g‘ri javoblar soni, teng bo‘lsa kamroq vaqt sarflagani yuqorida. Davom etayotgan ishtirokchilar yakunlagach o‘rin oladi.
+  {{ _('Tartib: to‘g‘ri javoblar soni, teng bo‘lsa kamroq vaqt sarflagani yuqorida. Davom etayotgan ishtirokchilar yakunlagach o‘rin oladi.') }}
   {% endif %}
 </p>
 {% endblock %}

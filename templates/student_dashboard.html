@@ -1,26 +1,26 @@
 {% extends "base.html" %}
-{% block title %}Talaba kabineti · Bilim.Arena{% endblock %}
+{% block title %}{{ _('Talaba kabineti') }} · Bilim.Arena{% endblock %}
 {% block content %}
-<div class="mb-4"><p class="eyebrow mb-2">TALABA KABINETI</p><h1 class="page-title mb-1">Salom, {{ student.full_name }}!</h1><p class="text-secondary mb-0">HEMIS ID: {{ student.hemis_id }} · {{ student.group_name }}</p></div>
-<h2 class="h5 mb-3">Faol kontestlar</h2>
+<div class="mb-4"><p class="eyebrow mb-2">{{ _('TALABA KABINETI') }}</p><h1 class="page-title mb-1">{{ _('Salom, %(name)s!', name=student.full_name) }}</h1><p class="text-secondary mb-0">HEMIS ID: {{ student.hemis_id }} · {{ student.group_name }}</p></div>
+<h2 class="h5 mb-3">{{ _('Faol kontestlar') }}</h2>
 <div class="row g-3">
   {% for contest in contests %}
   {% set attempt = attempts.get(contest.id) %}
   <div class="col-md-6 col-xl-4"><div class="card contest-card border-0 shadow-sm h-100"><div class="card-body p-4 d-flex flex-column">
-    <div class="d-flex justify-content-between mb-3"><span class="badge {{ {'coding': 'text-bg-warning', 'mixed': 'text-bg-info'}.get(contest.contest_type, 'text-bg-success') }}">{{ contest.type_label }}</span><span class="small text-secondary">{{ contest.duration_minutes }} daqiqa</span></div>
+    <div class="d-flex justify-content-between mb-3"><span class="badge {{ {'coding': 'text-bg-warning', 'mixed': 'text-bg-info'}.get(contest.contest_type, 'text-bg-success') }}">{{ contest.type_label }}</span><span class="small text-secondary">{{ _('%(n)s daqiqa', n=contest.duration_minutes) }}</span></div>
     {% set state = contest_state(contest) %}
-    <h3 class="h5">{{ contest.title }}</h3><p class="text-secondary small mb-2">{{ contest.questions|length }} ta masala</p>
-    {% if contest.monitored or contest.lockdown %}<p class="small mb-2">{% if contest.proctoring %}<span class="badge text-bg-dark">📹 Kamera kuzatuvi</span> {% endif %}{% if contest.screen_capture %}<span class="badge text-bg-dark">🖥 Ekran kuzatuvi</span> {% endif %}{% if contest.lockdown %}<span class="badge text-bg-dark">🔒 Qulflangan rejim</span> {% endif %}</p>{% endif %}
-    {% if contest.start_at or contest.end_at %}<p class="small text-secondary">{% if contest.start_at %}Boshlanish: {{ contest.start_at|local }}<br>{% endif %}{% if contest.end_at %}Tugash: {{ contest.end_at|local }}{% endif %}</p>{% endif %}
+    <h3 class="h5">{{ contest.title }}</h3><p class="text-secondary small mb-2">{{ _('%(n)s ta masala', n=contest.questions|length) }}</p>
+    {% if contest.monitored or contest.lockdown %}<p class="small mb-2">{% if contest.proctoring %}<span class="badge text-bg-dark">📹 {{ _('Kamera kuzatuvi') }}</span> {% endif %}{% if contest.screen_capture %}<span class="badge text-bg-dark">🖥 {{ _('Ekran kuzatuvi') }}</span> {% endif %}{% if contest.lockdown %}<span class="badge text-bg-dark">🔒 {{ _('Qulflangan rejim') }}</span> {% endif %}</p>{% endif %}
+    {% if contest.start_at or contest.end_at %}<p class="small text-secondary">{% if contest.start_at %}{{ _('Boshlanish: %(time)s', time=contest.start_at|local) }}<br>{% endif %}{% if contest.end_at %}{{ _('Tugash: %(time)s', time=contest.end_at|local) }}{% endif %}</p>{% endif %}
     <div class="mt-auto d-flex flex-column gap-2">
-    {% if attempt and attempt.completed_at %}<a class="btn btn-outline-primary" href="{{ url_for('student_result', attempt_id=attempt.id) }}">Natijani ko‘rish</a>
-    {% elif attempt %}<a class="btn btn-primary" href="{{ url_for('take_contest', contest_id=contest.id) }}">Davom ettirish</a>
-    {% elif state == 'upcoming' %}<button class="btn btn-secondary" disabled>{{ contest.start_at|local }} da boshlanadi</button>
-    {% elif state == 'finished' %}<button class="btn btn-secondary" disabled>Kontest tugagan</button>
-    {% else %}<a class="btn btn-primary" href="{{ url_for('take_contest', contest_id=contest.id) }}">Kontestni boshlash</a>{% endif %}
-    {% if contest.public_leaderboard %}<a class="btn btn-sm btn-outline-success" href="{{ url_for('student_leaderboard', contest_id=contest.id) }}">Reyting</a>{% endif %}
+    {% if attempt and attempt.completed_at %}<a class="btn btn-outline-primary" href="{{ url_for('student_result', attempt_id=attempt.id) }}">{{ _('Natijani ko‘rish') }}</a>
+    {% elif attempt %}<a class="btn btn-primary" href="{{ url_for('take_contest', contest_id=contest.id) }}">{{ _('Davom ettirish') }}</a>
+    {% elif state == 'upcoming' %}<button class="btn btn-secondary" disabled>{{ _('%(time)s da boshlanadi', time=contest.start_at|local) }}</button>
+    {% elif state == 'finished' %}<button class="btn btn-secondary" disabled>{{ _('Kontest tugagan') }}</button>
+    {% else %}<a class="btn btn-primary" href="{{ url_for('take_contest', contest_id=contest.id) }}">{{ _('Kontestni boshlash') }}</a>{% endif %}
+    {% if contest.public_leaderboard %}<a class="btn btn-sm btn-outline-success" href="{{ url_for('student_leaderboard', contest_id=contest.id) }}">{{ _('Reyting') }}</a>{% endif %}
     </div>
   </div></div></div>
-  {% else %}<div class="col-12"><div class="card border-0 shadow-sm"><div class="empty-state">Hozircha faol kontest mavjud emas. Keyinroq qayta tekshiring.</div></div></div>{% endfor %}
+  {% else %}<div class="col-12"><div class="card border-0 shadow-sm"><div class="empty-state">{{ _('Hozircha faol kontest mavjud emas. Keyinroq qayta tekshiring.') }}</div></div></div>{% endfor %}
 </div>
 {% endblock %}

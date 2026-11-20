@@ -1,29 +1,29 @@
 {% extends "base.html" %}
-{% block title %}Ustoz ko‘rigi · {{ contest.title }}{% endblock %}
+{% block title %}{{ _('Ustoz ko‘rigi') }} · {{ contest.title }}{% endblock %}
 {% block content %}
 <div class="page-heading">
-  <p class="eyebrow mb-2">USTOZ KO‘RIGI</p>
+  <p class="eyebrow mb-2">{{ _('Ustoz ko‘rigi')|upper }}</p>
   <h1 class="page-title">{{ contest.title }}</h1>
-  <p class="text-secondary">Bu sinov talaba natijalariga qo‘shilmaydi. Talabalar kirishi uchun kontestni alohida faollashtiring.</p>
+  <p class="text-secondary">{{ _('Bu sinov talaba natijalariga qo‘shilmaydi. Talabalar kirishi uchun kontestni alohida faollashtiring.') }}</p>
 </div>
 {% if score %}
-<div class="alert alert-primary">Natija: {{ score.correct }} / {{ score.total }} · {{ '%.2f'|format(score.percentage) }}%</div>
+<div class="alert alert-primary">{{ _('Natija') }}: {{ score.correct }} / {{ score.total }} · {{ '%.2f'|format(score.percentage) }}%</div>
 {% endif %}
 {% if contest.has_coding %}
-<h2 class="h5 mb-3">{{ '1-blok: ' if contest.has_quiz else '' }}Kod yozish masalalari</h2>
+<h2 class="h5 mb-3">{{ _('1-blok') ~ ': ' if contest.has_quiz else '' }}{{ _('Kod yozish masalalari') }}</h2>
 <div class="d-flex flex-column gap-3">
   {% for question in contest.coding_questions %}
   <article class="card border-0 shadow-sm"><div class="card-body p-4">
-    <span class="badge text-bg-warning mb-2">Masala {{ loop.index }}</span>
+    <span class="badge text-bg-warning mb-2">{{ _('Masala %(n)s', n=loop.index) }}</span>
     <h2 class="h5 problem-statement">{{ question.prompt }}</h2>
-    <div class="small fw-semibold mb-1">Namuna Input</div><pre class="sample-input">{{ question.input_data or '—' }}</pre>
-    <div class="small fw-semibold mb-1">Namuna Output</div><pre class="sample-input">{{ question.expected_output or '—' }}</pre>
+    <div class="small fw-semibold mb-1">{{ _('Namuna Input') }}</div><pre class="sample-input">{{ question.input_data or '—' }}</pre>
+    <div class="small fw-semibold mb-1">{{ _('Namuna Output') }}</div><pre class="sample-input">{{ question.expected_output or '—' }}</pre>
   </div></article>
   {% endfor %}
 </div>
 {% endif %}
 {% if contest.has_quiz %}
-{% if contest.has_coding %}<h2 class="h5 my-3">2-blok: test</h2>{% endif %}
+{% if contest.has_coding %}<h2 class="h5 my-3">{{ _('2-blok: test') }}</h2>{% endif %}
 <form method="post">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   {% for question in contest.quiz_questions %}
@@ -40,8 +40,8 @@
     </div>
   </section>
   {% endfor %}
-  <button class="btn btn-primary btn-lg">Sinovni yakunlash</button>
+  <button class="btn btn-primary btn-lg">{{ _('Sinovni yakunlash') }}</button>
 </form>
 {% endif %}
-<a class="btn btn-outline-secondary mt-4" href="{{ url_for('admin_contests') }}">Kontestlarga qaytish</a>
+<a class="btn btn-outline-secondary mt-4" href="{{ url_for('admin_contests') }}">{{ _('Kontestlarga qaytish') }}</a>
 {% endblock %}

@@ -1,27 +1,27 @@
 {% extends "base.html" %}
-{% block title %}Kuzatuv · {{ contest.title }}{% endblock %}
+{% block title %}{{ _('Kuzatuv') }} · {{ contest.title }}{% endblock %}
 {% block main_class %}container-fluid px-lg-5 py-4{% endblock %}
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
   <div class="page-heading mb-0">
-    <p class="eyebrow mb-2">JONLI KUZATUV</p>
+    <p class="eyebrow mb-2">{{ _('JONLI KUZATUV') }}</p>
     <h1 class="page-title">{{ contest.title }}</h1>
-    <p class="text-secondary mb-0">Kadrlar har 10 soniyada yangilanadi{% if contest.screen_capture %}; ekran rasmini kattalashtirish uchun ustiga bosing{% endif %}. {{ stale_seconds }} soniyadan ko‘p kadr kelmasa yoki yuz soni 1 ta bo‘lmasa, kartochka qizil bo‘ladi va yuqoriga chiqadi.</p>
+    <p class="text-secondary mb-0">{{ _('Kadrlar har 10 soniyada yangilanadi') }}{% if contest.screen_capture %}; {{ _('ekran rasmini kattalashtirish uchun ustiga bosing') }}{% endif %}. {{ _('%(n)s soniyadan ko‘p kadr kelmasa yoki yuz soni 1 ta bo‘lmasa, kartochka qizil bo‘ladi va yuqoriga chiqadi.', n=stale_seconds) }}</p>
   </div>
   <div class="d-flex flex-wrap gap-2 align-items-center">
     <span class="small text-secondary" id="proctorUpdated"></span>
-    <a class="btn btn-outline-success" href="{{ url_for('admin_leaderboard', contest_id=contest.id) }}">Reyting</a>
-    <a class="btn btn-outline-secondary" href="{{ url_for('admin_contests') }}">← Kontestlar</a>
-    <form method="post" action="{{ url_for('clear_proctor_data', contest_id=contest.id) }}" onsubmit="return confirm('Bu kontestning barcha kadrlari va hodisalari o‘chiriladi. Davom etasizmi?')">
+    <a class="btn btn-outline-success" href="{{ url_for('admin_leaderboard', contest_id=contest.id) }}">{{ _('Reyting') }}</a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin_contests') }}">← {{ _('Kontestlar') }}</a>
+    <form method="post" action="{{ url_for('clear_proctor_data', contest_id=contest.id) }}" onsubmit="return confirm({{ _('Bu kontestning barcha kadrlari va hodisalari o‘chiriladi. Davom etasizmi?')|tojson|forceescape }})">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <button class="btn btn-outline-danger">Kadrlarni o‘chirish</button>
+      <button class="btn btn-outline-danger">{{ _('Kadrlarni o‘chirish') }}</button>
     </form>
   </div>
 </div>
-{% if not contest.monitored %}<div class="alert alert-warning">Bu kontestda kamera va ekran kuzatuvi o‘chirilgan — kadrlar kelmaydi{% if contest.lockdown %}, lekin qulflangan rejim qoidabuzarliklari (to‘liq ekrandan chiqish, oynadan chiqish) shu yerda ko‘rinadi{% endif %}.</div>{% endif %}
+{% if not contest.monitored %}<div class="alert alert-warning">{{ _('Bu kontestda kamera va ekran kuzatuvi o‘chirilgan — kadrlar kelmaydi') }}{% if contest.lockdown %}, {{ _('lekin qulflangan rejim qoidabuzarliklari (to‘liq ekrandan chiqish, oynadan chiqish) shu yerda ko‘rinadi') }}{% endif %}.</div>{% endif %}
 <div class="d-flex flex-wrap gap-3 mb-3 small" id="proctorSummary"></div>
 <div class="proctor-grid" id="proctorGrid"></div>
-<div class="empty-state d-none" id="proctorEmpty">Hali hech kim kontestni boshlamagan.</div>
+<div class="empty-state d-none" id="proctorEmpty">{{ _('Hali hech kim kontestni boshlamagan.') }}</div>
 {% endblock %}
 {% block scripts %}
 <script>
@@ -32,28 +32,54 @@ const needCamera = {{ 'true' if contest.proctoring else 'false' }};
 const needScreen = {{ 'true' if contest.screen_capture else 'false' }};
 const detailUrl = (id) => `{{ url_for('admin_proctor_attempt', attempt_id=0) }}`.replace(/\/0$/, `/${id}`);
 const grid = document.getElementById('proctorGrid');
+const T = {
+  finished: {{ _('Yakunlagan')|tojson }},
+  live: {{ _('Jonli')|tojson }},
+  noCamera: {{ _('Kamera yo‘q')|tojson }},
+  noScreen: {{ _('Ekran yo‘q')|tojson }},
+  noFace: {{ _('Yuz yo‘q')|tojson }},
+  faces: {{ _('%(n)s ta yuz')|tojson }},
+  oneFace: {{ _('1 yuz')|tojson }},
+  cameraMissing: {{ _('Kamerasi yo‘q — faqat ekran')|tojson }},
+  noFrame: {{ _('Kadr hali kelmagan')|tojson }},
+  openScreen: {{ _('Ekranni to‘liq ochish')|tojson }},
+  screen: {{ _('Ekran')|tojson }},
+  noScreenYet: {{ _('Ekran hali ulashilmagan')|tojson }},
+  ago: {{ _('%(n)s s oldin')|tojson }},
+  frame: {{ _('kadr')|tojson }},
+  focusLost: {{ _('Boshqa tab/oynaga o‘tishlar')|tojson }},
+  paste: {{ _('Paste urinishlari')|tojson }},
+  faceAlerts: {{ _('Yuz bo‘yicha ogohlantirishlar')|tojson }},
+  violations: {{ _('Qoidabuzarliklar / limit')|tojson }},
+  events: {{ _('Hodisalar (%(n)s)')|tojson }},
+  total: {{ _('Jami: %(n)s')|tojson }},
+  active: {{ _('Faol: %(n)s')|tojson }},
+  attention: {{ _('Diqqat talab: %(n)s')|tojson }},
+  updated: {{ _('Yangilandi: %(time)s')|tojson }},
+  failed: {{ _('Yangilab bo‘lmadi, qayta urinilmoqda…')|tojson }},
+};
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch]));
 
 function card(row) {
   const status = !row.active
-    ? '<span class="badge text-bg-secondary">Yakunlagan</span>'
+    ? `<span class="badge text-bg-secondary">${T.finished}</span>`
     : row.live
-      ? '<span class="badge text-bg-success">● Jonli</span>'
-      : `<span class="badge text-bg-danger">${needCamera && !row.camera_live ? 'Kamera yo‘q' : 'Ekran yo‘q'}</span>`;
+      ? `<span class="badge text-bg-success">● ${T.live}</span>`
+      : `<span class="badge text-bg-danger">${needCamera && !row.camera_live ? T.noCamera : T.noScreen}</span>`;
   let faces = '';
-  if (row.faces === 0) faces = '<span class="badge text-bg-danger">Yuz yo‘q</span>';
-  else if (row.faces > 1) faces = `<span class="badge text-bg-danger">${row.faces} ta yuz</span>`;
-  else if (row.faces === 1) faces = '<span class="badge text-bg-light">1 yuz</span>';
-  if (row.camera_missing && !row.has_image) faces = '<span class="badge text-bg-warning">Kamerasi yo‘q — faqat ekran</span>';
+  if (row.faces === 0) faces = `<span class="badge text-bg-danger">${T.noFace}</span>`;
+  else if (row.faces > 1) faces = `<span class="badge text-bg-danger">${T.faces.replace('%(n)s', row.faces)}</span>`;
+  else if (row.faces === 1) faces = `<span class="badge text-bg-light">${T.oneFace}</span>`;
+  if (row.camera_missing && !row.has_image) faces = `<span class="badge text-bg-warning">${T.cameraMissing}</span>`;
   const cameraImage = !needCamera ? '' : row.has_image
     ? `<img class="proctor-frame" alt="" src="${frameUrl(row.attempt_id, row.frame_version)}">`
-    : '<div class="proctor-frame-empty">Kadr hali kelmagan</div>';
+    : `<div class="proctor-frame-empty">${T.noFrame}</div>`;
   const screenImage = !needScreen ? '' : row.has_screen
-    ? `<a href="${screenUrl(row.attempt_id, row.screen_version)}" target="_blank" title="Ekranni to‘liq ochish"><img class="proctor-screen ${row.screen_live ? '' : 'is-stale'}" alt="Ekran" src="${screenUrl(row.attempt_id, row.screen_version)}"></a>`
-    : '<div class="proctor-frame-empty">Ekran hali ulashilmagan</div>';
+    ? `<a href="${screenUrl(row.attempt_id, row.screen_version)}" target="_blank" title="${escapeHtml(T.openScreen)}"><img class="proctor-screen ${row.screen_live ? '' : 'is-stale'}" alt="${escapeHtml(T.screen)}" src="${screenUrl(row.attempt_id, row.screen_version)}"></a>`
+    : `<div class="proctor-frame-empty">${T.noScreenYet}</div>`;
   const image = `<div class="proctor-media ${needCamera && needScreen ? 'is-dual' : ''}">${screenImage}${cameraImage}</div>`;
   const ago = needCamera ? row.seen_ago : row.screen_ago;
-  const seen = ago === null ? '—' : `${ago} s oldin`;
+  const seen = ago === null ? '—' : T.ago.replace('%(n)s', ago);
   const code = row.code
     ? `<pre class="sample-input proctor-code"><code>${escapeHtml(row.code.split('\n').slice(-25).join('\n'))}</code></pre>`
     : '';
@@ -61,13 +87,13 @@ function card(row) {
     ${image}
     <div class="card-body p-3">
       <div class="d-flex justify-content-between gap-2 mb-1"><strong>${escapeHtml(row.name)}</strong><span class="d-flex gap-1">${status}${faces}</span></div>
-      <div class="small text-secondary mb-2">${escapeHtml(row.hemis_id)} · ${escapeHtml(row.group)} · kadr: ${seen}</div>
+      <div class="small text-secondary mb-2">${escapeHtml(row.hemis_id)} · ${escapeHtml(row.group)} · ${T.frame}: ${seen}</div>
       <div class="small d-flex flex-wrap gap-2 mb-2">
-        <span title="Boshqa tab/oynaga o‘tishlar">↗ ${row.focus_lost}</span>
-        <span title="Paste urinishlari">📋 ${row.paste}</span>
-        <span title="Yuz bo‘yicha ogohlantirishlar">👤 ${row.face_alerts}</span>
-        <span title="Qoidabuzarliklar / limit" class="${row.max_violations && row.violations >= row.max_violations - 1 ? 'text-danger fw-semibold' : ''}">⚠ ${row.violations}${row.max_violations ? '/' + row.max_violations : ''}</span>
-        <a class="ms-auto" href="${detailUrl(row.attempt_id)}">Hodisalar (${row.events}) →</a>
+        <span title="${escapeHtml(T.focusLost)}">↗ ${row.focus_lost}</span>
+        <span title="${escapeHtml(T.paste)}">📋 ${row.paste}</span>
+        <span title="${escapeHtml(T.faceAlerts)}">👤 ${row.face_alerts}</span>
+        <span title="${escapeHtml(T.violations)}" class="${row.max_violations && row.violations >= row.max_violations - 1 ? 'text-danger fw-semibold' : ''}">⚠ ${row.violations}${row.max_violations ? '/' + row.max_violations : ''}</span>
+        <a class="ms-auto" href="${detailUrl(row.attempt_id)}">${T.events.replace('%(n)s', row.events)} →</a>
       </div>
       ${code}
     </div>
@@ -84,12 +110,12 @@ async function refresh() {
     const active = rows.filter((row) => row.active).length;
     const alerts = rows.filter((row) => row.alert).length;
     document.getElementById('proctorSummary').innerHTML =
-      `<span class="badge text-bg-light">Jami: ${rows.length}</span>` +
-      `<span class="badge text-bg-success">Faol: ${active}</span>` +
-      `<span class="badge ${alerts ? 'text-bg-danger' : 'text-bg-light'}">Diqqat talab: ${alerts}</span>`;
-    document.getElementById('proctorUpdated').textContent = `Yangilandi: ${new Date().toLocaleTimeString()}`;
+      `<span class="badge text-bg-light">${T.total.replace('%(n)s', rows.length)}</span>` +
+      `<span class="badge text-bg-success">${T.active.replace('%(n)s', active)}</span>` +
+      `<span class="badge ${alerts ? 'text-bg-danger' : 'text-bg-light'}">${T.attention.replace('%(n)s', alerts)}</span>`;
+    document.getElementById('proctorUpdated').textContent = T.updated.replace('%(time)s', new Date().toLocaleTimeString());
   } catch (error) {
-    document.getElementById('proctorUpdated').textContent = 'Yangilab bo‘lmadi, qayta urinilmoqda…';
+    document.getElementById('proctorUpdated').textContent = T.failed;
   }
 }
 refresh();

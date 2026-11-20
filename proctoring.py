@@ -3,6 +3,8 @@
 import os
 import threading
 
+from i18n import N_
+
 try:
     import cv2
     import numpy as np
@@ -19,21 +21,22 @@ FRAME_STALE_SECONDS = 60
 # Bir xil turdagi ogohlantirish shu oraliqda faqat bir marta yoziladi.
 EVENT_COOLDOWN_SECONDS = 30
 
+# Ko'rsatishda _() bilan tarjima qilinadi (app.py, admin_proctor_attempt).
 EVENT_LABELS = {
-    "no_face": "Kadrda yuz yo‘q",
-    "multiple_faces": "Kadrda bir nechta yuz",
-    "tab_hidden": "Boshqa tab/dasturga o‘tdi",
-    "window_blur": "Oynadan chiqdi",
-    "paste": "Kod joylashtirishga urindi (paste)",
-    "camera_denied": "Kameraga ruxsat bermadi",
-    "camera_lost": "Kamera uzildi",
-    "camera_missing": "Kompyuterda kamera yo‘q — faqat ekran orqali kuzatildi",
-    "screen_denied": "Ekranni ulashishga ruxsat bermadi",
-    "screen_lost": "Ekran ulashish to‘xtatildi",
-    "fullscreen_exit": "To‘liq ekran rejimidan chiqdi",
-    "seb_missing": "Safe Exam Browser'siz kirishga urindi",
-    "new_device_login": "Boshqa qurilma/brauzerdan kirdi",
-    "auto_finished": "Qoidabuzarlik limiti: urinish avtomatik yakunlandi",
+    "no_face": N_("Kadrda yuz yo‘q"),
+    "multiple_faces": N_("Kadrda bir nechta yuz"),
+    "tab_hidden": N_("Boshqa tab/dasturga o‘tdi"),
+    "window_blur": N_("Oynadan chiqdi"),
+    "paste": N_("Kod joylashtirishga urindi (paste)"),
+    "camera_denied": N_("Kameraga ruxsat bermadi"),
+    "camera_lost": N_("Kamera uzildi"),
+    "camera_missing": N_("Kompyuterda kamera yo‘q — faqat ekran orqali kuzatildi"),
+    "screen_denied": N_("Ekranni ulashishga ruxsat bermadi"),
+    "screen_lost": N_("Ekran ulashish to‘xtatildi"),
+    "fullscreen_exit": N_("To‘liq ekran rejimidan chiqdi"),
+    "seb_missing": N_("Safe Exam Browser'siz kirishga urindi"),
+    "new_device_login": N_("Boshqa qurilma/brauzerdan kirdi"),
+    "auto_finished": N_("Qoidabuzarlik limiti: urinish avtomatik yakunlandi"),
 }
 # Limitga hisoblanadigan qoidabuzarliklar. tab_hidden hisoblanmaydi: tab almashganda
 # window_blur ham keladi, ikki marta sanalmasin. camera_denied — kontest boshlanmasdan oldin.

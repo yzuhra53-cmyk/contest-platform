@@ -40,6 +40,8 @@ def template_messages(env, path):
     with open(path, encoding="utf-8") as file:
         source = file.read()
     for lineno, func, message in env.extract_translations(source, gettext_functions=("_", "gettext", "N_")):
+        if isinstance(message, tuple):  # _('... %(n)s', n=x) -> ('... %(n)s', None)
+            message = message[0] if message else None
         if isinstance(message, str):
             yield lineno, message
 

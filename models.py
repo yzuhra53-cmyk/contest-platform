@@ -2,6 +2,8 @@ from datetime import datetime, timezone
 
 from flask_sqlalchemy import SQLAlchemy
 
+from i18n import _
+
 
 db = SQLAlchemy()
 
@@ -119,9 +121,9 @@ class Contest(db.Model):
         """Kontest bloklari tartibi bilan: (kalit, nom, savollar soni)."""
         result = []
         for key, title, items in (
-            ("code", "Kod yozish", self.coding_questions),
-            ("output", "Output testi", self.output_questions),
-            ("theory", "Nazariy bilimlar", self.theory_questions),
+            ("code", _("Kod yozish"), self.coding_questions),
+            ("output", _("Output testi"), self.output_questions),
+            ("theory", _("Nazariy bilimlar"), self.theory_questions),
         ):
             if items:
                 result.append((key, title, len(items)))
@@ -129,7 +131,7 @@ class Contest(db.Model):
 
     @property
     def type_label(self):
-        return " + ".join(title for _, title, _ in self.blocks) or "Bo‘sh"
+        return " + ".join(block[1] for block in self.blocks) or _("Bo‘sh")
 
     @property
     def monitored(self):

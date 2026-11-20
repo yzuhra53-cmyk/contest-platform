@@ -4,8 +4,8 @@
 {% block content %}
 <div class="contest-header card border-0 shadow-sm mb-4">
   <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
-    <div><p class="eyebrow mb-2">{% if contest.contest_type == 'mixed' %}TEST BLOKLARI{% else %}KONTЕST{% endif %}</p><h1 class="h3 mb-1">{{ contest.title }}</h1><span class="text-secondary">{{ questions|length }} ta savol{% if contest.contest_type == 'mixed' %} · kod bo‘limi yakunlangan{% endif %}</span></div>
-    <div class="timer-wrap"><span class="small text-secondary">Qolgan vaqt</span><div class="timer" id="timer" data-seconds="{{ remaining_seconds }}">--:--</div></div>
+    <div><p class="eyebrow mb-2">{% if contest.contest_type == 'mixed' %}{{ _('TEST BLOKLARI') }}{% else %}{{ _('KONTЕST') }}{% endif %}</p><h1 class="h3 mb-1">{{ contest.title }}</h1><span class="text-secondary">{{ _('%(n)s ta savol', n=questions|length) }}{% if contest.contest_type == 'mixed' %} · {{ _('kod bo‘limi yakunlangan') }}{% endif %}</span></div>
+    <div class="timer-wrap"><span class="small text-secondary">{{ _('Qolgan vaqt') }}</span><div class="timer" id="timer" data-seconds="{{ remaining_seconds }}">--:--</div></div>
   </div>
 </div>
 {% set stage = 'tests' %}{% include "_block_steps.html" %}
@@ -13,8 +13,8 @@
 {% set has_theory = questions|selectattr('question_type', 'equalto', 'test')|list %}
 {% if has_output and has_theory %}
 <div class="block-tabs" role="tablist">
-  <button type="button" class="is-active" data-tab="output" role="tab">Output testi <span class="tab-count" data-tab-count="output"></span></button>
-  <button type="button" data-tab="theory" role="tab">Nazariy bilimlar <span class="tab-count" data-tab-count="theory"></span></button>
+  <button type="button" class="is-active" data-tab="output" role="tab">{{ _('Output testi') }} <span class="tab-count" data-tab-count="output"></span></button>
+  <button type="button" data-tab="theory" role="tab">{{ _('Nazariy bilimlar') }} <span class="tab-count" data-tab-count="theory"></span></button>
 </div>
 {% endif %}
 <form method="post" id="contestForm" data-save-url="{{ url_for('save_answer', contest_id=contest.id) }}">
@@ -23,11 +23,11 @@
   <section class="card border-0 shadow-sm mb-3 question-card" data-block="{{ 'theory' if question.question_type == 'test' else 'output' }}">
     <div class="card-body p-4">
       <div class="d-flex gap-3"><span class="question-number">{{ loop.index }}</span><div class="flex-grow-1">
-        <div class="d-flex flex-wrap gap-2 mb-2"><span class="badge text-bg-light">{{ 'Kod natijasini toping' if question.question_type == 'code_output' else ('Test savoli' if question.question_type == 'test' else 'Dasturlash masalasi') }}</span></div>
+        <div class="d-flex flex-wrap gap-2 mb-2"><span class="badge text-bg-light">{{ _('Kod natijasini toping') if question.question_type == 'code_output' else (_('Test savoli') if question.question_type == 'test' else _('Dasturlash masalasi')) }}</span></div>
         <h2 class="h5 mb-3">{{ question.prompt.split('] ', 1)[1] if question.prompt.startswith('[NB-') else question.prompt }}</h2>
         {% if question.question_type == 'code_output' %}
         <pre class="sample-input code-sample"><code>{{ question.code_snippet }}</code></pre>
-        <div class="small fw-semibold mb-1">Kirish ma’lumoti (Input)</div>
+        <div class="small fw-semibold mb-1">{{ _('Kirish ma’lumoti (Input)') }}</div>
         <pre class="sample-input">{{ question.input_data or '—' }}</pre>
         {% for letter, option in [('A',question.option_a),('B',question.option_b),('C',question.option_c),('D',question.option_d)] %}
         <label class="answer-option"><input class="form-check-input answer-input" type="radio" name="{{ question.id }}" value="{{ letter }}" {% if answers.get(question.id|string) == letter %}checked{% endif %}><span><strong>{{ letter }}.</strong> {{ option }}</span></label>
@@ -37,18 +37,18 @@
         <label class="answer-option"><input class="form-check-input answer-input" type="radio" name="{{ question.id }}" value="{{ letter }}" {% if answers.get(question.id|string) == letter %}checked{% endif %}><span><strong>{{ letter }}.</strong> {{ option }}</span></label>
         {% endfor %}
         {% else %}
-          {% if question.input_data %}<div class="small fw-semibold mb-1">Kirish ma’lumoti (Input)</div><pre class="sample-input">{{ question.input_data }}</pre>{% endif %}
-          <label class="form-label" for="answer-{{ question.id }}">Chiqish ma’lumotingiz (Output)</label>
-          <textarea class="form-control answer-input" id="answer-{{ question.id }}" name="{{ question.id }}" rows="4" placeholder="Javobni kiriting">{{ answers.get(question.id|string, '') }}</textarea>
-          <div class="form-text">Natija kutilgan chiqish bilan aniq solishtiriladi.</div>
+          {% if question.input_data %}<div class="small fw-semibold mb-1">{{ _('Kirish ma’lumoti (Input)') }}</div><pre class="sample-input">{{ question.input_data }}</pre>{% endif %}
+          <label class="form-label" for="answer-{{ question.id }}">{{ _('Chiqish ma’lumotingiz (Output)') }}</label>
+          <textarea class="form-control answer-input" id="answer-{{ question.id }}" name="{{ question.id }}" rows="4" placeholder="{{ _('Javobni kiriting') }}">{{ answers.get(question.id|string, '') }}</textarea>
+          <div class="form-text">{{ _('Natija kutilgan chiqish bilan aniq solishtiriladi.') }}</div>
         {% endif %}
       </div></div>
     </div>
   </section>
   {% endfor %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 py-3">
-    <span class="text-secondary small">Javoblaringiz avtomatik saqlanadi.</span>
-    <button type="submit" class="btn btn-primary btn-lg" onclick="return confirm('Javoblarni yuborib, kontestni yakunlaysizmi?')">Testni yakunlash</button>
+    <span class="text-secondary small">{{ _('Javoblaringiz avtomatik saqlanadi.') }}</span>
+    <button type="submit" class="btn btn-primary btn-lg" onclick='return confirm({{ _("Javoblarni yuborib, kontestni yakunlaysizmi?")|tojson }})'>{{ _('Testni yakunlash') }}</button>
   </div>
 </form>
 {% endblock %}

@@ -16,6 +16,7 @@ import io
 import random
 
 from difficulty import normalize as normalize_level
+from i18n import _
 import re
 import zipfile
 import xml.etree.ElementTree as ET
@@ -105,7 +106,7 @@ def parse_docx(data, default_category=None):
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
             body = ET.fromstring(archive.read("word/document.xml")).find(W + "body")
     except (zipfile.BadZipFile, KeyError, ET.ParseError) as error:
-        raise ImportFormatError("Word faylini o‘qib bo‘lmadi (.docx bo‘lishi kerak).") from error
+        raise ImportFormatError(_("Word faylini o‘qib bo‘lmadi (.docx bo‘lishi kerak).")) from error
     category, items = default_category, []
     for child in body:
         if child.tag == W + "p":
@@ -133,7 +134,7 @@ def parse_xlsx(data, default_category=None):
     try:
         workbook = load_workbook(io.BytesIO(data), read_only=True, data_only=True)
     except Exception as error:  # noqa: BLE001 — openpyxl turli xatolar beradi
-        raise ImportFormatError("Excel faylini o‘qib bo‘lmadi (.xlsx bo‘lishi kerak).") from error
+        raise ImportFormatError(_("Excel faylini o‘qib bo‘lmadi (.xlsx bo‘lishi kerak).")) from error
     items = []
     for sheet in workbook.worksheets:
         layout = None
@@ -160,4 +161,4 @@ def parse_file(filename, data, default_category=None):
         return parse_docx(data, default_category)
     if name.endswith(".xlsx"):
         return parse_xlsx(data, default_category)
-    raise ImportFormatError("Faqat .docx (Word) yoki .xlsx (Excel) fayl yuklang.")
+    raise ImportFormatError(_("Faqat .docx (Word) yoki .xlsx (Excel) fayl yuklang."))

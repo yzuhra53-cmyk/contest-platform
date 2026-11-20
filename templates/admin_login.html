@@ -1,39 +1,39 @@
 {% extends "base.html" %}
-{% block title %}Ustoz kirishi · Ranch University{% endblock %}
+{% block title %}{{ _('Ustoz kirishi') }} · Ranch University{% endblock %}
 {% block main_class %}auth-main{% endblock %}
 {% block content %}
 <section class="auth-hero">
   <div class="auth-hero-inner">
     <div class="auth-intro">
-      <span class="auth-kicker">RANCH UNIVERSITY <i></i> RAQAMLI TEXNOLOGIYALAR KAFEDRASI</span>
-      <h1>Raqamli texnologiyalar kafedrasi uchun olimpiada va kontest platformasi</h1>
-      <p>Olimpiada va kontestlarni boshqarish uchun ustoz paneliga kiring.</p>
+      <span class="auth-kicker">RANCH UNIVERSITY <i></i> {{ _('Raqamli texnologiyalar kafedrasi')|upper }}</span>
+      <h1>{{ _('Raqamli texnologiyalar kafedrasi uchun olimpiada va kontest platformasi') }}</h1>
+      <p>{{ _('Olimpiada va kontestlarni boshqarish uchun ustoz paneliga kiring.') }}</p>
       <div class="auth-accent-line"></div>
     </div>
     <div class="auth-side">
       <section class="card auth-card">
         <div class="card-body">
-          <div class="auth-card-mark">02 <span>· USTOZ KIRISHI</span></div>
-          <h2 class="h3 mb-2">Ustoz paneli</h2>
-          <p class="text-secondary mb-4">Boshqaruv paneliga xavfsiz kirish</p>
+          <div class="auth-card-mark">02 <span>· {{ _('Ustoz kirishi')|upper }}</span></div>
+          <h2 class="h3 mb-2">{{ _('Ustoz paneli') }}</h2>
+          <p class="text-secondary mb-4">{{ _('Boshqaruv paneliga xavfsiz kirish') }}</p>
           <form method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <label class="form-label" for="username">Login</label>
+            <label class="form-label" for="username">{{ _('Login') }}</label>
             <input class="form-control mb-3" id="username" name="username" autocomplete="username" required autofocus>
-            <label class="form-label" for="password">Parol</label>
+            <label class="form-label" for="password">{{ _('Parol') }}</label>
             <div class="password-field mb-4">
               <input class="form-control" id="password" name="password" type="password" autocomplete="current-password" required>
-              <button type="button" class="password-toggle" id="passwordToggle" aria-label="Parolni ko‘rsatish" title="Parolni ko‘rsatish" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <button type="button" class="password-toggle" id="passwordToggle" aria-label="{{ _('Parolni ko‘rsatish') }}" title="{{ _('Parolni ko‘rsatish') }}" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
             </div>
-            <button class="btn btn-primary w-100">Kirish <span aria-hidden="true">→</span></button>
+            <button class="btn btn-primary w-100">{{ _('Kirish') }} <span aria-hidden="true">→</span></button>
           </form>
-          <div class="auth-card-footer"><span>Talabamisiz?</span><a href="{{ url_for('student_login') }}">Talaba sifatida kirish <span aria-hidden="true">→</span></a></div>
+          <div class="auth-card-footer"><span>{{ _('Talabamisiz?') }}</span><a href="{{ url_for('student_login') }}">{{ _('Talaba sifatida kirish') }} <span aria-hidden="true">→</span></a></div>
         </div>
       </section>
       {% include "_staff_card.html" %}
     </div>
   </div>
-  <div class="auth-scroll-cue" aria-hidden="true"><span></span> BILIM — KELAJAKKA YO‘L</div>
+  <div class="auth-scroll-cue" aria-hidden="true"><span></span> {{ _('BILIM — KELAJAKKA YO‘L') }}</div>
 </section>
 {% endblock %}
 
@@ -47,7 +47,7 @@
     input.type = show ? 'text' : 'password';
     toggle.setAttribute('aria-pressed', String(show));
     toggle.classList.toggle('is-on', show);
-    const label = show ? 'Parolni yashirish' : 'Parolni ko‘rsatish';
+    const label = show ? {{ _('Parolni yashirish')|tojson }} : {{ _('Parolni ko‘rsatish')|tojson }};
     toggle.setAttribute('aria-label', label);
     toggle.title = label;
     input.focus();

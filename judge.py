@@ -26,6 +26,8 @@ import tempfile
 import threading
 import time
 
+from i18n import N_, _
+
 try:
     import pwd
 except ImportError:  # Windows (faqat lokal ishlab chiqish uchun)
@@ -205,7 +207,7 @@ def _run(command, workdir, stdin_text, timeout, memory_mb, file_bytes, identity,
                 **extra,
             )
         except OSError as error:
-            raise JudgeError("Tekshiruv jarayonini ishga tushirib bo‘lmadi.") from error
+            raise JudgeError(N_("Tekshiruv jarayonini ishga tushirib bo‘lmadi.")) from error
         timed_out = False
         try:
             process.wait(timeout=timeout)
@@ -257,9 +259,9 @@ def _normalize(text):
 
 def _validate(language, source_code, test_cases):
     if language not in LANGUAGES:
-        raise JudgeError("Dasturlash tili qo‘llab-quvvatlanmaydi.")
+        raise JudgeError(N_("Dasturlash tili qo‘llab-quvvatlanmaydi."))
     if not isinstance(test_cases, list) or not test_cases or len(test_cases) > MAX_TESTS:
-        raise JudgeError("Masala testlari soni noto‘g‘ri.")
+        raise JudgeError(N_("Masala testlari soni noto‘g‘ri."))
     if len(source_code) > MAX_SOURCE_CHARS or any(
         not isinstance(case, dict)
         or not isinstance(case.get("input"), str)
@@ -268,7 +270,7 @@ def _validate(language, source_code, test_cases):
         or len(case["output"]) > MAX_CASE_CHARS
         for case in test_cases
     ):
-        raise JudgeError("Kod yoki test ma’lumoti ruxsat etilgan hajmdan katta.")
+        raise JudgeError(N_("Kod yoki test ma’lumoti ruxsat etilgan hajmdan katta."))
 
 
 def _prepare(language, source_code, workdir, identity):
@@ -290,7 +292,7 @@ def _prepare(language, source_code, workdir, identity):
     if language == "cpp":
         compiler = shutil.which("g++")
         if not compiler:
-            raise JudgeError("Serverda C++ kompilyatori (g++) o‘rnatilmagan.")
+            raise JudgeError(N_("Serverda C++ kompilyatori (g++) o‘rnatilmagan."))
         returncode, timed_out, _, stderr, _ = _run(
             [compiler, *CXX_FLAGS, "-o", "main", "main.cpp"],
             workdir,
@@ -301,7 +303,7 @@ def _prepare(language, source_code, workdir, identity):
             identity=identity,
         )
         if timed_out:
-            return run_command, "Kompilyatsiya vaqti tugadi."
+            return run_command, N_("Kompilyatsiya vaqti tugadi.")
         if returncode != 0:
             return run_command, _tail(stderr, workdir, limit=2000)
     return run_command, None
@@ -354,7 +356,7 @@ class _Sandbox:
         try:
             self.slot = _free_slots.get(timeout=self.queue_timeout)
         except queue.Empty:
-            raise JudgeError("Tekshiruv navbati band. Birozdan so‘ng qayta urinib ko‘ring.") from None
+            raise JudgeError(N_("Tekshiruv navbati band. Birozdan so‘ng qayta urinib ko‘ring.")) from None
         self.identity = _sandbox_identity(self.slot)
         try:
             self.workdir = tempfile.mkdtemp(prefix="job-", dir=_get_base_dir())
@@ -362,7 +364,7 @@ class _Sandbox:
                 os.chown(self.workdir, self.identity[0], self.identity[1])
         except OSError as error:
             self.__exit__(None, None, None)
-            raise JudgeError("Tekshiruv serverida ichki xatolik yuz berdi.") from error
+            raise JudgeError(N_("Tekshiruv serverida ichki xatolik yuz berdi.")) from error
         return self
 
     def __exit__(self, exc_type, exc, traceback):
@@ -372,7 +374,7 @@ class _Sandbox:
             shutil.rmtree(self.workdir, ignore_errors=True)
         _free_slots.put(self.slot)
         if isinstance(exc, OSError):
-            raise JudgeError("Tekshiruv serverida ichki xatolik yuz berdi.") from exc
+            raise JudgeError(N_("Tekshiruv serverida ichki xatolik yuz berdi.")) from exc
         return False
 
 
@@ -397,13 +399,13 @@ def run_program(language, source_code, stdin_text):
     runtime_error, time_limit, output_limit.
     """
     if language not in LANGUAGES:
-        raise JudgeError("Dasturlash tili qo‘llab-quvvatlanmaydi.")
+        raise JudgeError(N_("Dasturlash tili qo‘llab-quvvatlanmaydi."))
     if len(source_code) > MAX_SOURCE_CHARS or len(stdin_text) > MAX_CASE_CHARS:
-        raise JudgeError("Kod yoki kirish ma’lumoti ruxsat etilgan hajmdan katta.")
+        raise JudgeError(N_("Kod yoki kirish ma’lumoti ruxsat etilgan hajmdan katta."))
     with _Sandbox(RUN_QUEUE_TIMEOUT) as box:
         run_command, compile_error = _prepare(language, source_code, box.workdir, box.identity)
         if compile_error is not None:
-            return {"status": "compile_error", "stdout": "", "stderr": compile_error, "time_ms": 0}
+            return {"status": "compile_error", "stdout": "", "stderr": _(compile_error), "time_ms": 0}
         started = time.perf_counter()
         returncode, timed_out, stdout, stderr, too_big = _run(
             run_command,
@@ -424,7 +426,7 @@ def run_program(language, source_code, stdin_text):
     elif returncode != 0:
         status = "runtime_error"
         if not stderr:
-            stderr = f"Dastur {returncode} kodi bilan tugadi."
+            stderr = _("Dastur %(code)s kodi bilan tugadi.", code=returncode)
     else:
         status = "ok"
     return {

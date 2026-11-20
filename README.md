@@ -175,3 +175,21 @@ uv run python seed_40_problems.py
 ```
 
 Masalalar 3–4 ta maxfiy test bilan kiritiladi. Ustoz **Savollar** sahifasidan ularni kontestga tanlaydi; mavjud chiqish testi alohida qoladi.
+
+## Qiyinlik darajalari
+
+Har bir savol **Oson / O‘rta / Qiyin** darajaga ega (`difficulty.py`). Bank savollari ishga tushishda bir marta
+avtomatik baholanadi; ustoz darajani «Savollar» sahifasida o‘zgartira oladi, fayldan yuklashda «Daraja» ustuni
+o‘qiladi. Kontest yaratishda daraja bo‘yicha filtr va har bir blokda «Tasodifiy: Oson N, O‘rta N, Qiyin N» tanlash bor.
+
+## Tillar (O‘zbekcha / Русский / English)
+
+Menyudagi 🌐 tugmasi orqali tanlanadi (sessiya va cookie'da eslab qolinadi; birinchi kirishda brauzer tili).
+Matnlar kodda o‘zbekcha yoziladi va `_()` bilan o‘raladi; tarjimalar `translations/ru.json` va `translations/en.json`da.
+Yangi matn qo‘shgandan keyin tekshiring:
+
+```powershell
+python tools/i18n_check.py --stubs
+```
+
+Savol va masala matnlari tarjima qilinmaydi — ular ustoz yozgan tilda ko‘rsatiladi.
