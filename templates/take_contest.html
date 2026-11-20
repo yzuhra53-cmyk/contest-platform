@@ -24,17 +24,17 @@
     <div class="card-body p-4">
       <div class="d-flex gap-3"><span class="question-number">{{ loop.index }}</span><div class="flex-grow-1">
         <div class="d-flex flex-wrap gap-2 mb-2"><span class="badge text-bg-light">{{ _('Kod natijasini toping') if question.question_type == 'code_output' else (_('Test savoli') if question.question_type == 'test' else _('Dasturlash masalasi')) }}</span></div>
-        <h2 class="h5 mb-3">{{ question.prompt.split('] ', 1)[1] if question.prompt.startswith('[NB-') else question.prompt }}</h2>
+        <h2 class="h5 mb-3">{{ question.prompt|content(not question.prompt.startswith('[NB-')) }}</h2>
         {% if question.question_type == 'code_output' %}
         <pre class="sample-input code-sample"><code>{{ question.code_snippet }}</code></pre>
         <div class="small fw-semibold mb-1">{{ _('Kirish ma’lumoti (Input)') }}</div>
         <pre class="sample-input">{{ question.input_data or '—' }}</pre>
         {% for letter, option in [('A',question.option_a),('B',question.option_b),('C',question.option_c),('D',question.option_d)] %}
-        <label class="answer-option"><input class="form-check-input answer-input" type="radio" name="{{ question.id }}" value="{{ letter }}" {% if answers.get(question.id|string) == letter %}checked{% endif %}><span><strong>{{ letter }}.</strong> {{ option }}</span></label>
+        <label class="answer-option"><input class="form-check-input answer-input" type="radio" name="{{ question.id }}" value="{{ letter }}" {% if answers.get(question.id|string) == letter %}checked{% endif %}><span><strong>{{ letter }}.</strong> {{ option|content }}</span></label>
         {% endfor %}
         {% elif question.question_type == 'test' %}
         {% for letter, option in [('A',question.option_a),('B',question.option_b),('C',question.option_c),('D',question.option_d)] %}
-        <label class="answer-option"><input class="form-check-input answer-input" type="radio" name="{{ question.id }}" value="{{ letter }}" {% if answers.get(question.id|string) == letter %}checked{% endif %}><span><strong>{{ letter }}.</strong> {{ option }}</span></label>
+        <label class="answer-option"><input class="form-check-input answer-input" type="radio" name="{{ question.id }}" value="{{ letter }}" {% if answers.get(question.id|string) == letter %}checked{% endif %}><span><strong>{{ letter }}.</strong> {{ option|content }}</span></label>
         {% endfor %}
         {% else %}
           {% if question.input_data %}<div class="small fw-semibold mb-1">{{ _('Kirish ma’lumoti (Input)') }}</div><pre class="sample-input">{{ question.input_data }}</pre>{% endif %}

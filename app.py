@@ -52,6 +52,7 @@ import proctoring
 from question_import import ImportFormatError, parse_file as parse_question_file
 from difficulty import LEVEL_LABELS, classify as classify_difficulty, normalize as normalize_difficulty
 import i18n
+import content_i18n
 from verdicts import status_label, translate_verdict
 from i18n import _, N_
 
@@ -209,6 +210,7 @@ def create_app(test_config=None):
     application.jinja_env.filters["local"] = format_local
     application.jinja_env.globals["contest_state"] = contest_state
     i18n.init_app(application)
+    content_i18n.init_app(application)
     application.jinja_env.filters["verdict"] = translate_verdict
     application.jinja_env.filters["status_label"] = status_label
     throttle = LoginThrottle()

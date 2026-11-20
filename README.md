@@ -192,4 +192,5 @@ Yangi matn qo‘shgandan keyin tekshiring:
 python tools/i18n_check.py --stubs
 ```
 
-Savol va masala matnlari tarjima qilinmaydi — ular ustoz yozgan tilda ko‘rsatiladi.
+Bank savollari, masalalari va javob variantlari ham tarjima qilingan (`translations/content/ru.json`, `en.json`;
+kalit — o‘zbekcha matn). Ustoz qo‘shgan yangi savollar o‘zi yozilgan tilda ko‘rsatiladi.

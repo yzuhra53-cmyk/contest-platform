@@ -25,7 +25,7 @@
   <thead><tr>
     <th class="text-center">#</th><th>{{ _('Talaba') }}</th><th>{{ _('Guruh') }}</th>
     {% if coding %}
-      {% for question in contest.questions %}<th class="text-center" title="{{ question.prompt|truncate(80) }}">{{ loop.index }}</th>{% endfor %}
+      {% for question in contest.questions %}<th class="text-center" title="{{ (question.prompt|content)|truncate(80) }}">{{ loop.index }}</th>{% endfor %}
       <th class="text-center">{{ _('Yechilgan') }}</th><th class="text-center">{{ _('Jarima') }}</th>
     {% else %}
       <th class="text-center">{{ _('To‘g‘ri') }}</th><th class="text-center">{{ _('Vaqt (daq.)') }}</th>

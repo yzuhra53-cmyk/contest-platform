@@ -15,7 +15,7 @@
   {% for question in contest.coding_questions %}
   <article class="card border-0 shadow-sm"><div class="card-body p-4">
     <span class="badge text-bg-warning mb-2">{{ _('Masala %(n)s', n=loop.index) }}</span>
-    <h2 class="h5 problem-statement">{{ question.prompt }}</h2>
+    <h2 class="h5 problem-statement">{{ question.prompt|content }}</h2>
     <div class="small fw-semibold mb-1">{{ _('Namuna Input') }}</div><pre class="sample-input">{{ question.input_data or '—' }}</pre>
     <div class="small fw-semibold mb-1">{{ _('Namuna Output') }}</div><pre class="sample-input">{{ question.expected_output or '—' }}</pre>
   </div></article>
@@ -29,13 +29,13 @@
   {% for question in contest.quiz_questions %}
   <section class="card border-0 shadow-sm mb-3">
     <div class="card-body p-4">
-      <h2 class="h5">{{ loop.index }}. {{ question.prompt }}</h2>
+      <h2 class="h5">{{ loop.index }}. {{ question.prompt|content }}</h2>
       {% if question.question_type == 'code_output' %}
       <pre class="sample-input"><code>{{ question.code_snippet }}</code></pre>
       <div class="small fw-semibold mb-1">Input</div><pre class="sample-input">{{ question.input_data or '—' }}</pre>
       {% endif %}
       {% for letter, option in [('A',question.option_a),('B',question.option_b),('C',question.option_c),('D',question.option_d)] %}
-      <label class="answer-option"><input class="form-check-input" type="radio" name="{{ question.id }}" value="{{ letter }}"><span><strong>{{ letter }}.</strong> {{ option }}</span></label>
+      <label class="answer-option"><input class="form-check-input" type="radio" name="{{ question.id }}" value="{{ letter }}"><span><strong>{{ letter }}.</strong> {{ option|content }}</span></label>
       {% endfor %}
     </div>
   </section>

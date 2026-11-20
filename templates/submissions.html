@@ -7,7 +7,7 @@
   <article class="card border-0 shadow-sm"><div class="card-body p-4">
     <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
       <div><span class="badge {{ 'text-bg-warning' if submission.status == 'pending' else ('text-bg-success' if submission.status == 'accepted' else 'text-bg-danger') }}">{{ _('Kutilmoqda') if submission.status == 'pending' else (_('Qabul qilingan') if submission.status == 'accepted' else (_('Tekshiruv xatosi') if submission.status == 'error' else _('Qaytarilgan'))) }}</span>
-      <h2 class="h5 mt-2 mb-1">{{ submission.question.prompt }}</h2>
+      <h2 class="h5 mt-2 mb-1">{{ submission.question.prompt|content }}</h2>
       <div class="small text-secondary">{{ submission.attempt.student.full_name }} · {{ submission.attempt.student.hemis_id }} · {{ submission.attempt.contest.title }} · {{ 'Python 3' if submission.language == 'python' else 'C++17' }}</div></div>
       <span class="small text-secondary">{{ submission.submitted_at|local }}</span>
     </div>
