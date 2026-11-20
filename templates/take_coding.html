@@ -26,7 +26,7 @@
 </section>
 {% if submission %}
 <div class="alert {{ 'alert-success' if submission.status == 'accepted' else ('alert-warning' if submission.status == 'pending' else 'alert-danger') }} d-flex justify-content-between flex-wrap gap-2">
-  <span>{{ submission.judge_result or submission.reviewer_note or (_('Yechimingiz tekshirilmoqda.') if submission.status == 'pending' else _('Yechim testdan o‘tmadi. Kodni tuzatib qayta yuboring.')) }}</span>
+  <span>{{ submission.judge_result|verdict or submission.reviewer_note or (_('Yechimingiz tekshirilmoqda.') if submission.status == 'pending' else _('Yechim testdan o‘tmadi. Kodni tuzatib qayta yuboring.')) }}</span>
   <span class="small">{{ _('Yuborilgan: %(time)s', time=submission.submitted_at|local) }}</span>
 </div>
 {% endif %}
@@ -88,7 +88,7 @@
           <td class="text-nowrap">{{ item.submitted_at|local('%d.%m %H:%M:%S') }}</td>
           <td>{{ 'Python 3' if item.language == 'python' else 'C++17' }}</td>
           <td><span class="badge {{ 'text-bg-warning' if item.status == 'pending' else ('text-bg-success' if item.status == 'accepted' else 'text-bg-danger') }}">{{ {'pending': _('Tekshirilmoqda'), 'accepted': _('Qabul'), 'rejected': _('Xato'), 'error': _('Tizim xatosi')}.get(item.status, item.status) }}</span></td>
-          <td class="small">{{ item.judge_result or '' }}</td>
+          <td class="small">{{ item.judge_result|verdict or '' }}</td>
         </tr>
       {% endfor %}
       </tbody>
