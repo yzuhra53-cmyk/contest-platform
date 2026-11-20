@@ -464,7 +464,7 @@ def create_app(test_config=None):
         return render_template(
             "admin_dashboard.html",
             student_count=Student.query.count(),
-            question_count=Question.query.count(),
+            question_count=Question.query.filter(Question.archived.is_(False)).count(),
             contest_count=Contest.query.count(),
             attempt_count=Attempt.query.filter(Attempt.completed_at.is_not(None)).count(),
             active_contests=Contest.query.filter_by(is_active=True).all(),
@@ -585,7 +585,7 @@ def create_app(test_config=None):
                 continue
             existing.add(key(item["prompt"]))
             option_a, option_b, option_c, option_d = item["options"]
-            db.session.add(Question(
+            imported = Question(
                 question_type="test",
                 prompt=item["prompt"],
                 category=(item["category"] or category or os.path.splitext(uploaded.filename)[0])[:160],
@@ -595,7 +595,9 @@ def create_app(test_config=None):
                 option_d=option_d,
                 correct_option=item["correct"],
                 difficulty=item.get("difficulty") or default_level,
-            ))
+            )
+            imported.difficulty = imported.difficulty or classify_difficulty(imported)
+            db.session.add(imported)
             added += 1
         db.session.commit()
         message = _("Fayldan %(count)s ta nazariy savol qo‘shildi.", count=added)
@@ -783,11 +785,8 @@ def create_app(test_config=None):
             db.session.commit()
             flash(_("Savol bazaga qo‘shildi."), "success")
             return redirect(url_for("admin_questions"))
-        questions = Question.query.order_by(Question.id.desc()).all()
-        level_counts = {level: 0 for level in ("easy", "medium", "hard")}
-        for question in questions:
-            level_counts[question.difficulty or "medium"] = level_counts.get(question.difficulty or "medium", 0) + 1
-        return render_template("questions.html", questions=questions, level_counts=level_counts)
+        questions = Question.query.filter(Question.archived.is_(False)).order_by(Question.id).all()
+        return render_template("questions.html", questions=questions, bank_blocks=bank_blocks(questions))
 
     @application.route("/admin/questions/<int:question_id>/difficulty", methods=["POST"])
     @admin_required
@@ -833,6 +832,7 @@ def create_app(test_config=None):
             questions = (
                 Question.query.filter(
                     Question.id.in_(selected),
+                    Question.archived.is_(False),
                     Question.question_type.in_(allowed_types),
                 ).order_by(Question.id.asc()).all()
                 if selected
@@ -881,17 +881,36 @@ def create_app(test_config=None):
             "contests.html",
             default_max_violations=DEFAULT_MAX_VIOLATIONS,
             contests=Contest.query.order_by(Contest.id.desc()).all(),
-            quiz_questions=Question.query.filter_by(question_type="code_output").order_by(Question.id.desc()).all(),
-            theory_questions=Question.query.filter_by(question_type="test").order_by(Question.id).all(),
+            quiz_questions=Question.query.filter_by(question_type="code_output", archived=False).order_by(Question.id.desc()).all(),
+            theory_questions=Question.query.filter_by(question_type="test", archived=False).order_by(Question.id).all(),
             theory_groups=group_theory_questions(),
-            coding_questions=Question.query.filter_by(question_type="code_problem").order_by(Question.id.desc()).all(),
+            coding_questions=Question.query.filter_by(question_type="code_problem", archived=False).order_by(Question.id.desc()).all(),
         )
+
+    def bank_blocks(questions):
+        """Savollar bazasi sahifasi uchun: blok -> daraja -> savollar."""
+        blocks = [
+            ("code_problem", _("Kod yozish")),
+            ("code_output", _("Output testi")),
+            ("test", _("Nazariy bilimlar")),
+            ("code", _("Output yoziladigan masala")),
+        ]
+        result = []
+        for key, title in blocks:
+            items = [question for question in questions if question.question_type == key]
+            if not items and key == "code":
+                continue
+            if key == "test":
+                items.sort(key=lambda question: (question.category or "~", question.id))
+            levels = [(level, [q for q in items if (q.difficulty or "medium") == level]) for level in ("easy", "medium", "hard")]
+            result.append({"key": key, "title": title, "count": len(items), "levels": levels})
+        return result
 
     def group_theory_questions():
         """Nazariy savollar mavzu (blok) bo'yicha: [(nom, [savollar]), ...]."""
         groups = {}
         other = _("Boshqa savollar")
-        for question in Question.query.filter_by(question_type="test").order_by(Question.id):
+        for question in Question.query.filter_by(question_type="test", archived=False).order_by(Question.id):
             groups.setdefault(question.category or other, []).append(question)
         return sorted(groups.items(), key=lambda item: (item[0] == other, item[0]))
 
@@ -2016,6 +2035,9 @@ def create_app(test_config=None):
         if "difficulty" not in question_columns:
             db.session.execute(db.text("ALTER TABLE questions ADD COLUMN difficulty VARCHAR(10)"))
             db.session.commit()
+        if "archived" not in question_columns:
+            db.session.execute(db.text("ALTER TABLE questions ADD COLUMN archived BOOLEAN NOT NULL DEFAULT FALSE"))
+            db.session.commit()
         if "access_code_hash" not in student_columns:
             db.session.execute(db.text("ALTER TABLE students ADD COLUMN access_code_hash VARCHAR(255)"))
             db.session.commit()
@@ -2034,6 +2056,7 @@ def create_app(test_config=None):
         import_problem_bank(application)
         import_theory_bank(application)
         fill_difficulty(application)
+        curate_bank(application)
 
     return application
 
@@ -2066,6 +2089,39 @@ def import_problem_bank(application):
         except IntegrityError:
             # Bir nechta jarayon bir vaqtda ishga tushsa, boshqasi allaqachon qo'shgan.
             db.session.rollback()
+
+
+def curate_bank(application):
+    """Bank savollarini bir marta saralaydi (curated_bank.json): ro'yxatda yo'q bank savollari
+    o'chiriladi; kontestga biriktirilgan yoki yechim yuborilganlari faqat arxivlanadi.
+    Ustoz o'zi qo'shgan savollarga tegilmaydi."""
+    path = os.path.join(application.root_path, "curated_bank.json")
+    if not os.path.exists(path):
+        return
+    with open(path, encoding="utf-8") as file:
+        data = json.load(file)
+    marker = f"curated-bank-v{data.get('version', 1)}"
+    if db.session.get(BankImport, marker) is not None:
+        return
+    keep = {prompt for levels in data["keep"].values() for prompts in levels.values() for prompt in prompts}
+    seeded = set(data["seeded"])
+    deleted = archived = 0
+    for question in Question.query.all():
+        key = " ".join((question.prompt or "").split())
+        if key not in seeded or key in keep:
+            continue
+        if question.contests or question.code_submissions:
+            question.archived = True
+            archived += 1
+        else:
+            db.session.delete(question)
+            deleted += 1
+    db.session.add(BankImport(key=marker))
+    try:
+        db.session.commit()
+        application.logger.info("Savollar bazasi saralandi: %s ta o'chirildi, %s ta arxivlandi.", deleted, archived)
+    except IntegrityError:
+        db.session.rollback()
 
 
 def fill_difficulty(application):

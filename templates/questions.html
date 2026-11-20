@@ -47,9 +47,17 @@
   </div></div></div>
   <div class="col-lg-7"><div class="card border-0 shadow-sm"><div class="card-body p-0">
     <div class="p-4 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2"><h2 class="h5 mb-0">{{ _('Mavjud savollar') }} <span class="badge rounded-pill text-bg-light">{{ questions|length }}</span></h2>
-      <div class="d-flex flex-wrap gap-1" id="bankLevelFilter">{% for level in ('easy', 'medium', 'hard') %}<button type="button" class="btn btn-sm level-chip level-{{ level }} is-on" data-level-chip="{{ level }}">{{ level_labels[level] }} · {{ level_counts[level] }}</button>{% endfor %}</div></div>
-    {% if questions %}<div class="list-group list-group-flush">
-      {% for question in questions %}<div class="list-group-item p-4" data-level="{{ question.difficulty or 'medium' }}">
+      <div class="d-flex flex-wrap gap-1" id="bankLevelFilter">{% for level in ('easy', 'medium', 'hard') %}<button type="button" class="btn btn-sm level-chip level-{{ level }} is-on" data-level-chip="{{ level }}">{{ level_labels[level] }}</button>{% endfor %}</div></div>
+    {% if questions %}
+    <div class="bank-tabs px-4 pt-3" role="tablist">
+      {% for block in bank_blocks %}<button type="button" class="bank-tab{% if loop.first %} is-active{% endif %}" data-bank-tab="{{ block.key }}" role="tab">{{ block.title }} <span class="badge rounded-pill text-bg-light">{{ block.count }}</span>
+        <span class="bank-tab-levels">{% for level, items in block.levels %}<span class="level-badge level-{{ level }}">{{ items|length }}</span>{% endfor %}</span></button>{% endfor %}
+    </div>
+    {% for block in bank_blocks %}<div class="bank-panel" data-bank-panel="{{ block.key }}" {% if not loop.first %}hidden{% endif %}>
+      {% for level, items in block.levels %}<section class="bank-level" data-level="{{ level }}">
+        <h3 class="bank-level-title"><span class="level-badge level-{{ level }}">{{ level_labels[level] }}</span> <span class="text-secondary small">{{ _('%(n)s ta savol', n=items|length) }}</span></h3>
+        {% if items %}<div class="list-group list-group-flush">
+        {% for question in items %}<div class="list-group-item p-4" data-level="{{ question.difficulty or 'medium' }}">
         <div class="d-flex justify-content-between gap-3"><div><span class="badge {{ 'text-bg-info' if question.question_type == 'code_output' else ('text-bg-primary' if question.question_type == 'test' else 'text-bg-secondary') }} mb-2">{{ _('Kod natijasini topish') if question.question_type == 'code_output' else (_('Nazariy test') if question.question_type == 'test' else _('Dasturlash')) }}</span>{% if question.category %} <span class="badge text-bg-light mb-2">{{ question.category }}</span>{% endif %} <span class="level-badge level-{{ question.difficulty or 'medium' }} mb-2">{{ level_labels[question.difficulty or 'medium'] }}</span><div class="fw-medium">{{ question.prompt }}</div>
           {% if question.question_type == 'code_output' %}<pre class="sample-input mt-2 mb-2"><code>{{ question.code_snippet }}</code></pre><div class="small text-secondary">Input: {{ question.input_data or _('bo‘sh') }} · {{ _('Chiqish variantli test') }}</div>
           {% elif question.question_type == 'code_problem' %}<div class="small text-secondary mt-2">{{ _('Namuna Input') }}: {{ question.input_data or '—' }} · {{ _('yashirin testlar: %(n)s belgili JSON', n=(question.test_cases_json or '[]')|length) }}</div>
@@ -57,7 +65,10 @@
           {% else %}<div class="small text-secondary mt-2">Input: {{ question.input_data or '—' }} · {{ _('Output belgilangan') }}</div>{% endif %}
         </div><div class="d-flex flex-column align-items-end gap-2"><form method="post" class="question-level-form" action="{{ url_for('set_question_difficulty', question_id=question.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><select class="form-select form-select-sm" name="difficulty" aria-label="{{ _('Qiyinlik darajasi') }}" onchange="this.form.submit()">{% for level in ('easy', 'medium', 'hard') %}<option value="{{ level }}" {% if (question.difficulty or 'medium') == level %}selected{% endif %}>{{ level_labels[level] }}</option>{% endfor %}</select></form><form method="post" action="{{ url_for('delete_question', question_id=question.id) }}" onsubmit="return confirm({{ _('Savolni o‘chirmoqchimisiz?')|tojson|forceescape }})"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger">{{ _('O‘chirish') }}</button></form></div></div>
       </div>{% endfor %}
-    </div>{% else %}<div class="empty-state">{{ _('Savollar bazasi hozircha bo‘sh.') }}</div>{% endif %}
+        </div>{% else %}<p class="small text-secondary px-4 pb-3 mb-0">{{ _('Bu darajada savol yo‘q.') }}</p>{% endif %}
+      </section>{% endfor %}
+    </div>{% endfor %}
+    {% else %}<div class="empty-state">{{ _('Savollar bazasi hozircha bo‘sh.') }}</div>{% endif %}
   </div></div></div>
 </div>
 {% endblock %}
@@ -91,7 +102,11 @@ document.querySelectorAll('#bankLevelFilter [data-level-chip]').forEach((chip) =
   const level = chip.dataset.levelChip;
   if (shownLevels.has(level) && shownLevels.size > 1) shownLevels.delete(level); else shownLevels.add(level);
   document.querySelectorAll('#bankLevelFilter [data-level-chip]').forEach((item) => item.classList.toggle('is-on', shownLevels.has(item.dataset.levelChip)));
-  document.querySelectorAll('.list-group-item[data-level]').forEach((item) => { item.hidden = !shownLevels.has(item.dataset.level); });
+  document.querySelectorAll('.bank-level[data-level]').forEach((item) => { item.hidden = !shownLevels.has(item.dataset.level); });
+}));
+document.querySelectorAll('[data-bank-tab]').forEach((tab) => tab.addEventListener('click', () => {
+  document.querySelectorAll('[data-bank-tab]').forEach((item) => item.classList.toggle('is-active', item === tab));
+  document.querySelectorAll('[data-bank-panel]').forEach((panel) => { panel.hidden = panel.dataset.bankPanel !== tab.dataset.bankTab; });
 }));
 toggleQuestionFields();
 </script>

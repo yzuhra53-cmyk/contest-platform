@@ -194,3 +194,11 @@ python tools/i18n_check.py --stubs
 
 Bank savollari, masalalari va javob variantlari ham tarjima qilingan (`translations/content/ru.json`, `en.json`;
 kalit — o‘zbekcha matn). Ustoz qo‘shgan yangi savollar o‘zi yozilgan tilda ko‘rsatiladi.
+
+## Saralangan savollar bazasi
+
+`curated_bank.json` (`python tools/build_curated_bank.py` bilan yaratiladi) har bir blokdan takrorlanmaydigan
+savollarni, har bir darajadan ko‘pi bilan 40 tadan qoldiradi: Kod yozish 37/27/15, Output testi 32/27/16,
+Nazariy bilimlar 40/40/40 (5 mavzudan teng). Ilova birinchi ishga tushganda qolgan bank savollarini o‘chiradi;
+eski kontestga biriktirilgan yoki yechim yuborilganlari o‘chirilmaydi, faqat arxivlanadi (bazada ko‘rinmaydi).
+Ustoz o‘zi qo‘shgan savollarga tegilmaydi.

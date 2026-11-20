@@ -356,3 +356,10 @@ body.contest-locked .problem-statement, body.contest-locked .sample-input { -web
 
 /* ---------- Til tanlash ---------- */
 .lang-switch .dropdown-menu { min-width: 10rem; }
+
+/* ---------- Savollar bazasi: bloklar ---------- */
+.bank-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .5rem; }
+.bank-tab { text-align: left; border: 1px solid #e5e7eb; background: #fff; border-radius: .75rem; padding: .6rem .8rem; font-weight: 600; display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+.bank-tab.is-active { border-color: #dc2626; box-shadow: 0 0 0 2px rgba(220, 38, 38, .12); }
+.bank-tab-levels { display: flex; gap: .25rem; width: 100%; }
+.bank-level-title { font-size: 1rem; margin: 1.25rem 1.5rem .5rem; display: flex; align-items: center; gap: .5rem; }

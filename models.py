@@ -53,6 +53,8 @@ class Question(db.Model):
     category = db.Column(db.String(160))
     # Qiyinlik darajasi: easy / medium / hard (difficulty.py).
     difficulty = db.Column(db.String(10))
+    # Bankdan chiqarilgan, lekin eski kontestga biriktirilgani uchun o'chirilmagan savol.
+    archived = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
     contests = db.relationship("Contest", secondary=contest_questions, back_populates="questions")

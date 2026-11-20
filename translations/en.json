@@ -60,6 +60,7 @@
  "Bu HEMIS ID avval ro‘yxatga qo‘shilgan.": "This HEMIS ID is already on the list.",
  "Bu brauzer ekran ulashishni qo‘llab-quvvatlamaydi. Kompyuterda Chrome, Edge yoki Firefox’dan foydalaning.": "This browser does not support screen sharing. Use Chrome, Edge or Firefox on a computer.",
  "Bu brauzer ekranni ulashishni qo‘llab-quvvatlamaydi. Kompyuterda Chrome, Edge yoki Firefox’dan foydalaning.": "This browser does not support screen sharing. Use Chrome, Edge or Firefox on a computer.",
+ "Bu darajada savol yo‘q.": "No questions at this level.",
  "Bu kontest hozir faol emas.": "This contest is not active right now.",
  "Bu kontest kuzatuv ostida o‘tadi. Har %(n)s soniyada %(what)s va yozayotgan kodingiz ustozga yuboriladi.": "This contest is proctored. Every %(n)s seconds, %(what)s and the code you are writing are sent to the teacher.",
  "Bu kontestda kamera va ekran kuzatuvi o‘chirilgan — kadrlar kelmaydi": "Camera and screen monitoring are off for this contest — no frames will arrive",

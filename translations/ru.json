@@ -60,6 +60,7 @@
  "Bu HEMIS ID avval ro‘yxatga qo‘shilgan.": "Этот HEMIS ID уже есть в списке.",
  "Bu brauzer ekran ulashishni qo‘llab-quvvatlamaydi. Kompyuterda Chrome, Edge yoki Firefox’dan foydalaning.": "Этот браузер не поддерживает демонстрацию экрана. Используйте Chrome, Edge или Firefox на компьютере.",
  "Bu brauzer ekranni ulashishni qo‘llab-quvvatlamaydi. Kompyuterda Chrome, Edge yoki Firefox’dan foydalaning.": "Этот браузер не поддерживает демонстрацию экрана. Используйте Chrome, Edge или Firefox на компьютере.",
+ "Bu darajada savol yo‘q.": "На этом уровне нет вопросов.",
  "Bu kontest hozir faol emas.": "Этот контест сейчас неактивен.",
  "Bu kontest kuzatuv ostida o‘tadi. Har %(n)s soniyada %(what)s va yozayotgan kodingiz ustozga yuboriladi.": "Контест проходит под прокторингом. Каждые %(n)s секунд преподавателю отправляются %(what)s и код, который вы пишете.",
  "Bu kontestda kamera va ekran kuzatuvi o‘chirilgan — kadrlar kelmaydi": "В этом контесте камера и контроль экрана отключены — кадров не будет",
